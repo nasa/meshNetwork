@@ -1,0 +1,23 @@
+syntax ="proto3";
+package nodeInterface;
+
+message Command {
+    float txInterval = 1;
+    bytes msgBytes = 2;
+    uint32 cmdId = 3;
+}
+
+message NodeThreadMsg {
+    enum NodeMsgType {
+        NODE = 0;
+        COMM = 1;
+    }
+
+    NodeMsgType type = 1;
+    double timestamp = 2;
+    bytes cmdRelay = 3;
+    repeated Command cmds = 4;
+    repeated uint32 linkStatus = 5;
+    bytes rcvdBytes = 6; 
+    bytes dataBlock = 7;   
+}
