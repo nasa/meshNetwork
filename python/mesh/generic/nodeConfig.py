@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-import math
 import hashlib
 #from collections import namedtuple
 from mesh.generic.nodeTools import isBeaglebone
@@ -11,7 +10,7 @@ class NodeConfig(dict):
 
     Attributes:
 
-        platform (string): The type of vehicle the software is being run on.  The current valid values are: Pixhawk multicopter vehicle flying with the Pixhawk autopilot system; SatFC- generic satellite (used for satellite simulation).
+        platform (string): The type of vehicle the software is being run on.  Used to load platform-speciic configuration parameters.
         maxNumNodes (int): The maximum number of nodes allowed in the formation.  The actual number of nodes present may be less than this, but it may no be greater.
         nodeUpdateTimeout (double): The maximum allowable time (in seconds) between node state updates.
         commType (string): The communication protocol used by the nodes to communicate with one another.  Valid values are: TDMA- Time division multiple access communication scheme managed by formation software; standard- direct communication with no control by the formation software.  Any timing/conflict resolution is done by an outside entity such as the radio.
@@ -29,32 +28,13 @@ class NodeConfig(dict):
         cmdInterval (float): Interval in seconds between successive send times of repeating commands.
         logInterval (float): Interval in seconds between logging attempts. 
 
-        formationCmd (array of doubles): Formation position command.  The array should have the following 5 entries: command source- the node ID of the command sender; latitude (double)- commanded latitude; longitude (double)- commanded longitude; altitude (double)- commanded altitude; formation shape (int)- commanded formation shape.  Valid values are 0 (circle) and 1 (line).
-        posCmdFence (array of doubles): The region that the vehicles must be remain within.  The fence is specified by a pair of latitude/longitude/altitude points which define the extreme points of a rectangular cuboid.  The first point is the most southern, eastern, lowest point, and the second is the most northern, western, highest point.
-        altSpacing (double): The minimum altitude difference between failsafe altitudes of each vehicle.
-        leaderTimeout (double): The maximum allowable time (in seconds) between successive messages received from a leader node.  If this time is exceeded, the leader present status is cleared.
-        lateralDrift (double): The maximum allowable horizontal drift of a vehicle from its assigned formation location.  
-        altitudeDrift (double): The maximum allowable vertical drift of a vehicle from its assigned formation location.
-        positionTimer (double): The elapsed time (in seconds) from when a vehicle reaches its assigned formation location before it is declared in position.  
-        positionUpdateFail (double): Maximum allowable time (seconds) between state updates from Pixhawk before vehicle will automatically transition to Failsafe mode.
-        targetUpdateFail (double): Maximum allowable time (seconds) between target updates from Pixhawk, when node in Leader mode, before vehicle will automatically transition to Failsafe mode.
-        radius (double): Radius (in meters) of a circle formation.
-        vehSpacing (double): Spacing (in meters) between vehicles in a line formation.  
-        lineAngle (double): Direction along line formation from node 1 to last node specified in degrees measured counter-clockwise from X-axis (not a compass heading).  
-
-        satFormationType (string): The type of formation that the spacecraft will form.     
-        chiefId (int): Node ID of chief spacecraft.
-        nomOrbElems (array of doubles): Orbital elements of chief spacecraft.
-        deltaElems (array of doubles): Nominal element deltas from chief orbital elements.
-        eccDelta (array of doubles): Delta eccentricity offset vector for computing delta elements for specific node.  
-        inclDelta (array of doubles): Delta inclination offset vector for computing delta elements for specific node.  
-
-        commConfig (dict): This JSON object contains all of the TDMA configuration parameters.
+        commConfig (dict): This object contains all of the communication configuration parameters.
 
     """
     
     def __init__(self,configFile=[]):
         self.__dict__ = self
+
         if configFile:
             self.loadConfigFile(configFile)
         else:
@@ -62,13 +42,7 @@ class NodeConfig(dict):
             self.nodeId = -1
             self.maxNumNodes = -1
             self.uartNumBytesToRead = 100 
-            self.failsafeAlt = 10 
-            self.formationCmd = []
             self.numMeshNetworks = 2        
-            self.posCmdFence = [34.6540874, -86.6698390, 34.6547978, -86.6704157, 5, 50] 
-            self.lateralDrift = 3
-            self.altitudeDrift = 3
-            self.positionTimer = 3 # seconds        
 
         # Parameter map for sending/receiving config updates
         #Param = namedtuple('Param', ['id', 'serialType', 'varType'])
@@ -139,10 +113,7 @@ class NodeConfig(dict):
         self.msgParsers = configData['msgParsers']
 
         # Platform specific configuration
-        if self.platform == "Pixhawk": # Pixhawk specific config parameters
-            self.loadPixhawkConfig(config['pixhawkConfig']) 
-        elif self.platform == "SatFC": # Satellite specific config parameters
-            self.loadSatFCConfig(config['satFCConfig']) 
+        self.loadPlatformConfig(config)
 
     def loadInterfaceConfig(self, config):
         self.interface = config['interface']
@@ -186,50 +157,9 @@ class NodeConfig(dict):
             if 'transmitSlot' not in self.commConfig:
                 self.commConfig['transmitSlot'] = self.nodeId           
 
-    def loadPixhawkConfig(self, pixhawkConfig):
-        self.positionUpdateFail = pixhawkConfig['positionUpdateFail']
-        self.targetUpdateFail = pixhawkConfig['targetUpdateFail']
-        self.leaderTimeout = pixhawkConfig['leaderTimeout']
-        self.positionTimer = pixhawkConfig['positionTimer']
-        self.posCmdFence = pixhawkConfig['posCmdFence']
-        formCmd = pixhawkConfig['formationCmd']
-        self.formationCmd = [formCmd['sourceId'], formCmd['lat'], formCmd['lon'], formCmd['alt'], formCmd['shape']]
-        self.altSpacing = pixhawkConfig['altSpacing'] 
-        self.lateralDrift = pixhawkConfig['lateralDrift']
-        self.altitudeDrift = pixhawkConfig['altitudeDrift']
-        self.radius = pixhawkConfig['radius']
-        self.lineAngle = pixhawkConfig['lineAngle']
-        self.vehSpacing = pixhawkConfig['vehSpacing']
-                    
-        # Failsafe altitude
-        if 'failsafeAlt' in pixhawkConfig:
-            self.failsafeAlt = pixhawkConfig['failsafeAlt']
-        else:
-            # Calculate default failsafe altitude
-            self.failsafeAlt = self.posCmdFence[4] + (self.nodeId-1)*5 + 1.0 # constant value biases away from fence to allow for some error
-            print("Failsafe altitude: " + str(self.failsafeAlt))    
-
-    def loadSatFCConfig(self, satFCConfig):
-        self.satFormationType = satFCConfig['satFormationType']
-        if self.satFormationType == "EIVecSep":
-            formSpecs = satFCConfig['satFormationSpecs']
-            self.chiefId = formSpecs['chiefId']
-            self.nomOrbElems = formSpecs['nominalOrbitalElements']
-            deltaElems = formSpecs['deltaElems'] # [delta a, delta u, a*delta e, a*delta i]
-            self.deltaA = deltaElems['a']
-            self.deltaU = deltaElems['u']
-            self.deltaE = deltaElems['aDeltae']
-            self.deltaI = deltaElems['aDeltai']
-            self.eccDelta = formSpecs['eccDelta']
-            self.inclDelta = formSpecs['inclDelta']
-            for i in range(2):
-                self.deltaE[i] /= self.nomOrbElems[0]
-                self.deltaI[i] /= self.nomOrbElems[0]
-                self.eccDelta[i] /= self.nomOrbElems[0]
-                self.inclDelta[i] /= self.nomOrbElems[0]
-            self.maxEIAngle = formSpecs['maxEIAngle']*math.pi/180.0 # Convert from inputted degrees to radians
-            self.burnSpacing = formSpecs['burnSpacing']
-        
+    def loadPlatformConfig(self, config):
+        '''This function loads platform specific configuration data and should be overriden by sub-classes.''' 
+        pass
 
     def readNodeId(self):
         '''Determines node ID of this node by reading the GPIO input values wired to the DIP switches on the node formation cape.'''
@@ -362,49 +292,49 @@ class NodeConfig(dict):
         self.hashElem(configHash, self.commConfig['maxBlockTransferSize'])
 
         # Platform specific params
-        if (self.platform == "Pixhawk"):
-            self.hashElem(configHash, self.positionUpdateFail)
-            self.hashElem(configHash, self.targetUpdateFail)
-            self.hashElem(configHash, self.nodeUpdateTimeout)
-            self.hashElem(configHash, self.positionTimer)
-            self.hashElem(configHash, self.leaderTimeout)
+        #if (self.platform == "Pixhawk"):
+        #    self.hashElem(configHash, self.positionUpdateFail)
+        #    self.hashElem(configHash, self.targetUpdateFail)
+        #    self.hashElem(configHash, self.nodeUpdateTimeout)
+        #    self.hashElem(configHash, self.positionTimer)
+        #    self.hashElem(configHash, self.leaderTimeout)
             
             # Command fence
-            self.hashElem(configHash, self.posCmdFence[0]) # min lat
-            self.hashElem(configHash, self.posCmdFence[2]) # max lat
-            self.hashElem(configHash, self.posCmdFence[1]) # min lon
-            self.hashElem(configHash, self.posCmdFence[3]) # max lon
-            self.hashElem(configHash, self.posCmdFence[4]) # min alt
-            self.hashElem(configHash, self.posCmdFence[5]) # max alt
+        #    self.hashElem(configHash, self.posCmdFence[0]) # min lat
+        #    self.hashElem(configHash, self.posCmdFence[2]) # max lat
+        #    self.hashElem(configHash, self.posCmdFence[1]) # min lon
+        #    self.hashElem(configHash, self.posCmdFence[3]) # max lon
+        #    self.hashElem(configHash, self.posCmdFence[4]) # min alt
+        #    self.hashElem(configHash, self.posCmdFence[5]) # max alt
             
             # Formation command
-            self.hashElem(configHash, self.formationCmd[1]) # lat
-            self.hashElem(configHash, self.formationCmd[2]) # lon
-            self.hashElem(configHash, self.formationCmd[3]) # alt
-            self.hashElem(configHash, self.formationCmd[4]) # shape
+        #    self.hashElem(configHash, self.formationCmd[1]) # lat
+        #    self.hashElem(configHash, self.formationCmd[2]) # lon
+        #    self.hashElem(configHash, self.formationCmd[3]) # alt
+        #    self.hashElem(configHash, self.formationCmd[4]) # shape
             
-            self.hashElem(configHash, self.altSpacing)
-            self.hashElem(configHash, self.lateralDrift)
-            self.hashElem(configHash, self.altitudeDrift)
-            self.hashElem(configHash, self.radius)
-            self.hashElem(configHash, self.lineAngle)
-            self.hashElem(configHash, self.vehSpacing)
+        #    self.hashElem(configHash, self.altSpacing)
+        #    self.hashElem(configHash, self.lateralDrift)
+        #    self.hashElem(configHash, self.altitudeDrift)
+        #    self.hashElem(configHash, self.radius)
+        #    self.hashElem(configHash, self.lineAngle)
+        #    self.hashElem(configHash, self.vehSpacing)
         
-        elif (self.platform == "SatFC"):
-            if self.satFormationType == "EIVecSep":
-                self.hashElem(configHash, 0)
-                self.hashElem(configHash, self.chiefId)
-                for elem in self.nomOrbElems:
-                    self.hashElem(configHash, elem)
-                self.hashElem(configHash, self.deltaA)
-                self.hashElem(configHash, self.deltaU)
-                for i in range(2):
-                    self.hashElem(configHash, self.eccDelta[i])
-                    self.hashElem(configHash, self.inclDelta[i])
-                    self.hashElem(configHash, self.deltaE[i])
-                    self.hashElem(configHash, self.deltaI[i])
-                self.hashElem(configHash, self.maxEIAngle)
-                self.hashElem(configHash, self.burnSpacing)
+        #elif (self.platform == "SatFC"):
+        #    if self.satFormationType == "EIVecSep":
+        #        self.hashElem(configHash, 0)
+        #        self.hashElem(configHash, self.chiefId)
+        #        for elem in self.nomOrbElems:
+        #            self.hashElem(configHash, elem)
+        #        self.hashElem(configHash, self.deltaA)
+        #        self.hashElem(configHash, self.deltaU)
+        #        for i in range(2):
+        #            self.hashElem(configHash, self.eccDelta[i])
+        #            self.hashElem(configHash, self.inclDelta[i])
+        #            self.hashElem(configHash, self.deltaE[i])
+        #            self.hashElem(configHash, self.deltaI[i])
+        #        self.hashElem(configHash, self.maxEIAngle)
+        #        self.hashElem(configHash, self.burnSpacing)
 
 
         # Create hash

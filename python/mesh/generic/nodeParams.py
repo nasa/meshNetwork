@@ -6,6 +6,8 @@ from mesh.generic.formationClock import FormationClock
 from mesh.generic.tdmaState import TDMAStatus
 from mesh.generic.nodeState import NodeState, LinkStatus
 from mesh.generic.nodeTools import isBeaglebone
+from mesh.generic.cmdDict import CmdDict 
+from copy import deepcopy
 import mesh.generic.gpio as GPIO
 
 class NodeParams():
@@ -15,6 +17,9 @@ class NodeParams():
         elif config:
             self.config = config
 
+        self.setupParams()
+
+    def setupParams(self):
         self.cmdCounterMax = 255 # DEPRECATED - TODO - DELETE
         self.cmdCounterThreshold = 10 # DEPRECATED - TODO - DELETE  
         self.commStartTime = []

@@ -1,9 +1,6 @@
 from struct import pack
 from mesh.generic.commandType import CommandType
 from mesh.generic.cmds import NodeCmds
-from uav.pixhawkCmdDict import PixhawkCmdDict
-from uav.pixhawkFCCmdDict import PixhawkFCCmdDict
-from sat.satFCCmdDict import SatFCCmdDict
 from mesh.generic.tdmaCmdDict import TDMACmdDict
 from mesh.generic.testCmdDict import TestCmdDict
 
@@ -33,8 +30,5 @@ NodeCmdDict = {NodeCmds['GCSCmd']: CommandType('=BB', serialize_NodeCmds_GCSCmd,
 
 CmdDict = dict()
 CmdDict.update(NodeCmdDict)
-CmdDict.update(PixhawkCmdDict)
-CmdDict.update(PixhawkFCCmdDict)
-CmdDict.update(SatFCCmdDict)
 CmdDict.update(TDMACmdDict)
 CmdDict.update(TestCmdDict)
