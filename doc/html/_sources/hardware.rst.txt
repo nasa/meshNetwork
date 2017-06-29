@@ -1,0 +1,55 @@
+Hardware Implementations
+========================
+
+The following hardware implementations were created as testbeds for the mesh network communication system.  The mesh network was primarily tested on using commercially available quadcopter unmanned aerial systems (UASs) as a stressing flight platform.  To test on the UASs, the Beaglebone Black was chosen to interface with the mesh network radios and the vehicle flight computer.  As the mesh network development evolved, several generations of hardware were developed as described below.
+
+Generation 1 (FY2014)
+---------------------
+
+Preliminary mesh network development began by exploring available options for the communications link.  Initial options were explored based on their suitability for immediate testing and not necessarily their applicability for the final design.  Network layer options explored included WiFi and existing COTS personal area network technologies such as ZigBee.  Because of its simplicity, wide availability, and inter-operability with other existing test equipment, initial design studies converged on the use of XBee radios.
+The first generation node hardware consisted of a BeagleBone Black (BBB) single-board computer, two XBee Pro 2.4GHz radios, and a custom BBB interface board called a “cape.”  The XBee radios are attached to headers on the cape which in turn mate to the headers on the BBB.  The first generation network design used two independent mesh networks operating on different frequencies to provide redundancy.
+
+.. figure:: ../../../hardware_1stgen.png
+   :align: center
+
+   First Generation XBee Node Stack
+
+This first generation network was based on a proprietary XBee networking protocol.  This protocol was responsible for coordinating and controlling communication across the network.  The TDMA mesh network scheme that is the primary topic of this paper had not yet been developed.  By leveraging existing technology, we were able to quickly create an initial functioning system and concentrate on developing our testing architecture.  This initial generation also did not yet employ relay functionality, requiring all nodes to be in direct communication with all other nodes to ensure network integrity.
+
+The BBB in the hardware node stack interfaced with the test vehicle’s flight computer via an RS-232 serial UART (Universal Asynchronous Receiver/Transmitter).  Python scripts were developed and run on the BBB to interface with both the flight computer and the radios and to compile and process data for passing over the communication network.  All data was transmitted over both redundant networks with duplicate data being parsed and discarded by the receiving nodes.
+
+Generation 2 (FY2015)
+---------------------
+
+The second generation system was designed to make the communication system hardware independent, so that it would not be dependent on a particular model or brand of radio to function.  To enable this, a custom TDMA scheme was developed to control the sequencing of communication on the network.  This contrasts with the first generation system which did not have any software-based communication control scheme but instead relied on the XBee radios to provide this function.  By moving this function into software, the system is not only more hardware-independent, but the TDMA scheme also helps cut down on power requirements by allowing the radio receiver and transmitter to be powered off when not in use.
+
+To further reduce power requirements as well as mass, only one network is employed therefore only requiring one radio.  To showcase the capabilities of the system and to demonstrate deployment on a wide range of hardware, a relatively simple radio with minimum complexity was desired.  The radio hardware requirements were also simplified by moving the collision and other communication control logic into the mesh network communication system software. 
+
+The second generation system also added data relaying to allow nodes to communicate and pass data and commands between all vehicles without requiring direct communication between all nodes.  Relaying allows commands and data to propagate along the mesh network to any desired destination node, allowing a node that has no direct communication path to a particular node to still receive that node’s data.
+
+Implementation of the TDMA scheme also required precise timing, so a method had to be provided to synchronize the clocks of all nodes in the system.  Because of its existing widespread use as a vehicle navigation source by many vehicle types, GPS was chosen as the time synchronization source.  The time broadcast by the GPS constellation and a pulse per second (PPS) signal from a GPS receiver are used to provide time synchronization within 1 millisecond or better across the network nodes.  However the communication system is not dependent on this particular time source, so any other external time synchronization method implemented by the host platform would be sufficient provided it meets the time accuracy requirements.
+
+.. figure:: ../../../hardware_2ndgen_xbee.png
+   :align: center
+
+   Second Generation XBee Node Stack
+
+The new TDMA scheme was tested on two different hardware implementations.  The first was a modification of the first generation XBee stack but removing the second radio and adding a GPS interface.  To show that the mesh network would function using a flight-ready radio, a hardware implementation using the AstroDev Li-1 UHF radio was also tested.
+
+.. figure:: ../../../hardware_2ndgen_astrodev.png
+   :align: center
+
+   Second Generation AstroDev Li-1 Node Stack
+
+Current Generation
+------------------
+
+During development of the current generation of the network, the primary goal was to further improve network timing to ensure the most efficient usage of available communication bandwidth.  To facilitate improved timing accuracy, an FPGA was added into the hardware implementation.  By moving the network timing and control logic onto the embedded FPGA, time critical events, such as the start of each individual time segment of the TDMA Frame architecture, could rely on the more precise, repeatable execution afforded by the FPGA versus running it on a general purpose microprocessor such as the vehicle’s flight computer.  This precision then afforded to the option to reduce the lengths of the delay periods introduced into the mesh network architecture to account for less specific timing. 
+
+The FPGA used was a Microsemi ProASIC3, chosen because it provides a path towards space-quality hardware.  The BeagleBone Black platform was retained as in the previous generations just with the new interface board.  The TDMA network logic as well as the interface with the GPS was moved into VHDL running on the FPGA.  The data processing and other interface functions, such as communicating with the flight computer, were retained as Python scripts running on the BBB. 
+
+.. figure:: ../../../hardware_currentgen.png
+   :align: center
+
+   Third Generation XBee Node Stack
+

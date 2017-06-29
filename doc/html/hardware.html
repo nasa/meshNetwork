@@ -1,0 +1,146 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Hardware Implementations &#8212; Mesh Network Communication System 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Unit Testing" href="unittests.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="hardware-implementations">
+<h1>Hardware Implementations<a class="headerlink" href="#hardware-implementations" title="Permalink to this headline">¶</a></h1>
+<p>The following hardware implementations were created as testbeds for the mesh network communication system.  The mesh network was primarily tested on using commercially available quadcopter unmanned aerial systems (UASs) as a stressing flight platform.  To test on the UASs, the Beaglebone Black was chosen to interface with the mesh network radios and the vehicle flight computer.  As the mesh network development evolved, several generations of hardware were developed as described below.</p>
+<div class="section" id="generation-1-fy2014">
+<h2>Generation 1 (FY2014)<a class="headerlink" href="#generation-1-fy2014" title="Permalink to this headline">¶</a></h2>
+<p>Preliminary mesh network development began by exploring available options for the communications link.  Initial options were explored based on their suitability for immediate testing and not necessarily their applicability for the final design.  Network layer options explored included WiFi and existing COTS personal area network technologies such as ZigBee.  Because of its simplicity, wide availability, and inter-operability with other existing test equipment, initial design studies converged on the use of XBee radios.
+The first generation node hardware consisted of a BeagleBone Black (BBB) single-board computer, two XBee Pro 2.4GHz radios, and a custom BBB interface board called a “cape.”  The XBee radios are attached to headers on the cape which in turn mate to the headers on the BBB.  The first generation network design used two independent mesh networks operating on different frequencies to provide redundancy.</p>
+<div class="figure align-center" id="id1">
+<img alt="_images/hardware_1stgen.png" src="_images/hardware_1stgen.png" />
+<p class="caption"><span class="caption-text">First Generation XBee Node Stack</span></p>
+</div>
+<p>This first generation network was based on a proprietary XBee networking protocol.  This protocol was responsible for coordinating and controlling communication across the network.  The TDMA mesh network scheme that is the primary topic of this paper had not yet been developed.  By leveraging existing technology, we were able to quickly create an initial functioning system and concentrate on developing our testing architecture.  This initial generation also did not yet employ relay functionality, requiring all nodes to be in direct communication with all other nodes to ensure network integrity.</p>
+<p>The BBB in the hardware node stack interfaced with the test vehicle’s flight computer via an RS-232 serial UART (Universal Asynchronous Receiver/Transmitter).  Python scripts were developed and run on the BBB to interface with both the flight computer and the radios and to compile and process data for passing over the communication network.  All data was transmitted over both redundant networks with duplicate data being parsed and discarded by the receiving nodes.</p>
+</div>
+<div class="section" id="generation-2-fy2015">
+<h2>Generation 2 (FY2015)<a class="headerlink" href="#generation-2-fy2015" title="Permalink to this headline">¶</a></h2>
+<p>The second generation system was designed to make the communication system hardware independent, so that it would not be dependent on a particular model or brand of radio to function.  To enable this, a custom TDMA scheme was developed to control the sequencing of communication on the network.  This contrasts with the first generation system which did not have any software-based communication control scheme but instead relied on the XBee radios to provide this function.  By moving this function into software, the system is not only more hardware-independent, but the TDMA scheme also helps cut down on power requirements by allowing the radio receiver and transmitter to be powered off when not in use.</p>
+<p>To further reduce power requirements as well as mass, only one network is employed therefore only requiring one radio.  To showcase the capabilities of the system and to demonstrate deployment on a wide range of hardware, a relatively simple radio with minimum complexity was desired.  The radio hardware requirements were also simplified by moving the collision and other communication control logic into the mesh network communication system software.</p>
+<p>The second generation system also added data relaying to allow nodes to communicate and pass data and commands between all vehicles without requiring direct communication between all nodes.  Relaying allows commands and data to propagate along the mesh network to any desired destination node, allowing a node that has no direct communication path to a particular node to still receive that node’s data.</p>
+<p>Implementation of the TDMA scheme also required precise timing, so a method had to be provided to synchronize the clocks of all nodes in the system.  Because of its existing widespread use as a vehicle navigation source by many vehicle types, GPS was chosen as the time synchronization source.  The time broadcast by the GPS constellation and a pulse per second (PPS) signal from a GPS receiver are used to provide time synchronization within 1 millisecond or better across the network nodes.  However the communication system is not dependent on this particular time source, so any other external time synchronization method implemented by the host platform would be sufficient provided it meets the time accuracy requirements.</p>
+<div class="figure align-center" id="id2">
+<img alt="_images/hardware_2ndgen_xbee.png" src="_images/hardware_2ndgen_xbee.png" />
+<p class="caption"><span class="caption-text">Second Generation XBee Node Stack</span></p>
+</div>
+<p>The new TDMA scheme was tested on two different hardware implementations.  The first was a modification of the first generation XBee stack but removing the second radio and adding a GPS interface.  To show that the mesh network would function using a flight-ready radio, a hardware implementation using the AstroDev Li-1 UHF radio was also tested.</p>
+<div class="figure align-center" id="id3">
+<img alt="_images/hardware_2ndgen_astrodev.png" src="_images/hardware_2ndgen_astrodev.png" />
+<p class="caption"><span class="caption-text">Second Generation AstroDev Li-1 Node Stack</span></p>
+</div>
+</div>
+<div class="section" id="current-generation">
+<h2>Current Generation<a class="headerlink" href="#current-generation" title="Permalink to this headline">¶</a></h2>
+<p>During development of the current generation of the network, the primary goal was to further improve network timing to ensure the most efficient usage of available communication bandwidth.  To facilitate improved timing accuracy, an FPGA was added into the hardware implementation.  By moving the network timing and control logic onto the embedded FPGA, time critical events, such as the start of each individual time segment of the TDMA Frame architecture, could rely on the more precise, repeatable execution afforded by the FPGA versus running it on a general purpose microprocessor such as the vehicle’s flight computer.  This precision then afforded to the option to reduce the lengths of the delay periods introduced into the mesh network architecture to account for less specific timing.</p>
+<p>The FPGA used was a Microsemi ProASIC3, chosen because it provides a path towards space-quality hardware.  The BeagleBone Black platform was retained as in the previous generations just with the new interface board.  The TDMA network logic as well as the interface with the GPS was moved into VHDL running on the FPGA.  The data processing and other interface functions, such as communicating with the flight computer, were retained as Python scripts running on the BBB.</p>
+<div class="figure align-center" id="id4">
+<img alt="_images/hardware_currentgen.png" src="_images/hardware_currentgen.png" />
+<p class="caption"><span class="caption-text">Third Generation XBee Node Stack</span></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Hardware Implementations</a><ul>
+<li><a class="reference internal" href="#generation-1-fy2014">Generation 1 (FY2014)</a></li>
+<li><a class="reference internal" href="#generation-2-fy2015">Generation 2 (FY2015)</a></li>
+<li><a class="reference internal" href="#current-generation">Current Generation</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="unittests.html" title="previous chapter">Unit Testing</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/hardware.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Chris Becker, Garrick Merrill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/hardware.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

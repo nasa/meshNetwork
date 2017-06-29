@@ -8,8 +8,6 @@
 		"FCBaudrate": 57600,
     	"cmdInterval": 0.2,
     	"logInterval": 0.05,
-        "enablePin": "P8_15", 
-        "statusPin": "P8_18",
 		"commType": "TDMA",
 		"numMeshNetworks": 1,
 		"meshDevices": ["/dev/ttyO4"],
@@ -22,8 +20,6 @@
 	},
 
 	"interface": {
-		"node": "/dev/ttyV1",
-		"comm": "/dev/ttyV2",
         "nodeCommIntIP": "127.0.0.1",
         "commRdPort": 30000,
         "commWrPort": 30001
@@ -52,7 +48,9 @@
 		"minBlockTxDelay": 6,
         "fpga": false,
         "fpgaFailsafePin": "P8_16",
-        "fpgaFifoSize": 512 	
+        "fpgaFifoSize": 512,
+        "enablePin": "P8_15", 
+        "statusPin": "P8_18"
 	}
 
 }

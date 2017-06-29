@@ -1,0 +1,127 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Network Design &#8212; Mesh Network Communication System 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Software" href="software.html" />
+    <link rel="prev" title="Welcome to Formation Flying’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="network-design">
+<h1>Network Design<a class="headerlink" href="#network-design" title="Permalink to this headline">¶</a></h1>
+<p>The mesh network functions by assigning time blocks to individual network nodes.  A node is any entity communicating using the mesh network protocol.  The time allocations are determined using a time division multiple access-based architecture.  This architecture is illustrated in the figure below.  Time is sliced in segments called Frames.  A <strong>Frame</strong> consists of the <strong>Cycle</strong> and the <strong>Sleep</strong> periods.  Primary communication across the network is performed during the Cycle.  The Cycle is broken down into Slots, where a <strong>Slot</strong> is the portion of time provided to each node to perform its outgoing communication on the network.  The Frame, Cycle, and Slot lengths are all configurable parameters.</p>
+<p>During a Slot, only one node is transmitting, and all other nodes are listening.  To ensure data integrity and accommodate some variation of clock times across the network, delay periods are built into the communication protocol.  As shown in the figure, this pattern of delays is designed to ensure that receiving nodes are listening for the entirety of the transmitting node’s transmission.  Once a node is done transmitting, it will change over into receive mode and prepare to listen to other transmitting nodes.  The lengths of the sub-periods within the slot are configurable, so as to make the network architecture flexible for specific applications.</p>
+<p>Once all slots are completed, the Cycle ends and a Sleep period begins for the remaining time in the Frame.  During the Sleep, all nodes are nominally quiescent, allowing for power-savings when communication is not necessary.  The Sleep period could also be used for aperiodic communications or network administration such as reconfiguring the parameters of the mesh network protocol.</p>
+<div class="figure align-center" id="id1">
+<img alt="_images/tdma_frame.png" src="_images/tdma_frame.png" />
+<p class="caption"><span class="caption-text">Mesh Network TDMA Frame</span></p>
+</div>
+<p>To function without a master node, the nodes in the network require a common time source to maintain the integrity of the TDMA architecture.  The system is not dependent on a specific method of synchronizing time, but the reference design was developed and tested assuming the individual node clocks are synced using time received from the Global Positioning System (GPS).  Since GPS is widely used already by spacecraft for orbital position and other data, it is a convenient, readily available, and reliable time source.</p>
+<div class="section" id="network-topology-and-data-relay">
+<h2>Network Topology and Data Relay<a class="headerlink" href="#network-topology-and-data-relay" title="Permalink to this headline">¶</a></h2>
+<p>The network topology employed is a simple point-to-point design, as illustrated in the figure below.  When nodes broadcast, all other nodes in range receive the data.  Any nodes not in range of a broadcasting node will not receive its data directly during the initial transmission.</p>
+<div class="figure align-center" id="id2">
+<img alt="_images/topology.png" src="_images/topology.png" />
+<p class="caption"><span class="caption-text">Mesh Network Topology</span></p>
+</div>
+<p>However, using the data relay capability in the network, nodes will transmit not only their own data, but also data received from other nodes.  The relay functionality is performed in a single repeat manner, meaning that nodes will only rebroadcast unique data once.  For example, for the network shown in the figure above, Node 2 would receive data from Nodes 1 and 4 directly.  When Node 2 enters its transmission period, it would pass its own data and any data received from Node 1 back out to be received by Nodes 1 and 4.  When Node 1 receives this transmission from Node 2, it will recognize the portion of the message that it originally transmitted.  The next time that Node 1 transmits, it will not retransmit that portion of the data again.  This prevents data that was previously sent from being relayed back and forth across the network endlessly.</p>
+<p>Because there is no master node, the network will continue to function regardless of what specific nodes are currently present in the network.  Any node present will transmit during its allotted Slot and receive data from other nodes during their Slots.  If a previously present node drops out of the network, the other nodes will notice the data dropout during the lost node’s Slot, but the network will remain intact for usage by the remaining nodes.  Since the network topology is point-to-point, any node that couldn’t communicate directly with other network nodes without going through the lost node will become isolated.  For example, if Node 1 dropped out of the network, Nodes 3 and 6 would also lose communication with the network.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Network Design</a><ul>
+<li><a class="reference internal" href="#network-topology-and-data-relay">Network Topology and Data Relay</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Formation Flying’s documentation!</a></li>
+      <li>Next: <a href="software.html" title="next chapter">Software</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/design.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Chris Becker, Garrick Merrill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/design.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

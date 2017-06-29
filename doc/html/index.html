@@ -1,0 +1,143 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Mesh Network Communication System Documentation &#8212; Mesh Network Communication System 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Network Design" href="design.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mesh-network-communication-system-documentation">
+<h1>Mesh Network Communication System Documentation<a class="headerlink" href="#mesh-network-communication-system-documentation" title="Permalink to this headline">¶</a></h1>
+<p>The Mesh Network Communication system is a peer-to-peer communication network architecture that enables communication between network nodes of various types.  The initial primary goal of the system was to enable communication between small formations of cubesats or other small satellites, but the basic mesh architecture is applicable to data exchange between network assets of any type.  The system has been flight tested on formations of small unmanned aerial systems (sUAS) and shown to provide low latency data throughput for dynamic flight environments.</p>
+<p>As the use of cubesats and other small satellites continues to grow, communicating with the larger numbers of on-orbit assets will start to stress ground communications capabilities.  In addition to single satellite missions, multiple organizations have begun to develop and deploy constellations of satellites and more are planned in the near future.  To help relieve the demands being placed on ground stations and to enable communication between satellites, The network employs a TDMA-based mesh architecture that allows peer-to-peer communication without requiring a central master node or router to control the network.  This eliminates the possibility of single-point caused by the loss of the network master.</p>
+<p>The designed mesh network allows a small formation of satellites, aircraft, ground assets, or other network node types to collaborate and exchange data to enable their mission and reduce communication requirements to a central control center.  By exchanging data directly with other network nodes, the nodes can function more autonomously with less outside intervention required.  The communication system was designed to be reconfigurable for different applications.  Some of the driving design goals were to have low latency, to allow for addition and removal of communication nodes in the network without interruption, to relay data across the network, and to make the communication architecture hardware agnostic, not requiring it to be dependent on a specific hardware implementation.</p>
+</div>
+<div class="section" id="documentation-contents">
+<h1>Documentation Contents<a class="headerlink" href="#documentation-contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Network Design</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="design.html#network-topology-and-data-relay">Network Topology and Data Relay</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="software.html">Software</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="software.html#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#common-application-programming-interface-api">Common Application Programming Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#vhdl">VHDL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="hardware.html">Hardware Implementations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hardware.html#generation-1-fy2014">Generation 1 (FY2014)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hardware.html#generation-2-fy2015">Generation 2 (FY2015)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hardware.html#current-generation">Current Generation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Mesh Network Communication System Documentation</a></li>
+<li><a class="reference internal" href="#documentation-contents">Documentation Contents</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="design.html" title="next chapter">Network Design</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Chris Becker, Garrick Merrill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

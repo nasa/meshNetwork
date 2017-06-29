@@ -1,0 +1,186 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Python &#8212; Mesh Network Communication System 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="mesh package" href="mesh.html" />
+    <link rel="prev" title="Configuration" href="config.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="python">
+<h1>Python<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h1>
+<p>Python is the primary development language for the Mesh Network.  New features are first developed and tested in the Python implementation before being ported to other languages. Python was chosen for its flexibility and ease of use which helps facilitate rapid software development.  Development was performed using Python3 with no backwards compatibility to Python2 explicitly included.</p>
+<div class="section" id="execution">
+<h2>Execution<a class="headerlink" href="#execution" title="Permalink to this headline">¶</a></h2>
+<p>An example execution script (execute.py) is provided to run the Python implementation. This script will allow a generic node to communicate over the TDMA network using either a full software implementation of the network scheme in Python or an FPGA running the VHDL implementation.  The script should be expanded upon and modified to implement details specific to a particular node type or application.</p>
+<p>The node control interface is provided in the nodeControlProcess.py.  By replacing the generic Node type class instances with specific subclasses, the script can be modified for a specific use case.  Likewise the commProcess.py script controls the process that communicates over the Mesh Network.  This script should not require modification for a specific application.  Network configuration should be handled via the JSON configuration file.</p>
+</div>
+<div class="section" id="python-api">
+<h2>Python API<a class="headerlink" href="#python-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="serialcomm">
+<span id="id1"></span><h3>SerialComm<a class="headerlink" href="#serialcomm" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>SerialComm</strong> class is used to communicate with hardware or other software processes.  This class was created originally to pass data via serial communication, but is not restricted to communication over just serial ports. The actual communication layer is provided via the <em>radio</em> class member which is a <a class="reference internal" href="#radio"><span class="std std-ref">Radio</span></a> object, and thus can be specialized to make use of any communication interface available.  The SerialComm class has methods for sending and receiving raw bytes or formatted messages.  The specific format of messages is controlled by the <em>msgParser</em> class member which is of type <a class="reference internal" href="#msgparser"><span class="std std-ref">MsgParser</span></a>.</p>
+</div>
+<div class="section" id="radio">
+<span id="id2"></span><h3>Radio<a class="headerlink" href="#radio" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>Radio</strong> class provides the interface to communication interfaces.  These communication interfaces can be actual hardware radios or just abstraction layers from something like a UDP connection between different software processes. By creating a subclass of Radio, any communication layer can be interfaced to using a similar API.</p>
+</div>
+<div class="section" id="nodeconfig">
+<h3>NodeConfig<a class="headerlink" href="#nodeconfig" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>NodeConfig</strong> class stores configuration parameters loaded from the JSON configuration file.  The base class contains all the standard parameters, but it can be subclassed to add parameters specific to a particular platform or application.</p>
+</div>
+<div class="section" id="nodeparams">
+<h3>NodeParams<a class="headerlink" href="#nodeparams" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>NodeParams</strong> class functions as a wrapper for the node configuration and also includes certain utility functions that need to be accessed by various other portions of the Mesh Network control software.</p>
+</div>
+<div class="section" id="nodecontroller">
+<span id="id3"></span><h3>NodeController<a class="headerlink" href="#nodecontroller" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>NodeController</strong> class provides common methods for interfacing with the other software running on the node’s platform, i.e. the main flight computer software for a flight vehicle application.  Data from the flight computer and from the Mesh Network is processed by the NodeController.  For example, if the flight computer wishes to transfer some set of data over the Mesh Network, it is sent to the Node Controller which in turn packages it and passes it to the Mesh Network for transmission.  Any data received from the Mesh Network is likewise processed by the NodeController and passed to the flight computer.</p>
+</div>
+<div class="section" id="nodeexecutive">
+<h3>NodeExecutive<a class="headerlink" href="#nodeexecutive" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>NodeExecutive</strong> functions as an overseer for the <a class="reference internal" href="#nodecontroller"><span class="std std-ref">NodeController</span></a> and the various <a class="reference internal" href="#serialcomm"><span class="std std-ref">SerialComm</span></a> instances for interfacing with the main node software and the Mesh Network.  The NodeExecutive coordinates when to read from the comm interfaces and provides the received data to the NodeController for consumption.</p>
+</div>
+<div class="section" id="cmddict">
+<span id="id4"></span><h3>CmdDict<a class="headerlink" href="#cmddict" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>CmdDict</strong> class stores information on the format of all types of command messages to be passed over the Mesh Network and to the node host platform.  It has an entry for each command type that defines how to create outgoing messages and how to parse incoming messages of that type.  New command types can be defined for a specific application and added to the main CmdDict.</p>
+</div>
+<div class="section" id="msgparser">
+<span id="id5"></span><h3>MsgParser<a class="headerlink" href="#msgparser" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>MsgParser</strong> class is used to create and parse messages from raw bytes.  A MsgParser instance is provided to a <a class="reference internal" href="#serialcomm"><span class="std std-ref">SerialComm</span></a> instance so that it knows how to process received and outgoing data. Specific message formats can be parsed by creating specialized variants such as the SLIPMsgParser that uses the <a class="reference external" href="https://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol">Serial Line Internet Protocol</a>.</p>
+</div>
+<div class="section" id="commprocessor">
+<h3>CommProcessor<a class="headerlink" href="#commprocessor" title="Permalink to this headline">¶</a></h3>
+<p>Once the <a class="reference internal" href="#msgparser"><span class="std std-ref">MsgParser</span></a> class parses raw received data bytes using the proper protocol, the processed bytes are then passed to the <strong>CommProcessor</strong> to determine how to parse the command contents.  The CommProcessor checks the command ID of each message parsed by the MsgParser and forwards the command to the proper <a class="reference internal" href="#cmdprocessor"><span class="std std-ref">CmdProcessor</span></a> to be read and formatted back into the original command data.</p>
+</div>
+<div class="section" id="cmdprocessor">
+<span id="id6"></span><h3>CmdProcessor<a class="headerlink" href="#cmdprocessor" title="Permalink to this headline">¶</a></h3>
+<p>The <strong>CmdProcessor</strong> has the logic for determining how to retrieve the command data from a processed stream of data bytes.  Based on the command ID of each command, it will look up the command format from the <a class="reference internal" href="#cmddict"><span class="std std-ref">CmdDict</span></a> and parse the data bytes back into useable command data.  Specific classes can be derived from the CmdProcessor to process and parse platform specific command types.</p>
+</div>
+</div>
+<div class="section" id="detailed-python-api">
+<h2>Detailed Python API<a class="headerlink" href="#detailed-python-api" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">mesh package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-mesh">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Python</a><ul>
+<li><a class="reference internal" href="#execution">Execution</a></li>
+<li><a class="reference internal" href="#python-api">Python API</a><ul>
+<li><a class="reference internal" href="#serialcomm">SerialComm</a></li>
+<li><a class="reference internal" href="#radio">Radio</a></li>
+<li><a class="reference internal" href="#nodeconfig">NodeConfig</a></li>
+<li><a class="reference internal" href="#nodeparams">NodeParams</a></li>
+<li><a class="reference internal" href="#nodecontroller">NodeController</a></li>
+<li><a class="reference internal" href="#nodeexecutive">NodeExecutive</a></li>
+<li><a class="reference internal" href="#cmddict">CmdDict</a></li>
+<li><a class="reference internal" href="#msgparser">MsgParser</a></li>
+<li><a class="reference internal" href="#commprocessor">CommProcessor</a></li>
+<li><a class="reference internal" href="#cmdprocessor">CmdProcessor</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#detailed-python-api">Detailed Python API</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="software.html">Software</a><ul>
+      <li>Previous: <a href="config.html" title="previous chapter">Configuration</a></li>
+      <li>Next: <a href="mesh.html" title="next chapter">mesh package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/python.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Chris Becker, Garrick Merrill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/python.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,182 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mesh package &#8212; Mesh Network Communication System 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="mesh.generic package" href="mesh.generic.html" />
+    <link rel="prev" title="Setup" href="setup.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mesh-package">
+<h1>mesh package<a class="headerlink" href="#mesh-package" title="Permalink to this headline">¶</a></h1>
+<p>The <strong>mesh</strong> package contains all of the network management and control logic for the Python implementation of the Mesh Network.  This package has two subpackages: <em>generic</em> and <em>interface</em>. The generic package contains the actual mesh network control code, while the interface package is used to provide interprocess communication between the communication control process and the node control process, which serves as the interface between the mesh network control and the rest of the host platform’s computing logic.  In the case of a flight vehicle, the node control process would interface with the vehicle’s flight computer.  The interface package makes use of the Google Protocol Buffer API to serialize and exchange data between processes.</p>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mesh.generic.html">mesh.generic package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.checksum">mesh.generic.checksum module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.cmdDict">mesh.generic.cmdDict module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.cmdProcessor">mesh.generic.cmdProcessor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.cmdStatus">mesh.generic.cmdStatus module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.cmds">mesh.generic.cmds module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.commPorts">mesh.generic.commPorts module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.commProcessor">mesh.generic.commProcessor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.command">mesh.generic.command module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.commandMsg">mesh.generic.commandMsg module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.commandType">mesh.generic.commandType module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.constants">mesh.generic.constants module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.customExceptions">mesh.generic.customExceptions module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.deserialize">mesh.generic.deserialize module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.formationClock">mesh.generic.formationClock module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.fpgaRadio">mesh.generic.fpgaRadio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.gpio">mesh.generic.gpio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.li1Radio">mesh.generic.li1Radio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.li1RadioCmds">mesh.generic.li1RadioCmds module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.msgParser">mesh.generic.msgParser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.multiProcess">mesh.generic.multiProcess module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.navigation">mesh.generic.navigation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeComm">mesh.generic.nodeComm module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeConfig">mesh.generic.nodeConfig module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeController">mesh.generic.nodeController module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeExecutive">mesh.generic.nodeExecutive module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeHeader">mesh.generic.nodeHeader module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeParams">mesh.generic.nodeParams module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeState">mesh.generic.nodeState module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.nodeTools">mesh.generic.nodeTools module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.pipeConn">mesh.generic.pipeConn module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.radio">mesh.generic.radio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.serialComm">mesh.generic.serialComm module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.slipMsg">mesh.generic.slipMsg module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.slipMsgParser">mesh.generic.slipMsgParser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.slipMsgParser_li1">mesh.generic.slipMsgParser_li1 module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.slipMsg_li1">mesh.generic.slipMsg_li1 module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.tdmaCmdDict">mesh.generic.tdmaCmdDict module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.tdmaCmdProcessor">mesh.generic.tdmaCmdProcessor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.tdmaComm">mesh.generic.tdmaComm module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.tdmaComm_fpga">mesh.generic.tdmaComm_fpga module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.tdmaState">mesh.generic.tdmaState module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.tdmaTime">mesh.generic.tdmaTime module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.testCmdDict">mesh.generic.testCmdDict module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.testCmdProcessor">mesh.generic.testCmdProcessor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.udpRadio">mesh.generic.udpRadio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic.xbeeRadio">mesh.generic.xbeeRadio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.generic.html#module-mesh.generic">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.interface.html">mesh.interface package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mesh.interface.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.interface.html#module-mesh.interface.nodeInterface_pb2">mesh.interface.nodeInterface_pb2 module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.interface.html#module-mesh.interface">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-mesh">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mesh" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">mesh package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#module-mesh">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="software.html">Software</a><ul>
+  <li><a href="python.html">Python</a><ul>
+      <li>Previous: <a href="setup.html" title="previous chapter">Setup</a></li>
+      <li>Next: <a href="mesh.generic.html" title="next chapter">mesh.generic package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mesh.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Chris Becker, Garrick Merrill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/mesh.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

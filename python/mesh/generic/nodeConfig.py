@@ -98,8 +98,6 @@ class NodeConfig(dict):
         self.FCBaudrate = configData['FCBaudrate']
         self.cmdInterval = configData['cmdInterval'] 
         self.logInterval = configData['logInterval'] 
-        self.enablePin = configData['enablePin']        
-        self.statusPin = configData['statusPin']        
         
         # Network config
         self.commType = configData['commType']
