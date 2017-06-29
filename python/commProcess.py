@@ -6,7 +6,6 @@ from mesh.generic.li1Radio import Li1Radio
 from mesh.generic.udpRadio import UDPRadio
 from mesh.generic.slipMsgParser import SLIPMsgParser
 from mesh.generic.msgParser import MsgParser
-from mesh.generic.tdmaComm import TDMAComm    
 from mesh.generic.serialComm import SerialComm    
 from mesh.generic.multiProcess import getNewMsgs
 from mesh.interface.nodeInterface_pb2 import NodeThreadMsg
@@ -48,19 +47,34 @@ class CommProcess(Process):
         elif self.nodeParams.config.msgParsers[meshNum] == "standard":
             msgParser = MsgParser(parserConfig)
 
+
+        # Create comm
+        if (self.nodeParams.config.commConfig['fpga'] == True):
+            from mesh.generic.tdmaComm_fpga import TDMAComm
+        else:    
+            from mesh.generic.tdmaComm import TDMAComm
+        
         self.comm = TDMAComm([], radio, msgParser, self.nodeParams)
 
         # Node control run time bounds
-        if self.comm.transmitSlot == 1:
-            self.maxNodeControlTime = self.comm.frameLength - self.comm.slotLength
-            self.minNodeControlTime = self.comm.transmitSlot * self.comm.slotLength
-        else:
-            self.minNodeControlTime = (self.comm.transmitSlot-2) * self.comm.slotLength # don't run within 1 slot of transmit 
-            self.maxNodeControlTime = self.comm.transmitSlot * self.comm.slotLength
-        #self.minNodeControlTime = 0.8*((self.comm.transmitSlot-1) * self.comm.slotLength)
+        if (self.nodeParams.config.commConfig['fpga'] == False):
+            if self.comm.transmitSlot == 1:
+                self.maxNodeControlTime = self.comm.frameLength - self.comm.slotLength
+                self.minNodeControlTime = self.comm.transmitSlot * self.comm.slotLength
+            else:
+                self.minNodeControlTime = (self.comm.transmitSlot-2) * self.comm.slotLength # don't run within 1 slot of transmit 
+                self.maxNodeControlTime = self.comm.transmitSlot * self.comm.slotLength
+            #self.minNodeControlTime = 0.8*((self.comm.transmitSlot-1) * self.comm.slotLength)
     def run(self):
         while 1:
             try:
+                # Check for loss of node commands
+                if self.lastNodeCmdTime and (time.time() - self.lastNodeCmdTime) > 5.0:
+                    # No node interface link so disable comm 
+                    self.comm.enabled = False
+                else:
+                    self.comm.enabled = True
+                
                 # Check for new messages from node control process
                 self.interface.readMsgs()
                 
@@ -94,19 +108,21 @@ class CommProcess(Process):
                 # Execute comm  
                 self.comm.execute()
 
-                # Run node control
-                if self.comm.transmitSlot == 1 and (self.comm.frameTime > self.minNodeControlTime and self.comm.frameTime < self.maxNodeControlTime):
+                # Run node control (only when comm is running in software)
+                if (self.nodeParams.config.commConfig['fpga'] == False):
+                    if self.comm.transmitSlot == 1 and (self.comm.frameTime > self.minNodeControlTime and self.comm.frameTime < self.maxNodeControlTime):
                         self.nodeControlRunFlag.value = 1
-                elif self.comm.transmitSlot != 1 and (self.comm.frameTime < self.minNodeControlTime or self.comm.frameTime > self.maxNodeControlTime):
-                    self.nodeControlRunFlag.value = 1
-                else: # restrict node control process running
-                    self.nodeControlRunFlag.value = 0
+                    elif self.comm.transmitSlot != 1 and (self.comm.frameTime < self.minNodeControlTime or self.comm.frameTime > self.maxNodeControlTime):
+                        self.nodeControlRunFlag.value = 1
+                    else: # restrict node control process running
+                        self.nodeControlRunFlag.value = 0
                 
                 # Send any received bytes to node control process
-                if self.comm.frameTime > self.comm.cycleLength and self.comm.radio.bytesInRxBuffer > 0:
-                    rcvdBytes = self.comm.radio.getRxBytes()
-                    self.comm.radio.clearRxBuffer()
-                    self.interface.send_bytes(rcvdBytes) 
+                if (self.nodeParams.config.commConfig['fpga'] == False or self.comm.frameTime > self.comm.cycleLength):
+                    if (self.comm.radio.bytesInRxBuffer > 0):
+                        rcvdBytes = self.comm.radio.getRxBytes()
+                        self.comm.radio.clearRxBuffer()
+                        self.interface.send_bytes(rcvdBytes) 
                 
                 if self.comm.radio.bytesInRxBuffer > 0: # TODO: What is this doing?
                     rcvdBytes = self.comm.radio.getRxBytes()

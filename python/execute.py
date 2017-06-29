@@ -2,8 +2,8 @@ import serial
 import os, time, sys
 from natsort import natsorted
 from multiprocessing import Value
-
 from mesh.generic.nodeParams import NodeParams
+from commProcess import CommProcess
 from nodeControlProcess import NodeControlProcess
 
 # Execute communication and node control as separate processes
@@ -16,10 +16,6 @@ if __name__ == '__main__':
     nodeParams = NodeParams(configFile=configFile)
     
     # Create node communication processes (one process per network)
-    if nodeParams.config.commConfig['fpga']:
-        from commProcess_fpga import CommProcess
-    else:
-        from commProcess import CommProcess
     commProcesses = [None]*nodeParams.config.numMeshNetworks
     for i in range(nodeParams.config.numMeshNetworks):
         commProcesses[i] = CommProcess(configFile, i, runFlag)

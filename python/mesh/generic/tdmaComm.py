@@ -64,6 +64,8 @@ class TDMAComm(NodeComm):
         self.resetBlockTxStatus()
         self.clearDataBlock()
 
+        # Comm enable flag
+        self.enabled = True
 
     def execute(self, currentTime=-1):
         """Execute communication functions."""
@@ -299,6 +301,9 @@ class TDMAComm(NodeComm):
     
             
     def sendMsg(self):
+        if (self.enabled == False): # Don't sendanything if disabled
+            return    
+    
         if self.tdmaMode == TDMAMode.transmit:
             if self.cmdBuffer: # command buffer
                 noRepeatCmds = []

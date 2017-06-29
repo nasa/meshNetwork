@@ -82,11 +82,12 @@ class NodeControlProcess(Process):
         # Execute node control
         while 1:
             try:
-                if self.runFlag.value == 1: 
+                # Run if flag is set or comm is running on FPGA
+                if self.nodeExecutive.nodeParams.config.commConfig['fpga'] == True or self.runFlag.value == 1: 
                     # Run node executive            
                     #print("Node execution start time:", time.time())
                     self.nodeExecutive.executeNodeSoftware()
-                    #print("Node execution end time:", time.time())
+                    
                     self.runFlag.value = 0 # reset run flag
                 
                     # Minimum delay time between executions
