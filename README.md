@@ -4,7 +4,7 @@ The Mesh Network Communication system is a peer-to-peer communication network ar
 
 ### Documentation
 
-The full documentation is in the doc/html directory.
+The full documentation is in the doc/build/html directory.
 
 ### License
 

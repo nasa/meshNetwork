@@ -9,7 +9,7 @@ Generation 1 (FY2014)
 Preliminary mesh network development began by exploring available options for the communications link.  Initial options were explored based on their suitability for immediate testing and not necessarily their applicability for the final design.  Network layer options explored included WiFi and existing COTS personal area network technologies such as ZigBee.  Because of its simplicity, wide availability, and inter-operability with other existing test equipment, initial design studies converged on the use of XBee radios.
 The first generation node hardware consisted of a BeagleBone Black (BBB) single-board computer, two XBee Pro 2.4GHz radios, and a custom BBB interface board called a “cape.”  The XBee radios are attached to headers on the cape which in turn mate to the headers on the BBB.  The first generation network design used two independent mesh networks operating on different frequencies to provide redundancy.
 
-.. figure:: ../../../hardware_1stgen.png
+.. figure:: ../hardware_1stgen.png
    :align: center
 
    First Generation XBee Node Stack
@@ -29,14 +29,14 @@ The second generation system also added data relaying to allow nodes to communic
 
 Implementation of the TDMA scheme also required precise timing, so a method had to be provided to synchronize the clocks of all nodes in the system.  Because of its existing widespread use as a vehicle navigation source by many vehicle types, GPS was chosen as the time synchronization source.  The time broadcast by the GPS constellation and a pulse per second (PPS) signal from a GPS receiver are used to provide time synchronization within 1 millisecond or better across the network nodes.  However the communication system is not dependent on this particular time source, so any other external time synchronization method implemented by the host platform would be sufficient provided it meets the time accuracy requirements.
 
-.. figure:: ../../../hardware_2ndgen_xbee.png
+.. figure:: ../hardware_2ndgen_xbee.png
    :align: center
 
    Second Generation XBee Node Stack
 
 The new TDMA scheme was tested on two different hardware implementations.  The first was a modification of the first generation XBee stack but removing the second radio and adding a GPS interface.  To show that the mesh network would function using a flight-ready radio, a hardware implementation using the AstroDev Li-1 UHF radio was also tested.
 
-.. figure:: ../../../hardware_2ndgen_astrodev.png
+.. figure:: ../hardware_2ndgen_astrodev.png
    :align: center
 
    Second Generation AstroDev Li-1 Node Stack
@@ -48,7 +48,7 @@ During development of the current generation of the network, the primary goal wa
 
 The FPGA used was a Microsemi ProASIC3, chosen because it provides a path towards space-quality hardware.  The BeagleBone Black platform was retained as in the previous generations just with the new interface board.  The TDMA network logic as well as the interface with the GPS was moved into VHDL running on the FPGA.  The data processing and other interface functions, such as communicating with the flight computer, were retained as Python scripts running on the BBB. 
 
-.. figure:: ../../../hardware_currentgen.png
+.. figure:: ../hardware_currentgen.png
    :align: center
 
    Third Generation XBee Node Stack

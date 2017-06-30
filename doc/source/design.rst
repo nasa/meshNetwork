@@ -6,7 +6,7 @@ During a Slot, only one node is transmitting, and all other nodes are listening.
 
 Once all slots are completed, the Cycle ends and a Sleep period begins for the remaining time in the Frame.  During the Sleep, all nodes are nominally quiescent, allowing for power-savings when communication is not necessary.  The Sleep period could also be used for aperiodic communications or network administration such as reconfiguring the parameters of the mesh network protocol.
 
-.. figure:: ../../../tdma_frame.png
+.. figure:: ../tdma_frame.png
    :align: center
 
    Mesh Network TDMA Frame
@@ -18,7 +18,7 @@ Network Topology and Data Relay
 
 The network topology employed is a simple point-to-point design, as illustrated in the figure below.  When nodes broadcast, all other nodes in range receive the data.  Any nodes not in range of a broadcasting node will not receive its data directly during the initial transmission.
 
-.. figure:: ../../../topology.png
+.. figure:: ../topology.png
    :align: center
 
    Mesh Network Topology

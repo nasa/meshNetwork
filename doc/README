@@ -1,0 +1,2 @@
+-Autogenerate Sphinx sources for a python module
+To autogenerate Sphinx source files for a python module use the sphinx-apidoc tool.  Copy resulting .rst files into source directory and link to existing source structure.
