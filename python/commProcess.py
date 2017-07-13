@@ -50,7 +50,7 @@ class CommProcess(Process):
 
         # Create comm
         if (self.nodeParams.config.commConfig['fpga'] == True):
-            from mesh.generic.tdmaComm_fpga import TDMAComm
+            from mesh.generic.tdmaComm_fpga import TDMAComm_FPGA as TDMAComm
         else:    
             from mesh.generic.tdmaComm import TDMAComm
         

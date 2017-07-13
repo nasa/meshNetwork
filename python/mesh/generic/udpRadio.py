@@ -4,12 +4,6 @@ import socket
 from mesh.generic.radio import Radio
 from mesh.generic.customExceptions import NoSerialConnection
 
-class RadioMode(IntEnum):
-    off = 0
-    sleep = 1
-    receive = 2
-    transmit = 3
-
 class UDPRadio(Radio):
 
     def __init__(self, config):
