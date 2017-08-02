@@ -2,8 +2,10 @@ from mesh.generic.tdmaComm import TDMAComm
 from switch import switch
 import time
 from mesh.generic.tdmaState import TDMAMode
+from mesh.generic.cmds import TDMACmds
 from mesh.generic.commProcessor import CommProcessor
 from mesh.generic.tdmaCmdProcessor import TDMACmdProcessor
+from mesh.generic.command import Command
 
 class TDMAComm_FPGA(TDMAComm):
     def __init__(self, commProcessor, radio, msgParser, nodeParams):
@@ -24,26 +26,7 @@ class TDMAComm_FPGA(TDMAComm):
         self.transmitInterval = 1.0/nodeParams.config.commConfig['desiredDataRate']
         self.lastTransmitTime = -1.0
 
-    def execute(self):
-        """Execute communication functions."""
-        currentTime = time.time()   
-
-        # Initialize mesh network
-        if self.inited == False: # local TDMA status not inited
-            #if (GPIO.input(self.initPin) == 0): # FPGA TDMA not inited
-            self.init(currentTime) # look for comm start time
-            return
-            #else: # temporary hack TODO: FIX THIS!
-            #    self.nodeParams.commStartTime = 0;
-            #    self.initMesh(self.nodeParams.commStartTime)
-        else: # perform TDMA execution logic
-            #if (GPIO.input(self.initPin) == 0): # FPGA TDMA not inited
-                # send start time to fpga
-                #self.radio.sendBytes(self.initTimeMsg)
-                
-            self.executeTDMAComm()
-    
-    def executeTDMAComm(self):
+    def executeTDMAComm(self, currentTime):
         """Execute TDMA communication scheme."""
         # Read any new bytes
         self.readMsg()
@@ -51,13 +34,25 @@ class TDMAComm_FPGA(TDMAComm):
         # Send current message data
         if (time.time() - self.lastTransmitTime > self.transmitInterval):
             self.lastTransmitTime = time.time()
-            self.tdmaMode == TDMAMode.transmit
+            self.tdmaMode = TDMAMode.transmit
+            print("TdmaMode in execute:", self.tdmaMode)
             self.sendMsg()
         else:
             self.tdmaMode = TDMAMode.receive
 
-    def initComm(self, currentTime):
-        self.checkForInit()
+    def init(self, currentTime):
+        # Network search and start performed by FPGA
+        self.initMesh()
+
+    def initMesh(self, currentTime=time.time()):
+        self.tdmaCmds[TDMACmds['LinkStatus']] = Command(TDMACmds['LinkStatus'], {'linkStatus': self.nodeParams.linkStatus, 'nodeId': self.nodeParams.config.nodeId}, [TDMACmds['LinkStatus'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['linksTxInterval'])
+        
+        if self.nodeParams.config.nodeId != 0: # stop ground node from broadcasting time offset
+            self.tdmaCmds[TDMACmds['TimeOffset']] = Command(TDMACmds['TimeOffset'], {'nodeStatus': self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1]}, [TDMACmds['TimeOffset'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['offsetTxInterval'])
+        
+        self.inited = True
+        print("Node " + str(self.nodeParams.config.nodeId) + " - Initializing comm")
+            
 
     def readMsg(self):
         self.radio.readBytes(True)

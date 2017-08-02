@@ -132,6 +132,7 @@ class NodeConfig(dict):
            
             if 'fpga' not in self.commConfig.keys():
                 self.commConfig['fpga'] = False
+                self.commConfig['fpgaFailsafePin'] = ""
             
             # Maximum TDMA transfer size
             self.commConfig['maxTransferSize'] = self.commConfig['txLength'] * self.meshBaudrate/8.0

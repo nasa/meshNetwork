@@ -35,10 +35,14 @@ class CommProcess(Process):
 
         # Radio
         radioConfig = {'uartNumBytesToRead': self.nodeParams.config.uartNumBytesToRead, 'rxBufferSize': self.nodeParams.config.rxBufferSize}
-        if self.nodeParams.config.radios[meshNum] == "Xbee":
-            radio = XbeeRadio(ser, radioConfig, "P8_12")
-        elif self.nodeParams.config.radios[meshNum] == "Li-1":
-            radio = Li1Radio(ser, radioConfig)
+        if (self.nodeParams.config.commConfig['fpga'] == True):
+            from mesh.generic.fpgaRadio import FPGARadio
+            radio = FPGARadio(ser, radioConfig)
+        else:
+            if self.nodeParams.config.radios[meshNum] == "Xbee":
+                radio = XbeeRadio(ser, radioConfig, "P8_12")
+            elif self.nodeParams.config.radios[meshNum] == "Li-1":
+                radio = Li1Radio(ser, radioConfig)
     
         # Message parser
         parserConfig = {'parseMsgMax': self.nodeParams.config.parseMsgMax}
@@ -124,65 +128,6 @@ class CommProcess(Process):
                         self.comm.radio.clearRxBuffer()
                         self.interface.send_bytes(rcvdBytes) 
                 
-                if self.comm.radio.bytesInRxBuffer > 0: # TODO: What is this doing?
-                    rcvdBytes = self.comm.radio.getRxBytes()
-
-
             except KeyboardInterrupt:
                 print("\nTerminating Comm Process.")
-    
-    def run(self):
-        while 1:
-            try:
-                # Check for loss of node commands
-                if self.lastNodeCmdTime and (time.time() - self.lastNodeCmdTime) > 5.0:
-                    # No node interface link so disable comm 
-                    self.comm.enabled = False
-                else:
-                    self.comm.enabled = True
-                                
-                # Check for new messages from node control process
-                self.interface.readMsgs()
-                
-                # Parse protocol buffer messages 
-                for msg in self.interface.msgParser.parsedMsgs: # Process received messages
-                    nodeMsg = NodeThreadMsg()
-                    nodeMsg.ParseFromString(msg)
-                    # Check if new message
-                    if (nodeMsg.timestamp > 0.0 and nodeMsg.timestamp > self.dataPackage.timestamp):
-                        self.lastNodeCmdTime = time.time()
-                        self.dataPackage = nodeMsg
-                   
-                        # Update link status
-                        if (self.nodeParams.config.nodeId == self.nodeParams.config.gcsNodeId): # ground node
-                            entry = self.nodeParams.config.maxNumNodes - 1
-                        else:
-                            entry = self.nodeParams.config.nodeId - 1
-                        self.nodeParams.linkStatus[entry] = nodeMsg.linkStatus
-     
-                        if (nodeMsg.cmdRelay): # command relay data                    
-                            for cmd in nodeMsg.cmdRelay:
-                                self.comm.cmdRelayBuffer.append(cmd)
-                                #print("Cmds to relay:",self.comm.cmdRelayBuffer)
-                        if (nodeMsg.cmds): # commands received
-                            #self.comm.cmdBuffer = [] # clear existing buffer
-                            for cmd in nodeMsg.cmds:
-                                self.comm.cmdBuffer[cmd.cmdId] = {'bytes': cmd.msgBytes, 'txInterval': cmd.txInterval}
-                                #self.comm.cmdBuffer.append({'bytes': cmd.msgBytes, 'txInterval': cmd.txInterval})
-                self.interface.msgParser.parsedMsgs = [] # clear out processed parsed messages
-
-                # Execute comm  
-                self.comm.execute()
-
-                # Send any received bytes to node control process
-                if self.comm.radio.bytesInRxBuffer > 0:
-                    rcvdBytes = self.comm.radio.getRxBytes()
-                    self.comm.radio.clearRxBuffer()
-                    self.interface.sendBytes(rcvdBytes) 
-                
-                time.sleep(0.1)
-
-            except KeyboardInterrupt:
-                print("\nTerminating Comm Process.")
-                self.terminate()
                 self.terminate()

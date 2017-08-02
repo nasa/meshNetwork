@@ -68,7 +68,7 @@ class NodeControlProcess(Process):
 
                 # Initialize communication variables
                 for i in range(nodeParams.config.numMeshNetworks):
-                        nodeComm[i] = NodeComm([], radios[i], msgParsers[i], nodeParams)
+                    nodeComm[i] = NodeComm([], radios[i], msgParsers[i], nodeParams)
                 FCComm = NodeComm([], FCRadio, FCMsgParser, nodeParams)
     
                 # Node controller

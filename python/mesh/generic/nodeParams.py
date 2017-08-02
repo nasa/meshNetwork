@@ -37,13 +37,12 @@ class NodeParams():
         self.frameStartTime = [] # DEPRECATED - REMOVE
         self.tdmaFailsafe = False
         self.timeOffsetTimer = None
-        if isBeaglebone():
-            if (self.config.commConfig['fpga'] == True):
-                # Setup FPGA failsafe status pin
-                self.fpgaFailsafePin = self.config.commConfig['fpgaFailsafePin']
-                GPIO.setup(self.fpgaFailsafePin, "in")
-            else:
-                self.fpgaFailsafePin = []
+        if (self.config.commConfig['fpga'] == True):
+            # Setup FPGA failsafe status pin
+            self.fpgaFailsafePin = self.config.commConfig['fpgaFailsafePin']
+            GPIO.setup(self.fpgaFailsafePin, "in")
+        else:
+            self.fpgaFailsafePin = []
         # Comm link status
         self.linkStatus = [[LinkStatus.NoLink for i in range(self.config.maxNumNodes)] for j in range(self.config.maxNumNodes)]
 
@@ -55,7 +54,7 @@ class NodeParams():
     
     def checkTimeOffset(self, offset=None):
         if (self.config.commType == "TDMA"): # TDMA time offset failsafe
-            if self.config.commConfig['fpga'] and self.config.fpgaFailsafePin: # TDMA time controlled by FPGA
+            if self.config.commConfig['fpga'] and self.fpgaFailsafePin: # TDMA time controlled by FPGA
                 if (GPIO.input(self.fpgaFailsafePin) == 0): # failsafe not set
                     self.timeOffsetTimer = None # reset timer
                 else: # failsafe condition set

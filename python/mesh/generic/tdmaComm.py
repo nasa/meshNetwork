@@ -39,6 +39,7 @@ class TDMAComm(NodeComm):
         self.inited = False
         self.initTimeToWait = nodeParams.config.commConfig['initTimeToWait'] # Time to wait before assuming no existing mesh network
         self.initStartTime = []
+        self.tdmaCmds = dict()
         
         # Transmit period variables
         self.transmitSlot = nodeParams.config.commConfig['transmitSlot'] # Slot in cycle that this node is schedule to transmit
@@ -165,20 +166,20 @@ class TDMAComm(NodeComm):
     def initMesh(self, currentTime=time.time()):
         """Initialize node mesh networks."""
         # Create tdma comm messages
-        self.tdmaCmds = dict()
         flooredStartTime = math.floor(self.nodeParams.commStartTime)
         self.tdmaCmds[TDMACmds['MeshStatus']] = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': int(flooredStartTime), 'status': self.nodeParams.tdmaStatus}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['statusTxInterval'])
+
         self.tdmaCmds[TDMACmds['LinkStatus']] = Command(TDMACmds['LinkStatus'], {'linkStatus': self.nodeParams.linkStatus, 'nodeId': self.nodeParams.config.nodeId}, [TDMACmds['LinkStatus'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['linksTxInterval'])
         
         if self.nodeParams.config.nodeId != 0: # stop ground node from broadcasting time offset
             self.tdmaCmds[TDMACmds['TimeOffset']] = Command(TDMACmds['TimeOffset'], {'nodeStatus': self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1]}, [TDMACmds['TimeOffset'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['offsetTxInterval'])
-        
+            
         # Determine where in frame mesh network currently is
         self.syncTDMAFrame(currentTime)
 
         self.inited = True
         print("Node " + str(self.nodeParams.config.nodeId) + " - Initializing comm")
-    
+        
     def initComm(self, currentTime):
         if self.initStartTime == []:
             # Start mesh initialization timer
@@ -204,6 +205,7 @@ class TDMAComm(NodeComm):
                 msg = self.msgParser.parsedMsgs.pop(0)
                 cmdId = struct.unpack('=B',msg[0:1])[0]
                 if cmdId == TDMACmds['MeshStatus']:
+                    print("Mesh status received")
                     self.processMsg(msg, {'nodeStatus': self.nodeParams.nodeStatus, 'comm': self, 'clock': self.nodeParams.clock})  
     
     def syncTDMAFrame(self, currentTime=time.time()):
@@ -213,7 +215,8 @@ class TDMAComm(NodeComm):
         print(str(self.frameStartTime),"- Frame start") 
         
         # Update periodic mesh messages
-        self.tdmaCmds[TDMACmds['MeshStatus']].cmdData['status'] = self.nodeParams.tdmaStatus
+        if (TDMACmds['MeshStatus'] in self.tdmaCmds):
+            self.tdmaCmds[TDMACmds['MeshStatus']].cmdData['status'] = self.nodeParams.tdmaStatus
                 
         # Reset buffer read position
         self.rxBufferReadPos = 0
@@ -319,7 +322,6 @@ class TDMAComm(NodeComm):
     
         # Send periodic TDMA commands
         self.sendTDMACmds()
-
         if self.tdmaMode == TDMAMode.transmit:
             if self.cmdBuffer: # command buffer
                 noRepeatCmds = []
