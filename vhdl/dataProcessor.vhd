@@ -180,6 +180,12 @@ architecture behave of dataProcessor is
                     --tdmaFifoWrEn <= '0';
                     --tdmaFifoOut <= X"00";
                     
+                    -- Initialize output data to zero
+                    nodeDataOut <= X"00";
+                    meshDataOut <= X"00";
+                    nodeMemDataOut <= X"00";
+                    
+                    
                     meshMemRd <= '0';
                     
                     cnt <= 1;
@@ -458,7 +464,7 @@ architecture behave of dataProcessor is
                                 cnt <= 1;
                                 dataProcState <= tdmaCtrlReadDelay;
                             else
-                                tdmaTransmitComplete <= '1';
+                                --tdmaTransmitComplete <= '1';
                                 nextProcState <= checkTDMA; -- only update once no bytes pending
                                 dataProcState <= waitForChange;
                             end if;
