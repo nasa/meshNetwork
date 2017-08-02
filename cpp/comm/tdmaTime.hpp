@@ -1,0 +1,6 @@
+#ifndef COMM_TDMA_TIME_HPP
+#define COMM_TDMA_TIME_HPP
+
+
+
+#endif // COMM_TDMA_TIME_HPP

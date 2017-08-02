@@ -39,9 +39,10 @@ void protobuf_AssignDesc_nodeInterface_2eproto() {
       "nodeInterface.proto");
   GOOGLE_CHECK(file != NULL);
   Command_descriptor_ = file->message_type(0);
-  static const int Command_offsets_[2] = {
+  static const int Command_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, txinterval_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, msgbytes_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, cmdid_),
   };
   Command_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -55,11 +56,12 @@ void protobuf_AssignDesc_nodeInterface_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _is_default_instance_));
   NodeThreadMsg_descriptor_ = file->message_type(1);
-  static const int NodeThreadMsg_offsets_[6] = {
+  static const int NodeThreadMsg_offsets_[7] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeThreadMsg, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeThreadMsg, timestamp_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeThreadMsg, cmdrelay_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeThreadMsg, cmds_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeThreadMsg, linkstatus_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeThreadMsg, rcvdbytes_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeThreadMsg, datablock_),
   };
@@ -109,14 +111,15 @@ void protobuf_AddDesc_nodeInterface_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\023nodeInterface.proto\022\rnodeInterface\"/\n\007"
+    "\n\023nodeInterface.proto\022\rnodeInterface\">\n\007"
     "Command\022\022\n\ntxInterval\030\001 \001(\002\022\020\n\010msgBytes\030"
-    "\002 \001(\014\"\333\001\n\rNodeThreadMsg\0226\n\004type\030\001 \001(\0162(."
-    "nodeInterface.NodeThreadMsg.NodeMsgType\022"
-    "\021\n\ttimestamp\030\002 \001(\001\022\020\n\010cmdRelay\030\003 \003(\014\022$\n\004"
-    "cmds\030\004 \003(\0132\026.nodeInterface.Command\022\021\n\trc"
-    "vdBytes\030\005 \001(\014\022\021\n\tdataBlock\030\006 \001(\014\"!\n\013Node"
-    "MsgType\022\010\n\004NODE\020\000\022\010\n\004COMM\020\001b\006proto3", 315);
+    "\002 \001(\014\022\r\n\005cmdId\030\003 \001(\r\"\357\001\n\rNodeThreadMsg\0226"
+    "\n\004type\030\001 \001(\0162(.nodeInterface.NodeThreadM"
+    "sg.NodeMsgType\022\021\n\ttimestamp\030\002 \001(\001\022\020\n\010cmd"
+    "Relay\030\003 \001(\014\022$\n\004cmds\030\004 \003(\0132\026.nodeInterfac"
+    "e.Command\022\022\n\nlinkStatus\030\005 \003(\r\022\021\n\trcvdByt"
+    "es\030\006 \001(\014\022\021\n\tdataBlock\030\007 \001(\014\"!\n\013NodeMsgTy"
+    "pe\022\010\n\004NODE\020\000\022\010\n\004COMM\020\001b\006proto3", 350);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "nodeInterface.proto", &protobuf_RegisterTypes);
   Command::default_instance_ = new Command();
@@ -148,6 +151,7 @@ static void MergeFromFail(int line) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Command::kTxIntervalFieldNumber;
 const int Command::kMsgBytesFieldNumber;
+const int Command::kCmdIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Command::Command()
@@ -174,6 +178,7 @@ void Command::SharedCtor() {
   _cached_size_ = 0;
   txinterval_ = 0;
   msgbytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  cmdid_ = 0u;
 }
 
 Command::~Command() {
@@ -213,8 +218,20 @@ Command* Command::New(::google::protobuf::Arena* arena) const {
 }
 
 void Command::Clear() {
-  txinterval_ = 0;
+#define ZR_HELPER_(f) reinterpret_cast<char*>(\
+  &reinterpret_cast<Command*>(16)->f)
+
+#define ZR_(first, last) do {\
+  ::memset(&first, 0,\
+           ZR_HELPER_(last) - ZR_HELPER_(first) + sizeof(last));\
+} while (0)
+
+  ZR_(txinterval_, cmdid_);
   msgbytes_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+
+#undef ZR_HELPER_
+#undef ZR_
+
 }
 
 bool Command::MergePartialFromCodedStream(
@@ -247,6 +264,21 @@ bool Command::MergePartialFromCodedStream(
          parse_msgBytes:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_msgbytes()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(24)) goto parse_cmdId;
+        break;
+      }
+
+      // optional uint32 cmdId = 3;
+      case 3: {
+        if (tag == 24) {
+         parse_cmdId:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &cmdid_)));
+
         } else {
           goto handle_unusual;
         }
@@ -289,6 +321,11 @@ void Command::SerializeWithCachedSizes(
       2, this->msgbytes(), output);
   }
 
+  // optional uint32 cmdId = 3;
+  if (this->cmdid() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->cmdid(), output);
+  }
+
   // @@protoc_insertion_point(serialize_end:nodeInterface.Command)
 }
 
@@ -305,6 +342,11 @@ void Command::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         2, this->msgbytes(), target);
+  }
+
+  // optional uint32 cmdId = 3;
+  if (this->cmdid() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->cmdid(), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:nodeInterface.Command)
@@ -324,6 +366,13 @@ int Command::ByteSize() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->msgbytes());
+  }
+
+  // optional uint32 cmdId = 3;
+  if (this->cmdid() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        this->cmdid());
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -353,6 +402,9 @@ void Command::MergeFrom(const Command& from) {
 
     msgbytes_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.msgbytes_);
   }
+  if (from.cmdid() != 0) {
+    set_cmdid(from.cmdid());
+  }
 }
 
 void Command::CopyFrom(const ::google::protobuf::Message& from) {
@@ -379,6 +431,7 @@ void Command::Swap(Command* other) {
 void Command::InternalSwap(Command* other) {
   std::swap(txinterval_, other->txinterval_);
   msgbytes_.Swap(&other->msgbytes_);
+  std::swap(cmdid_, other->cmdid_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -451,6 +504,20 @@ void Command::clear_msgbytes() {
   // @@protoc_insertion_point(field_set_allocated:nodeInterface.Command.msgBytes)
 }
 
+// optional uint32 cmdId = 3;
+void Command::clear_cmdid() {
+  cmdid_ = 0u;
+}
+ ::google::protobuf::uint32 Command::cmdid() const {
+  // @@protoc_insertion_point(field_get:nodeInterface.Command.cmdId)
+  return cmdid_;
+}
+ void Command::set_cmdid(::google::protobuf::uint32 value) {
+  
+  cmdid_ = value;
+  // @@protoc_insertion_point(field_set:nodeInterface.Command.cmdId)
+}
+
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 
 // ===================================================================
@@ -481,6 +548,7 @@ const int NodeThreadMsg::kTypeFieldNumber;
 const int NodeThreadMsg::kTimestampFieldNumber;
 const int NodeThreadMsg::kCmdRelayFieldNumber;
 const int NodeThreadMsg::kCmdsFieldNumber;
+const int NodeThreadMsg::kLinkStatusFieldNumber;
 const int NodeThreadMsg::kRcvdBytesFieldNumber;
 const int NodeThreadMsg::kDataBlockFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -509,6 +577,7 @@ void NodeThreadMsg::SharedCtor() {
   _cached_size_ = 0;
   type_ = 0;
   timestamp_ = 0;
+  cmdrelay_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   rcvdbytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   datablock_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -519,6 +588,7 @@ NodeThreadMsg::~NodeThreadMsg() {
 }
 
 void NodeThreadMsg::SharedDtor() {
+  cmdrelay_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   rcvdbytes_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   datablock_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != default_instance_) {
@@ -553,10 +623,11 @@ NodeThreadMsg* NodeThreadMsg::New(::google::protobuf::Arena* arena) const {
 void NodeThreadMsg::Clear() {
   type_ = 0;
   timestamp_ = 0;
+  cmdrelay_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   rcvdbytes_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   datablock_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  cmdrelay_.Clear();
   cmds_.Clear();
+  linkstatus_.Clear();
 }
 
 bool NodeThreadMsg::MergePartialFromCodedStream(
@@ -599,16 +670,15 @@ bool NodeThreadMsg::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated bytes cmdRelay = 3;
+      // optional bytes cmdRelay = 3;
       case 3: {
         if (tag == 26) {
          parse_cmdRelay:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->add_cmdrelay()));
+                input, this->mutable_cmdrelay()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(26)) goto parse_cmdRelay;
         if (input->ExpectTag(34)) goto parse_cmds;
         break;
       }
@@ -626,26 +696,44 @@ bool NodeThreadMsg::MergePartialFromCodedStream(
         }
         if (input->ExpectTag(34)) goto parse_loop_cmds;
         input->UnsafeDecrementRecursionDepth();
-        if (input->ExpectTag(42)) goto parse_rcvdBytes;
+        if (input->ExpectTag(42)) goto parse_linkStatus;
         break;
       }
 
-      // optional bytes rcvdBytes = 5;
+      // repeated uint32 linkStatus = 5;
       case 5: {
         if (tag == 42) {
+         parse_linkStatus:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_linkstatus())));
+        } else if (tag == 40) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 42, input, this->mutable_linkstatus())));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(50)) goto parse_rcvdBytes;
+        break;
+      }
+
+      // optional bytes rcvdBytes = 6;
+      case 6: {
+        if (tag == 50) {
          parse_rcvdBytes:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_rcvdbytes()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(50)) goto parse_dataBlock;
+        if (input->ExpectTag(58)) goto parse_dataBlock;
         break;
       }
 
-      // optional bytes dataBlock = 6;
-      case 6: {
-        if (tag == 50) {
+      // optional bytes dataBlock = 7;
+      case 7: {
+        if (tag == 58) {
          parse_dataBlock:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_datablock()));
@@ -691,10 +779,10 @@ void NodeThreadMsg::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteDouble(2, this->timestamp(), output);
   }
 
-  // repeated bytes cmdRelay = 3;
-  for (int i = 0; i < this->cmdrelay_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytes(
-      3, this->cmdrelay(i), output);
+  // optional bytes cmdRelay = 3;
+  if (this->cmdrelay().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      3, this->cmdrelay(), output);
   }
 
   // repeated .nodeInterface.Command cmds = 4;
@@ -703,16 +791,26 @@ void NodeThreadMsg::SerializeWithCachedSizes(
       4, this->cmds(i), output);
   }
 
-  // optional bytes rcvdBytes = 5;
-  if (this->rcvdbytes().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      5, this->rcvdbytes(), output);
+  // repeated uint32 linkStatus = 5;
+  if (this->linkstatus_size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteTag(5, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_linkstatus_cached_byte_size_);
+  }
+  for (int i = 0; i < this->linkstatus_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32NoTag(
+      this->linkstatus(i), output);
   }
 
-  // optional bytes dataBlock = 6;
+  // optional bytes rcvdBytes = 6;
+  if (this->rcvdbytes().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      6, this->rcvdbytes(), output);
+  }
+
+  // optional bytes dataBlock = 7;
   if (this->datablock().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      6, this->datablock(), output);
+      7, this->datablock(), output);
   }
 
   // @@protoc_insertion_point(serialize_end:nodeInterface.NodeThreadMsg)
@@ -732,10 +830,11 @@ void NodeThreadMsg::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(2, this->timestamp(), target);
   }
 
-  // repeated bytes cmdRelay = 3;
-  for (int i = 0; i < this->cmdrelay_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteBytesToArray(3, this->cmdrelay(i), target);
+  // optional bytes cmdRelay = 3;
+  if (this->cmdrelay().size() > 0) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        3, this->cmdrelay(), target);
   }
 
   // repeated .nodeInterface.Command cmds = 4;
@@ -745,18 +844,32 @@ void NodeThreadMsg::SerializeWithCachedSizes(
         4, this->cmds(i), target);
   }
 
-  // optional bytes rcvdBytes = 5;
+  // repeated uint32 linkStatus = 5;
+  if (this->linkstatus_size() > 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
+      5,
+      ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
+      _linkstatus_cached_byte_size_, target);
+  }
+  for (int i = 0; i < this->linkstatus_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->linkstatus(i), target);
+  }
+
+  // optional bytes rcvdBytes = 6;
   if (this->rcvdbytes().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        5, this->rcvdbytes(), target);
+        6, this->rcvdbytes(), target);
   }
 
-  // optional bytes dataBlock = 6;
+  // optional bytes dataBlock = 7;
   if (this->datablock().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        6, this->datablock(), target);
+        7, this->datablock(), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:nodeInterface.NodeThreadMsg)
@@ -777,25 +890,25 @@ int NodeThreadMsg::ByteSize() const {
     total_size += 1 + 8;
   }
 
-  // optional bytes rcvdBytes = 5;
+  // optional bytes cmdRelay = 3;
+  if (this->cmdrelay().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->cmdrelay());
+  }
+
+  // optional bytes rcvdBytes = 6;
   if (this->rcvdbytes().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->rcvdbytes());
   }
 
-  // optional bytes dataBlock = 6;
+  // optional bytes dataBlock = 7;
   if (this->datablock().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->datablock());
-  }
-
-  // repeated bytes cmdRelay = 3;
-  total_size += 1 * this->cmdrelay_size();
-  for (int i = 0; i < this->cmdrelay_size(); i++) {
-    total_size += ::google::protobuf::internal::WireFormatLite::BytesSize(
-      this->cmdrelay(i));
   }
 
   // repeated .nodeInterface.Command cmds = 4;
@@ -804,6 +917,23 @@ int NodeThreadMsg::ByteSize() const {
     total_size +=
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         this->cmds(i));
+  }
+
+  // repeated uint32 linkStatus = 5;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->linkstatus_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->linkstatus(i));
+    }
+    if (data_size > 0) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(data_size);
+    }
+    GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+    _linkstatus_cached_byte_size_ = data_size;
+    GOOGLE_SAFE_CONCURRENT_WRITES_END();
+    total_size += data_size;
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -826,13 +956,17 @@ void NodeThreadMsg::MergeFrom(const ::google::protobuf::Message& from) {
 
 void NodeThreadMsg::MergeFrom(const NodeThreadMsg& from) {
   if (GOOGLE_PREDICT_FALSE(&from == this)) MergeFromFail(__LINE__);
-  cmdrelay_.MergeFrom(from.cmdrelay_);
   cmds_.MergeFrom(from.cmds_);
+  linkstatus_.MergeFrom(from.linkstatus_);
   if (from.type() != 0) {
     set_type(from.type());
   }
   if (from.timestamp() != 0) {
     set_timestamp(from.timestamp());
+  }
+  if (from.cmdrelay().size() > 0) {
+
+    cmdrelay_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.cmdrelay_);
   }
   if (from.rcvdbytes().size() > 0) {
 
@@ -868,8 +1002,9 @@ void NodeThreadMsg::Swap(NodeThreadMsg* other) {
 void NodeThreadMsg::InternalSwap(NodeThreadMsg* other) {
   std::swap(type_, other->type_);
   std::swap(timestamp_, other->timestamp_);
-  cmdrelay_.UnsafeArenaSwap(&other->cmdrelay_);
+  cmdrelay_.Swap(&other->cmdrelay_);
   cmds_.UnsafeArenaSwap(&other->cmds_);
+  linkstatus_.UnsafeArenaSwap(&other->linkstatus_);
   rcvdbytes_.Swap(&other->rcvdbytes_);
   datablock_.Swap(&other->datablock_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
@@ -915,58 +1050,47 @@ void NodeThreadMsg::clear_timestamp() {
   // @@protoc_insertion_point(field_set:nodeInterface.NodeThreadMsg.timestamp)
 }
 
-// repeated bytes cmdRelay = 3;
-int NodeThreadMsg::cmdrelay_size() const {
-  return cmdrelay_.size();
-}
+// optional bytes cmdRelay = 3;
 void NodeThreadMsg::clear_cmdrelay() {
-  cmdrelay_.Clear();
+  cmdrelay_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- const ::std::string& NodeThreadMsg::cmdrelay(int index) const {
+ const ::std::string& NodeThreadMsg::cmdrelay() const {
   // @@protoc_insertion_point(field_get:nodeInterface.NodeThreadMsg.cmdRelay)
-  return cmdrelay_.Get(index);
+  return cmdrelay_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- ::std::string* NodeThreadMsg::mutable_cmdrelay(int index) {
-  // @@protoc_insertion_point(field_mutable:nodeInterface.NodeThreadMsg.cmdRelay)
-  return cmdrelay_.Mutable(index);
-}
- void NodeThreadMsg::set_cmdrelay(int index, const ::std::string& value) {
+ void NodeThreadMsg::set_cmdrelay(const ::std::string& value) {
+  
+  cmdrelay_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set:nodeInterface.NodeThreadMsg.cmdRelay)
-  cmdrelay_.Mutable(index)->assign(value);
 }
- void NodeThreadMsg::set_cmdrelay(int index, const char* value) {
-  cmdrelay_.Mutable(index)->assign(value);
+ void NodeThreadMsg::set_cmdrelay(const char* value) {
+  
+  cmdrelay_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:nodeInterface.NodeThreadMsg.cmdRelay)
 }
- void NodeThreadMsg::set_cmdrelay(int index, const void* value, size_t size) {
-  cmdrelay_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
+ void NodeThreadMsg::set_cmdrelay(const void* value, size_t size) {
+  
+  cmdrelay_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
   // @@protoc_insertion_point(field_set_pointer:nodeInterface.NodeThreadMsg.cmdRelay)
 }
- ::std::string* NodeThreadMsg::add_cmdrelay() {
-  return cmdrelay_.Add();
+ ::std::string* NodeThreadMsg::mutable_cmdrelay() {
+  
+  // @@protoc_insertion_point(field_mutable:nodeInterface.NodeThreadMsg.cmdRelay)
+  return cmdrelay_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- void NodeThreadMsg::add_cmdrelay(const ::std::string& value) {
-  cmdrelay_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:nodeInterface.NodeThreadMsg.cmdRelay)
+ ::std::string* NodeThreadMsg::release_cmdrelay() {
+  
+  return cmdrelay_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- void NodeThreadMsg::add_cmdrelay(const char* value) {
-  cmdrelay_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:nodeInterface.NodeThreadMsg.cmdRelay)
-}
- void NodeThreadMsg::add_cmdrelay(const void* value, size_t size) {
-  cmdrelay_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:nodeInterface.NodeThreadMsg.cmdRelay)
-}
- const ::google::protobuf::RepeatedPtrField< ::std::string>&
-NodeThreadMsg::cmdrelay() const {
-  // @@protoc_insertion_point(field_list:nodeInterface.NodeThreadMsg.cmdRelay)
-  return cmdrelay_;
-}
- ::google::protobuf::RepeatedPtrField< ::std::string>*
-NodeThreadMsg::mutable_cmdrelay() {
-  // @@protoc_insertion_point(field_mutable_list:nodeInterface.NodeThreadMsg.cmdRelay)
-  return &cmdrelay_;
+ void NodeThreadMsg::set_allocated_cmdrelay(::std::string* cmdrelay) {
+  if (cmdrelay != NULL) {
+    
+  } else {
+    
+  }
+  cmdrelay_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), cmdrelay);
+  // @@protoc_insertion_point(field_set_allocated:nodeInterface.NodeThreadMsg.cmdRelay)
 }
 
 // repeated .nodeInterface.Command cmds = 4;
@@ -999,7 +1123,37 @@ NodeThreadMsg::cmds() const {
   return cmds_;
 }
 
-// optional bytes rcvdBytes = 5;
+// repeated uint32 linkStatus = 5;
+int NodeThreadMsg::linkstatus_size() const {
+  return linkstatus_.size();
+}
+void NodeThreadMsg::clear_linkstatus() {
+  linkstatus_.Clear();
+}
+ ::google::protobuf::uint32 NodeThreadMsg::linkstatus(int index) const {
+  // @@protoc_insertion_point(field_get:nodeInterface.NodeThreadMsg.linkStatus)
+  return linkstatus_.Get(index);
+}
+ void NodeThreadMsg::set_linkstatus(int index, ::google::protobuf::uint32 value) {
+  linkstatus_.Set(index, value);
+  // @@protoc_insertion_point(field_set:nodeInterface.NodeThreadMsg.linkStatus)
+}
+ void NodeThreadMsg::add_linkstatus(::google::protobuf::uint32 value) {
+  linkstatus_.Add(value);
+  // @@protoc_insertion_point(field_add:nodeInterface.NodeThreadMsg.linkStatus)
+}
+ const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+NodeThreadMsg::linkstatus() const {
+  // @@protoc_insertion_point(field_list:nodeInterface.NodeThreadMsg.linkStatus)
+  return linkstatus_;
+}
+ ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+NodeThreadMsg::mutable_linkstatus() {
+  // @@protoc_insertion_point(field_mutable_list:nodeInterface.NodeThreadMsg.linkStatus)
+  return &linkstatus_;
+}
+
+// optional bytes rcvdBytes = 6;
 void NodeThreadMsg::clear_rcvdbytes() {
   rcvdbytes_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1042,7 +1196,7 @@ void NodeThreadMsg::clear_rcvdbytes() {
   // @@protoc_insertion_point(field_set_allocated:nodeInterface.NodeThreadMsg.rcvdBytes)
 }
 
-// optional bytes dataBlock = 6;
+// optional bytes dataBlock = 7;
 void NodeThreadMsg::clear_datablock() {
   datablock_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }

@@ -136,6 +136,12 @@ class Command : public ::google::protobuf::Message {
   ::std::string* release_msgbytes();
   void set_allocated_msgbytes(::std::string* msgbytes);
 
+  // optional uint32 cmdId = 3;
+  void clear_cmdid();
+  static const int kCmdIdFieldNumber = 3;
+  ::google::protobuf::uint32 cmdid() const;
+  void set_cmdid(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:nodeInterface.Command)
  private:
 
@@ -143,6 +149,7 @@ class Command : public ::google::protobuf::Message {
   bool _is_default_instance_;
   ::google::protobuf::internal::ArenaStringPtr msgbytes_;
   float txinterval_;
+  ::google::protobuf::uint32 cmdid_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_nodeInterface_2eproto();
   friend void protobuf_AssignDesc_nodeInterface_2eproto();
@@ -245,21 +252,16 @@ class NodeThreadMsg : public ::google::protobuf::Message {
   double timestamp() const;
   void set_timestamp(double value);
 
-  // repeated bytes cmdRelay = 3;
-  int cmdrelay_size() const;
+  // optional bytes cmdRelay = 3;
   void clear_cmdrelay();
   static const int kCmdRelayFieldNumber = 3;
-  const ::std::string& cmdrelay(int index) const;
-  ::std::string* mutable_cmdrelay(int index);
-  void set_cmdrelay(int index, const ::std::string& value);
-  void set_cmdrelay(int index, const char* value);
-  void set_cmdrelay(int index, const void* value, size_t size);
-  ::std::string* add_cmdrelay();
-  void add_cmdrelay(const ::std::string& value);
-  void add_cmdrelay(const char* value);
-  void add_cmdrelay(const void* value, size_t size);
-  const ::google::protobuf::RepeatedPtrField< ::std::string>& cmdrelay() const;
-  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_cmdrelay();
+  const ::std::string& cmdrelay() const;
+  void set_cmdrelay(const ::std::string& value);
+  void set_cmdrelay(const char* value);
+  void set_cmdrelay(const void* value, size_t size);
+  ::std::string* mutable_cmdrelay();
+  ::std::string* release_cmdrelay();
+  void set_allocated_cmdrelay(::std::string* cmdrelay);
 
   // repeated .nodeInterface.Command cmds = 4;
   int cmds_size() const;
@@ -273,9 +275,21 @@ class NodeThreadMsg : public ::google::protobuf::Message {
   const ::google::protobuf::RepeatedPtrField< ::nodeInterface::Command >&
       cmds() const;
 
-  // optional bytes rcvdBytes = 5;
+  // repeated uint32 linkStatus = 5;
+  int linkstatus_size() const;
+  void clear_linkstatus();
+  static const int kLinkStatusFieldNumber = 5;
+  ::google::protobuf::uint32 linkstatus(int index) const;
+  void set_linkstatus(int index, ::google::protobuf::uint32 value);
+  void add_linkstatus(::google::protobuf::uint32 value);
+  const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      linkstatus() const;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_linkstatus();
+
+  // optional bytes rcvdBytes = 6;
   void clear_rcvdbytes();
-  static const int kRcvdBytesFieldNumber = 5;
+  static const int kRcvdBytesFieldNumber = 6;
   const ::std::string& rcvdbytes() const;
   void set_rcvdbytes(const ::std::string& value);
   void set_rcvdbytes(const char* value);
@@ -284,9 +298,9 @@ class NodeThreadMsg : public ::google::protobuf::Message {
   ::std::string* release_rcvdbytes();
   void set_allocated_rcvdbytes(::std::string* rcvdbytes);
 
-  // optional bytes dataBlock = 6;
+  // optional bytes dataBlock = 7;
   void clear_datablock();
-  static const int kDataBlockFieldNumber = 6;
+  static const int kDataBlockFieldNumber = 7;
   const ::std::string& datablock() const;
   void set_datablock(const ::std::string& value);
   void set_datablock(const char* value);
@@ -301,8 +315,10 @@ class NodeThreadMsg : public ::google::protobuf::Message {
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
   double timestamp_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> cmdrelay_;
+  ::google::protobuf::internal::ArenaStringPtr cmdrelay_;
   ::google::protobuf::RepeatedPtrField< ::nodeInterface::Command > cmds_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > linkstatus_;
+  mutable int _linkstatus_cached_byte_size_;
   ::google::protobuf::internal::ArenaStringPtr rcvdbytes_;
   ::google::protobuf::internal::ArenaStringPtr datablock_;
   int type_;
@@ -379,6 +395,20 @@ inline void Command::set_allocated_msgbytes(::std::string* msgbytes) {
   // @@protoc_insertion_point(field_set_allocated:nodeInterface.Command.msgBytes)
 }
 
+// optional uint32 cmdId = 3;
+inline void Command::clear_cmdid() {
+  cmdid_ = 0u;
+}
+inline ::google::protobuf::uint32 Command::cmdid() const {
+  // @@protoc_insertion_point(field_get:nodeInterface.Command.cmdId)
+  return cmdid_;
+}
+inline void Command::set_cmdid(::google::protobuf::uint32 value) {
+  
+  cmdid_ = value;
+  // @@protoc_insertion_point(field_set:nodeInterface.Command.cmdId)
+}
+
 // -------------------------------------------------------------------
 
 // NodeThreadMsg
@@ -411,58 +441,47 @@ inline void NodeThreadMsg::set_timestamp(double value) {
   // @@protoc_insertion_point(field_set:nodeInterface.NodeThreadMsg.timestamp)
 }
 
-// repeated bytes cmdRelay = 3;
-inline int NodeThreadMsg::cmdrelay_size() const {
-  return cmdrelay_.size();
-}
+// optional bytes cmdRelay = 3;
 inline void NodeThreadMsg::clear_cmdrelay() {
-  cmdrelay_.Clear();
+  cmdrelay_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& NodeThreadMsg::cmdrelay(int index) const {
+inline const ::std::string& NodeThreadMsg::cmdrelay() const {
   // @@protoc_insertion_point(field_get:nodeInterface.NodeThreadMsg.cmdRelay)
-  return cmdrelay_.Get(index);
+  return cmdrelay_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* NodeThreadMsg::mutable_cmdrelay(int index) {
-  // @@protoc_insertion_point(field_mutable:nodeInterface.NodeThreadMsg.cmdRelay)
-  return cmdrelay_.Mutable(index);
-}
-inline void NodeThreadMsg::set_cmdrelay(int index, const ::std::string& value) {
+inline void NodeThreadMsg::set_cmdrelay(const ::std::string& value) {
+  
+  cmdrelay_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set:nodeInterface.NodeThreadMsg.cmdRelay)
-  cmdrelay_.Mutable(index)->assign(value);
 }
-inline void NodeThreadMsg::set_cmdrelay(int index, const char* value) {
-  cmdrelay_.Mutable(index)->assign(value);
+inline void NodeThreadMsg::set_cmdrelay(const char* value) {
+  
+  cmdrelay_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:nodeInterface.NodeThreadMsg.cmdRelay)
 }
-inline void NodeThreadMsg::set_cmdrelay(int index, const void* value, size_t size) {
-  cmdrelay_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
+inline void NodeThreadMsg::set_cmdrelay(const void* value, size_t size) {
+  
+  cmdrelay_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
   // @@protoc_insertion_point(field_set_pointer:nodeInterface.NodeThreadMsg.cmdRelay)
 }
-inline ::std::string* NodeThreadMsg::add_cmdrelay() {
-  return cmdrelay_.Add();
+inline ::std::string* NodeThreadMsg::mutable_cmdrelay() {
+  
+  // @@protoc_insertion_point(field_mutable:nodeInterface.NodeThreadMsg.cmdRelay)
+  return cmdrelay_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void NodeThreadMsg::add_cmdrelay(const ::std::string& value) {
-  cmdrelay_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:nodeInterface.NodeThreadMsg.cmdRelay)
+inline ::std::string* NodeThreadMsg::release_cmdrelay() {
+  
+  return cmdrelay_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void NodeThreadMsg::add_cmdrelay(const char* value) {
-  cmdrelay_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:nodeInterface.NodeThreadMsg.cmdRelay)
-}
-inline void NodeThreadMsg::add_cmdrelay(const void* value, size_t size) {
-  cmdrelay_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:nodeInterface.NodeThreadMsg.cmdRelay)
-}
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-NodeThreadMsg::cmdrelay() const {
-  // @@protoc_insertion_point(field_list:nodeInterface.NodeThreadMsg.cmdRelay)
-  return cmdrelay_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-NodeThreadMsg::mutable_cmdrelay() {
-  // @@protoc_insertion_point(field_mutable_list:nodeInterface.NodeThreadMsg.cmdRelay)
-  return &cmdrelay_;
+inline void NodeThreadMsg::set_allocated_cmdrelay(::std::string* cmdrelay) {
+  if (cmdrelay != NULL) {
+    
+  } else {
+    
+  }
+  cmdrelay_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), cmdrelay);
+  // @@protoc_insertion_point(field_set_allocated:nodeInterface.NodeThreadMsg.cmdRelay)
 }
 
 // repeated .nodeInterface.Command cmds = 4;
@@ -495,7 +514,37 @@ NodeThreadMsg::cmds() const {
   return cmds_;
 }
 
-// optional bytes rcvdBytes = 5;
+// repeated uint32 linkStatus = 5;
+inline int NodeThreadMsg::linkstatus_size() const {
+  return linkstatus_.size();
+}
+inline void NodeThreadMsg::clear_linkstatus() {
+  linkstatus_.Clear();
+}
+inline ::google::protobuf::uint32 NodeThreadMsg::linkstatus(int index) const {
+  // @@protoc_insertion_point(field_get:nodeInterface.NodeThreadMsg.linkStatus)
+  return linkstatus_.Get(index);
+}
+inline void NodeThreadMsg::set_linkstatus(int index, ::google::protobuf::uint32 value) {
+  linkstatus_.Set(index, value);
+  // @@protoc_insertion_point(field_set:nodeInterface.NodeThreadMsg.linkStatus)
+}
+inline void NodeThreadMsg::add_linkstatus(::google::protobuf::uint32 value) {
+  linkstatus_.Add(value);
+  // @@protoc_insertion_point(field_add:nodeInterface.NodeThreadMsg.linkStatus)
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+NodeThreadMsg::linkstatus() const {
+  // @@protoc_insertion_point(field_list:nodeInterface.NodeThreadMsg.linkStatus)
+  return linkstatus_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+NodeThreadMsg::mutable_linkstatus() {
+  // @@protoc_insertion_point(field_mutable_list:nodeInterface.NodeThreadMsg.linkStatus)
+  return &linkstatus_;
+}
+
+// optional bytes rcvdBytes = 6;
 inline void NodeThreadMsg::clear_rcvdbytes() {
   rcvdbytes_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -538,7 +587,7 @@ inline void NodeThreadMsg::set_allocated_rcvdbytes(::std::string* rcvdbytes) {
   // @@protoc_insertion_point(field_set_allocated:nodeInterface.NodeThreadMsg.rcvdBytes)
 }
 
-// optional bytes dataBlock = 6;
+// optional bytes dataBlock = 7;
 inline void NodeThreadMsg::clear_datablock() {
   datablock_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
