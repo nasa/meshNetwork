@@ -24,8 +24,8 @@ class NodeController(object):
         # Process commmands
         self.processCommands()
 
-        # Check status of other formation nodes
-        self.monitorFormationStatus()
+        # Check status of mesh network
+        self.monitorNetworkStatus()
         
         # Run unique node behavior
         self.executeNode()  
@@ -34,21 +34,20 @@ class NodeController(object):
         self.logData()
 
     def executeNode(self):
-        """Executes primary formation node processing logic that determines where this node
-        should be in the particular formation and how to get it into the desired state."""
+        """Executes any processing logic required by this node."""
         pass        
 
     def processFCCommands(self, FCComm):
-        """Performs initial processing of incoming commands and messages from the vehicle's flight computer."""
+        """Performs initial processing of incoming commands and messages from the platform's flight computer."""
         pass
 
     def processNodeCommands(self, comm):
-        """Performs initial processing of incoming commands and messages from formation mesh network."""
+        """Performs initial processing of incoming commands and messages from the mesh network."""
         pass
 
     def processCommands(self):
         """Performs more specific processing and implementation of commands received over the 
-        formation mesh network."""
+        mesh network."""
         pass
 
     def logData(self):
@@ -56,7 +55,7 @@ class NodeController(object):
         pass
 
     def monitorNodeUpdates(self):
-        """Monitors times since last state update from other nodes."""
+        """Monitors time since last state update from other nodes."""
         
         # Check that other nodes' states are updating
         if 'nodeStatus' not in self.nodeParams.__dict__ or 'clock' not in self.nodeParams.__dict__:
@@ -89,8 +88,8 @@ class NodeController(object):
                 #else: # no link ever with this node
                 #    self.nodeParams.linkStatus[thisNode][i] = LinkStatus.NoLink
 
-    def monitorFormationStatus(self):
-        """Monitors status of other formation nodes to determine their current status."""
+    def monitoriNetworkStatus(self):
+        """Monitors status of other nodes to determine their current status."""
 
         # Check update status
         self.monitorNodeUpdates()
