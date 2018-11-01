@@ -12,7 +12,6 @@ class NodeController(object):
     def __init__(self, nodeParams, logFile=[]):
         # Logging
         self.logFile = logFile      
-        self.logTime = 0
     
         # Node configuration
         self.nodeParams = nodeParams
