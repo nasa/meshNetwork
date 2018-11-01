@@ -121,9 +121,9 @@ class Radio(object):
         """Default behavior is to just pass through raw bytes."""
         return msgBytes
 
-    def sendBuffer(self, maxBytesToSend=None):
+    def sendBuffer(self, maxBytesToSend=0):
         if self.txBuffer:
-            if maxBytesToSend and len(self.txBuffer) > maxBytesToSend: # too much data to send
+            if maxBytesToSend > 0 and len(self.txBuffer) > maxBytesToSend: # too much data to send
                 self.sendMsg(self.txBuffer[:maxBytesToSend])
                 self.txBuffer = self.txBuffer[maxBytesToSend:] # remove sent bytes from buffer
             else: # send entire buffer
