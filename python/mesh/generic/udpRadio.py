@@ -1,8 +1,6 @@
-from enum import IntEnum
-from switch import switch
 import socket
 from mesh.generic.radio import Radio
-from mesh.generic.customExceptions import NoSerialConnection
+from mesh.generic.customExceptions import NoSocket
 
 class UDPRadio(Radio):
 

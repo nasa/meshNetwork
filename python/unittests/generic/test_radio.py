@@ -1,6 +1,5 @@
 import serial, time
 from mesh.generic.radio import Radio, RadioMode
-from mesh.generic.radio import Radio, RadioMode
 from mesh.generic.nodeParams import NodeParams
 from unittests.testConfig import configFilePath, testSerialPort
 from mesh.generic.customExceptions import NoSerialConnection
@@ -63,6 +62,11 @@ class TestRadio:
         self.radio.bufferTxMsg(msg)
         assert(self.radio.txBuffer == msg)
 
+        # Confirm that buffer appends and doesn't overwrite
+        msg2 = b'67890'
+        self.radio.bufferTxMsg(msg2)
+        assert(self.radio.txBuffer == msg + msg2)
+
     def test_createMsg(self):
         """Test createMsg method of Radio."""
         msg = b'12345'
@@ -110,6 +114,7 @@ class TestRadio:
         msg = b'12345'
         self.radio.bufferTxMsg(msg)
         self.radio.sendBuffer()
+        assert(len(self.radio.txBuffer) == 0) # buffer should clear after data sent
         time.sleep(0.1)
         self.radio.readBytes(True)
         assert(self.radio.getRxBytes() == msg)
