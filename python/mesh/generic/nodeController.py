@@ -87,7 +87,7 @@ class NodeController(object):
                 #else: # no link ever with this node
                 #    self.nodeParams.linkStatus[thisNode][i] = LinkStatus.NoLink
 
-    def monitoriNetworkStatus(self):
+    def monitorNetworkStatus(self):
         """Monitors status of other nodes to determine their current status."""
 
         # Check update status
