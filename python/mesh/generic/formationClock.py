@@ -1,6 +1,4 @@
-from mesh.generic.nodeTools import isBeaglebone
-from mesh.generic.tdmaTime import getTimeOffset, SyncPulseMonitorThread
-from threading import Lock
+from mesh.generic.timeLib import getTimeOffset
 import time
 
 class FormationClock:
@@ -12,19 +10,14 @@ class FormationClock:
         referenceTime: Reference time used by clock to compute clock time upon request. 
     """
         
-    def __init__(self, referenceTime=[], ppsPin=None):
+    def __init__(self, referenceTime=[], timeSource=None):
+        self.timeSource = None
+
         if referenceTime: # Initialize time from some reference time
             self.referenced = True
             self.referenceTime = referenceTime
         else:
             self.referenced = False
-    
-        if ppsPin and isBeaglebone(): # monitor PPS signal 
-            self.tdmaTimerStart = time.time()
-            self.timerLock = Lock()
-            self.monitorThread = SyncPulseMonitorThread(ppsPin, self.resetTDMATimer)
-            self.monitorThread.setDaemon(True) # set as daemon so it will terminate when main program ends
-            self.monitorThread.start()
 
     def getTime(self):
         if self.referenced:
@@ -32,15 +25,5 @@ class FormationClock:
         else:
             return time.time()
 
-    def resetTDMATimer(self):
-        if (self.timerLock.acquire(blocking=False)): # get lock before updating
-            # Reset tdma timer start
-            self.tdmaTimerStart = time.time()
-        self.timerLock.release() 
-
-    def getTDMATimer(self):
-        with self.timerLock: # block on reads
-            return time.time() - self.tdmaTimerStart
-
     def getOffset(self):
-        return getTimeOffset('pps')
+        return getTimeOffset(self.timeSource)

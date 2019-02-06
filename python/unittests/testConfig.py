@@ -1,3 +1,5 @@
 configFilePath = '../nodeConfig.json'
+badConfigFilePath = 'nodeConfig_bad.json'
+noNodeConfigFilePath = 'nodeConfig_noNodeId.json'
 testSerialPort = '/dev/ttyUSB0'
-#testSerialPort = []
+testSerialPort2 = '/dev/ttyUSB1'

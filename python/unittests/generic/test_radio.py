@@ -39,12 +39,43 @@ class TestRadio:
         assert(self.radio.rxBuffer == bytearray(self.radio.rxBufferSize))
         assert(self.radio.bytesInRxBuffer == 0)
 
+    def test_bufferRxMsg(self):
+        """Test bufferRxMsg method of Radio."""
+        # Test without buffer
+        assert(self.radio.bytesInRxBuffer == 0);
+        testMsg = b'1234567890'
+        self.radio.bufferRxMsg(testMsg, False)
+        assert(self.radio.bytesInRxBuffer == len(testMsg))
+        assert(self.radio.rxBuffer[0:len(testMsg)] == testMsg)
+
+        # Test buffering
+        self.radio.bufferRxMsg(testMsg, True)
+        assert(self.radio.bytesInRxBuffer == len(testMsg)*2)
+        assert(self.radio.rxBuffer[0:2*len(testMsg)] == testMsg + testMsg)
+
+        # Test buffer overflow
+        self.radio.rxBufferSize = 10
+        self.radio.clearRxBuffer() # update buffer size
+
+        self.radio.bufferRxMsg(testMsg, True)
+        assert(self.radio.rxBuffer == testMsg)
+        self.radio.bufferRxMsg(b'99999', True) # confirm that bytes are not buffered
+        assert(self.radio.rxBuffer == testMsg)
+
     def test_getRxBytes(self):
         """Test getRxBytes method of Radio."""
         msg = b'12345'
         self.radio.bufferRxMsg(msg, True)
         assert(self.radio.getRxBytes() == msg)
 
+    def test_processRxBytes(self):
+        """Test processRxBytes method of Radio."""
+        # Base class method just buffers bytes
+        testMsg = b'1234567890'
+        assert(self.radio.bytesInRxBuffer == 0)
+        self.radio.processRxBytes(testMsg, True)
+        assert(self.radio.getRxBytes() == testMsg)
+    
     def test_sendMsg(self):
         """Test sendMsg method of Radio."""
         # Send test message
@@ -81,7 +112,8 @@ class TestRadio:
         msgBytes = b'ABC'
         self.serialPort.write(msgBytes)
         time.sleep(0.1)
-        self.radio.readBytes(False)
+        numBytesRead = self.radio.readBytes(False)
+        assert(numBytesRead == len(msgBytes))
         assert(self.radio.bytesInRxBuffer == len(msgBytes))
         serBytes = self.radio.getRxBytes()
         assert(serBytes == msgBytes)

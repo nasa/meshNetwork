@@ -1,5 +1,5 @@
 import sys, pytest
-sys.path.append('/home/aerom/code/')
+sys.path.append('../')
 
 # Execute requested test
 if len(sys.argv) > 1:

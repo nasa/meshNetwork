@@ -15,7 +15,8 @@ def serialize_TDMACmds_TimeOffsetSummary(cmdData, timestamp):
     nodeStatus = cmdData['nodeStatus']
 
     # Assemble message
-    msg = pack(TDMACmdDict[TDMACmds['TimeOffsetSummary']].packFormat, len(nodeStatus))
+    #msg = pack(TDMACmdDict[TDMACmds['TimeOffsetSummary']].packFormat, len(nodeStatus))
+    msg = bytearray()
     packFormat = TDMACmdDict['TimeOffsetSummaryContents'].packFormat
     for status in nodeStatus:
         msg += pack(packFormat, int(status.timeOffset*100))
@@ -60,12 +61,12 @@ def serialize_TDMACmds_BlockData(cmdData, timestamp):
 #TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=iB', serialize_TDMACmds_MeshStatus, ['commStartTime', 'cmdCounter'], header='MinimalHeader'), \
 TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=IB', serialize_TDMACmds_MeshStatus, ['commStartTimeSec', 'status'], header='SourceHeader'), \
        TDMACmds['TimeOffset']: CommandType('=H', serialize_TDMACmds_TimeOffset, ['timeOffset'], header='SourceHeader'), \
-       TDMACmds['TimeOffsetSummary']: CommandType('=B', serialize_TDMACmds_TimeOffsetSummary, ['numNodes'], header='MinimalHeader'), \
+       TDMACmds['TimeOffsetSummary']: CommandType('', serialize_TDMACmds_TimeOffsetSummary, ['numNodes'], header='MinimalHeader'), \
        'TimeOffsetSummaryContents': CommandType('=H', [], ['offset'], None), \
        TDMACmds['LinkStatus']: CommandType('', serialize_TDMACmds_LinkStatus, [], header='SourceHeader'), \
        'LinkStatusContents': CommandType('B', [], ['linkStatus'], None), \
        TDMACmds['LinkStatusSummary']: CommandType('', serialize_TDMACmds_LinkStatusSummary, [], header='MinimalHeader'), \
-       'LinkStatusSummaryContents': CommandType('B', [], ['linkStatus'], None), \
+       'LinkStatusSummaryContents': CommandType('=B', [], ['linkStatus'], None), \
        TDMACmds['BlockTxStatus']: CommandType('=BiB', serialize_TDMACmds_BlockTxStatus, ['blockReqID', 'startTime', 'length'],  header='NodeHeader'), \
        TDMACmds['BlockTxRequest']: CommandType('=BiB', serialize_TDMACmds_BlockTxRequest, ['blockReqID', 'startTime', 'length'],  header='NodeHeader'), \
        TDMACmds['BlockTxConfirmed']: CommandType('=B', serialize_TDMACmds_BlockTxConfirmed, ['blockReqID'], header='NodeHeader'), \

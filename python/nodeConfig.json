@@ -1,5 +1,6 @@
 {
 	"node": {
+        "nodeId": 2,
 		"maxNumNodes": 6,
 		"platform": "generic",
 		"nodeUpdateTimeout": 5.0,
@@ -27,7 +28,6 @@
 		
 	"tdmaConfig": {
 		"sleepPin": "P8_12",
-        "txBaudrate": 57600,
 		"enableLength": 0.005,
 		"slotGuardLength": 0.005,
 		"preTxGuardLength": 0.005,

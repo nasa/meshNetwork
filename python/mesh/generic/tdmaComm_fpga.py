@@ -3,16 +3,14 @@ from switch import switch
 import time
 from mesh.generic.tdmaState import TDMAMode
 from mesh.generic.cmds import TDMACmds
-from mesh.generic.commProcessor import CommProcessor
-from mesh.generic.tdmaCmdProcessor import TDMACmdProcessor
 from mesh.generic.command import Command
+import mesh.generic.gpio as GPIO
 
 class TDMAComm_FPGA(TDMAComm):
-    def __init__(self, commProcessor, radio, msgParser, nodeParams):
-        if not commProcessor:
-            commProcessor = CommProcessor([TDMACmdProcessor], nodeParams)
 
         TDMAComm.__init__(self, commProcessor, radio, msgParser, nodeParams)        
+    def __init__(self, msgProcessors, radio, msgParser, nodeParams):
+        TDMAComm.__init__(self, msgProcessors, radio, msgParser, nodeParams)        
 
         # TDMA init status
         #self.initPin = nodeParams.config.commConfig['initPin']
@@ -25,6 +23,10 @@ class TDMAComm_FPGA(TDMAComm):
         # TDMA config for FPGA implementation
         self.transmitInterval = 1.0/nodeParams.config.commConfig['desiredDataRate']
         self.lastTransmitTime = -1.0
+            
+        # Setup FPGA failsafe status pin
+        self.fpgaFailsafePin = self.config.commConfig['fpgaFailsafePin']
+        GPIO.setup(self.fpgaFailsafePin, "in")
 
     def executeTDMAComm(self, currentTime):
         """Execute TDMA communication scheme."""
@@ -59,3 +61,15 @@ class TDMAComm_FPGA(TDMAComm):
     
     def sleep(self): # no sleep operations for FPGA implementation
         pass
+    
+    def checkTimeOffset(self, offset=None):
+        if (GPIO.input(self.fpgaFailsafePin) == 0): # failsafe not set
+            self.timeOffsetTimer = None # reset timer
+        else: # failsafe condition set
+            if self.timeOffsetTimer:
+                if self.nodeParams.clock.getTime() - self.timeOffsetTimer > self.config.commConfig['offsetTimeout']: # No time offset reading for longer than allowed
+                    self.tdmaFailsafe = True # Set TDMA failsafe flag
+                    return 3
+            else: # start timer
+                self.timeOffsetTimer = self.nodeParams.clock.getTime()
+                    

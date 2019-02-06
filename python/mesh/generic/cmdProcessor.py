@@ -1,6 +1,18 @@
 from mesh.generic.cmds import cmdsToRelay
 from struct import pack
 
+# Process command header 
+def processHeader(self, header, msg, nodeStatus, clock, comm):
+    cmdStatus = True
+    if header != None:
+        updateNodeMsgRcvdStatus(nodeStatus, header, clock)
+        
+        # Check for command counter
+        cmdStatus = checkCmdCounter(self, header, msg, comm)
+        
+    return cmdStatus
+ 
+
 # Command counter check
 def checkCmdCounter(self, header, msg, comm):
     """Helper function to check command counter."""

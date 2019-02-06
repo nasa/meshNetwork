@@ -2,7 +2,7 @@
 class NodeExecutive(object):
     """Generic node executive controller to subtype for specific vehicle types.
 
-    The node executive is responsible for communicating over all serial links (flight computer and mesh networks), processing messages received over those links, and running the node control logic to perform the desired formation behavior.  This class has the generic framework for the node executive, but each specific platform type should derive their own executive type from this class.
+    The node executive is responsible for communicating over all serial links (flight computer and mesh networks), processing messages received over those links, and running the node control logic to interface with the node's host platform.  This class has the generic framework for the node executive, but each specific platform type should derive their own executive type from this class.
 
     Attributes:
         nodeConfig: Node configuration information.
@@ -33,12 +33,13 @@ class NodeExecutive(object):
             self.processNodeMsg(comm)   
     
         # Run node control algorithms           
-        self.nodeController.controlNode()
+        if self.nodeController:
+            self.nodeController.controlNode()
 
         # Send commands to flight computer
         self.sendFCCmds()
 
-        # Send out node status update to other formation nodes
+        # Send out commands and messages to other nodes
         self.sendNodeCmds()
     
     def processFCMsg(self): # Process message from flight computer
@@ -52,10 +53,13 @@ class NodeExecutive(object):
 
     def sendFCCmds(self): # Send required commands to flight computer
         """Sends messages and commands to the vehicle's flight computer."""
-        pass
+        # Send any buffered data
+        self.FCComm.sendBuffer()
 
     def sendNodeCmds(self): # Send command/data messages to other nodes
-        """Sends messages and commands to the other formation nodes."""
-        pass
+        """Sends messages and commands to the other nodes."""
+        # Send any buffered data
+        for comm in self.nodeComm:
+            comm.sendBuffer()
 
 

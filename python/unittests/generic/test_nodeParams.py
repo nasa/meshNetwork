@@ -1,7 +1,6 @@
 from mesh.generic.nodeConfig import NodeConfig
 from mesh.generic.nodeParams import NodeParams
-from mesh.generic.customExceptions import InvalidCmdCounter
-import pytest, time
+import pytest
 from unittests.testConfig import configFilePath
 
 class TestNodeParams:

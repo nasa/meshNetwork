@@ -1,14 +1,14 @@
-from mesh.generic.nodeConfig import NodeConfig
-from mesh.generic.nodeTools import isBeaglebone
+from mesh.generic.nodeConfig import NodeConfig, ParamId
 import json, math
 from switch import switch
 import socket
-import netifaces
-from unittests.testConfig import configFilePath
+from unittests.testConfig import configFilePath, badConfigFilePath, noNodeConfigFilePath
+import mesh.generic.customExceptions as customExceptions
+import pytest 
 
 # Load truth data
 testConfigFilePath = 'nodeConfig.json'
-standardParams = ["platform", "nodeId", "maxNumNodes", "nodeUpdateTimeout", "commType", "uartNumBytesToRead", "parseMsgMax", "rxBufferSize", "FCCommWriteInterval", "meshBaudrate", "FCBaudrate", "numMeshNetworks", "meshDevices", "FCCommDevice", "radios", "msgParsers", "gcsPresent", "cmdInterval", "logInterval", "enablePin", "statusPin", "interface"]
+standardParams = ["nodeId", "gcsPresent", "gcsNodeId", "maxNumNodes", "nodeUpdateTimeout", "uartNumBytesToRead", "parseMsgMax", "rxBufferSize", "FCCommWriteInterval", "meshBaudrate", "FCBaudrate", "numMeshNetworks", "meshDevices", "FCCommDevice", "radios", "msgParsers", "gcsPresent", "cmdInterval", "logInterval", "commType", "interface", "commConfig", "platform"]
 tdmaParams = ["rxLength", "preTxGuardLength", "txLength", "postTxGuardLength", "frameLength", "desiredDataRate", "cycleLength", "slotLength", "fpga", "maxTransferSize", "maxNumSlots", "maxBlockTransferSize", "rxDelay", "transmitSlot"]
 
 class TestNodeConfig:
@@ -17,27 +17,38 @@ class TestNodeConfig:
     def setup_method(self, method):
         
         # Populate truth data
-        self.configTruthData = json.load(open(configFilePath))
+        #self.configTruthData = json.load(open(configFilePath))
 
         ### Update truth data to match expected node configuration output
-        self.configTruthData.update({'nodeId': 0})
+        #self.configTruthData.update({'nodeId': 0})
             
         # TDMA comm test
-        if method.__name__ == 'test_TDMACommConfigLoad': 
-            self.configTruthData['commType'] = 'TDMA'
+        #if method.__name__ == 'test_TDMACommConfigLoad': 
+        #    self.configTruthData['commType'] = 'TDMA'
 
         # Create node config json input file
-        with open(testConfigFilePath, 'w') as outfile:
-            json.dump(self.configTruthData, outfile)
+        #with open(testConfigFilePath, 'w') as outfile:
+        #    json.dump(self.configTruthData, outfile)
 
         # Create NodeConfig instance
-        self.nodeConfig = NodeConfig(testConfigFilePath)
-    
+        self.nodeConfig = NodeConfig(configFilePath)
+   
+    def test_noFileLoad(self):
+        """Test for failed load of configuration due to no file provided."""
+        nodeConfig = NodeConfig("")
+        assert(nodeConfig.nodeId == -1)
+        assert(nodeConfig.loadSuccess == False)
+ 
+    def test_invalidFileLoad(self):
+        """Test for failed load due to bad configuration file."""
+        with pytest.raises(customExceptions.NodeConfigFileError) as e:
+            nodeConfig = NodeConfig("invalidFile")
+ 
     def test_standardConfigLoad(self):
         """Test that standard generic configuration loaded properly."""
         print("Testing generic configuration loading")
 
-        # Test that standar parameters are present
+        # Test that standard parameters are present
         self.checkConfigEntries(standardParams, True)
 
     def test_tdmaConfigLoad(self):
@@ -45,19 +56,44 @@ class TestNodeConfig:
         print("Testing TDMA comm configuration loading.")
         
         if (self.nodeConfig.commType == "TDMA"):
-            commEntries = ["preTxGuardLength", "postTxGuardLength", "txLength", "rxLength", "slotLength", "cycleLength", "frameLength", "transmitSlot", "desiredDataRate", "maxNumSlots", "offsetTimeout", "initSyncBound", "operateSyncBound"]
+            commEntries = ["preTxGuardLength", "postTxGuardLength", "txLength", "rxLength", "slotLength", "cycleLength", "frameLength", "transmitSlot", "desiredDataRate", "maxNumSlots", "offsetTimeout", "offsetTxInterval", "statusTxInterval", "linksTxInterval", "maxTxBlockSize", "blockTxRequestTimeout", "minBlockTxDelay", "fpga", "initSyncBound", "initTimeToWait", "operateSyncBound"]
         
             # Check for TDMA config
             assert(type(self.nodeConfig.commConfig == dict))
             self.checkConfigEntries(commEntries, True, list(self.nodeConfig.commConfig.keys()))
 
+            # Check FPGA config specific parameters
+            if (self.nodeConfig.commConfig['fpga'] == True):
+                fpgaParams = ["fpgaFailsafePin", "fpgaFifoSize"] 
+                self.checkConfigEntries(commEntries, True, list(self.nodeConfig.commConfig.keys()))
+
+    def test_missingConfigEntry(self):
+        """Test for missing configuration entry in configuration file."""
+        with pytest.raises(KeyError) as e:
+            nodeConfig = NodeConfig(badConfigFilePath)
+        pass  
+
     def test_readNodeId(self):
-        if isBeaglebone(): # only run test if running on node
-            assert(socket.gethostname() == 'node' + str(self.nodeConfig.nodeId)) # confirm hostname
-            assert(netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr'] == '192.168.0.' + str(self.nodeConfig.nodeId) + '0')
+        """Test proper call of readNodeId method of NodeConfig."""
+        nodeConfig = NodeConfig(noNodeConfigFilePath)
+        assert(nodeConfig.nodeId == 1) # defaults to node 1 when no nodeId provided
+
+    def test_updateParameter(self):
+        """Test updateParameter method of NodeConfig."""
+        # Test attempted update of invalid parameter
+        assert(self.nodeConfig.updateParameter("BadParam", 1) == False)
+
+        # Test successful update
+        assert(self.nodeConfig.parseMsgMax != 500)
+        assert(self.nodeConfig.updateParameter(ParamId.parseMsgMax, 500))
+        assert(self.nodeConfig.parseMsgMax == 500)
 
     def test_calculateHash(self):
-        pass
+        """Test calculateHash method of NodeConfig."""
+        # Verify that hash value does not change when unique parameters are different
+        nodeConfig = NodeConfig(noNodeConfigFilePath)
+
+        assert(nodeConfig.calculateHash() == self.nodeConfig.calculateHash())
 
     def test_hashElem(self):
         """Test hashElem function to ensure proper handling of all data types."""
@@ -72,8 +108,6 @@ class TestNodeConfig:
         testHash1 = hashlib.sha1()
         testHash2 = hashlib.sha1()
 
-        print(('%.*f' % (7, testFloat2)).encode('utf-8'))
-        print(('%.*f' % (7, testFloat3)).encode('utf-8'))
         # Test proper truncation of floats
         self.nodeConfig.hashElem(testHash1, testFloat1)
         self.nodeConfig.hashElem(testHash2, testFloat2) 
@@ -95,8 +129,6 @@ class TestNodeConfig:
     def checkConfigEntries(self, testEntries, testCondition, configEntries=None):
         if configEntries == None:
             configEntries = list(self.nodeConfig.__dict__.keys())
-        print("Test Entries:", testEntries)
-        print("Config Entries:", configEntries)
         for key in testEntries:
             # Check if key in configuration
             print("Testing " + str(key) + " in " + str(configEntries))

@@ -23,17 +23,11 @@ class NodeState(object):
         self.id = nodeId
         self.present = False
         self.updating = False
-        self.flightMode = -1
-        self.formationMode = 0
-        self.failsafeType = 0
-        self.state = []
-        self.timestamp = -1
         self.timeOffset = 127
-        self.numMsgsReceived = 0
-        self.lastStateUpdateTime = 0.0
         self.lastMsgRcvdTime = 0.0
+        self.lastStateUpdateTime = 0.0
         self.status = 0
-
+        
 class LinkStatus(IntEnum):
     """Enumeration of mesh link status.
 

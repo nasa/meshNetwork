@@ -1,6 +1,5 @@
 from mesh.generic.formationClock import FormationClock
 import time
-from numbers import Real
 
 class TestFormationClock:
     
@@ -14,7 +13,7 @@ class TestFormationClock:
         else:
             self.clock = FormationClock()
             
-    def test_standardClock(self):
+    def test_nonreferenceClock(self):
         """Test non-referenced clock functionality."""
         startTime = time.time()
         clockTime = self.clock.getTime()
@@ -28,5 +27,5 @@ class TestFormationClock:
     def test_getOffset(self):
         """Test time offset functionality."""
         offset = self.clock.getOffset()
-        assert(offset == None or (isinstance(offset, Real) and offset > 0))
+        assert(offset == None)
         

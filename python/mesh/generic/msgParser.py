@@ -3,8 +3,8 @@ class MsgParser:
     """This class is responsible for taking raw serial bytes and searching them for valid SLIP messages.
 
     Attributes:
-        slipMsg: Parsed SLIP message with SLIP bytes extracted.
-        parsedMsg: Valid serial message stored in this variable upon confirmation of valid CRC.
+        parsedMsgs: Valid serial messages stored in this variable upon confirmation of valid CRC.
+        parseMsgMax: Maximum attempts at parsing messages from the raw receive buffer.
     """
 
     def __init__(self, config):
@@ -29,6 +29,7 @@ class MsgParser:
                 break
 
         # Message creation methods
+    
     def encodeMsg(self, msg):
         """Default encoding is none."""
         return msg

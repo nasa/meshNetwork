@@ -62,7 +62,7 @@ class Radio(object):
         """Reads raw bytes from serial connection"""
         if not self.serial:
             raise NoSerialConnection("No serial connection available")
-            return  
+            return 0 
         
         # Read from serial port
         newBytes = []
@@ -74,6 +74,8 @@ class Radio(object):
         # Process rx bytes
         if newBytes:
             self.processRxBytes(newBytes, bufferFlag)
+
+        return len(newBytes)
 
     def sendBytes(self, msgBytes):
         """Send bytes over serial connection."""

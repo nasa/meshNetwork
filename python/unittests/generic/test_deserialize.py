@@ -1,16 +1,40 @@
-from mesh.generic.deserialize import deserialize, parseHeader, parseBody
+import pytest
+from mesh.generic.deserialize import deserialize, parseHeader, parseBody, unpackBytes
 from mesh.generic.cmdDict import CmdDict
 from mesh.generic.nodeHeader import packHeader
-from mesh.generic.cmds import PixhawkCmds
+from mesh.generic.cmds import NodeCmds
+from mesh.generic.customExceptions import InsufficientMsgBytes
 from unittests.testCmds import testCmds
+from struct import calcsize
+
 class TestDeserialize:
     
     def setup_method(self, method):
         # Test command
-        self.cmdId = PixhawkCmds['FormationCmd']
+        self.cmdId = NodeCmds['GCSCmd']
         self.command = testCmds[self.cmdId]
-        self.headerBytes = packHeader(self.command.header)
-        self.msgBytes = self.headerBytes + self.command.body
+        self.headerBytes = self.command.packHeader()
+        self.msgBytes = self.command.serialize()
+
+    def test_unpackBytes(self):
+        """Test unpackBytes method."""
+        # Test processing of equal size message
+        msg = b'12345'
+        fmt = '=BBBBB'
+        out = unpackBytes(fmt, msg)
+        assert(len(out) == calcsize(fmt))
+        #assert(len(out[1]) == 0) # no excess bytes
+
+        # Test processing of short message
+        fmt = '=BBBBBB'
+        with pytest.raises(InsufficientMsgBytes) as e:
+            out = unpackBytes(fmt, msg)
+
+        # Test processing of long message
+        fmt = '=BBBB'
+        out = unpackBytes(fmt, msg)
+        assert(len(out) == calcsize(fmt))
+        #assert(out[1] == msg[calcsize(fmt):])
 
     def test_parseHeader(self):
         """Test parsing header from serial message bytes."""
@@ -39,15 +63,6 @@ class TestDeserialize:
         self.checkBodyEntries(body)     
         pass
 
-    def test_deserialize(self):
-        """Test serialization of all NodeCmds."""
-#       for cmdId in cmdsToTest:
-#           print("Testing deserializing body:", cmdId)
-#           msg = deserialize(testCmds[cmdId].body, cmdId, 'bodyonly')
-#           print(msg)
-        #assert(msg == testCmds[cmdId].) # check that output matches truth command
-        pass            
-    
     def checkBodyEntries(self, body):
         for entry in CmdDict[self.cmdId].messageFormat:
             print("Testing", "\'" + entry + "\'", "in body.")

@@ -4,7 +4,7 @@ from mesh.generic.cmdDict import CmdDict
 from struct import unpack, calcsize
 from mesh.generic.nodeHeader import headers
 from mesh.generic.deserialize import deserialize
-from mesh.generic.cmdProcessor import checkCmdCounter, updateNodeMsgRcvdStatus
+from mesh.generic.cmdProcessor import processHeader
 from mesh.generic.tdmaState import TDMABlockTxStatus
 from mesh.generic.command import Command
 
@@ -13,56 +13,38 @@ def processMsg(self, cmdId, msg, args):
         nodeStatus = args['nodeStatus'] 
         comm = args['comm']
         clock = args['clock']
+
+        cmdStatus = False
         
         if len(msg) > 0:
             # Parse command header
             header = deserialize(msg, cmdId, 'header')
-            if header != None:
-                updateNodeMsgRcvdStatus(nodeStatus, header, clock)
-                # Check for command counter
-                cmdStatus = checkCmdCounter(self, header, msg, comm)
-                if cmdStatus == False: # old command counter
-                    return
-            
+            if (processHeader(self, header, msg, nodeStatus, clock, comm) == False): # stale command
+                return False
+
             # Parse message contents
-            if cmdId not in [TDMACmds['TimeOffsetSummary'], TDMACmds['BlockData'], TDMACmds['LinkStatus'], TDMACmds['LinkStatusSummary']]:
+            if cmdId not in [TDMACmds['BlockData'], TDMACmds['LinkStatus']]:
                 try: 
                     msgContents = deserialize(msg, cmdId, 'body')       
                     if msgContents == None:
-                        return
-                except KeyError:
-                    print("Invalid command ID.")
-                    return
+                        return False
+                except Exception as e:
+                    print("Exception occurred while deserializing message:", e)
+                    return False
             
             # Process message by command id
             for case in switch(cmdId):
                 if case(TDMACmds['TimeOffset']):
-                    if nodeStatus:
+                    if nodeStatus and len(nodeStatus) >= header['sourceId']:
                         nodeStatus[header['sourceId']-1].timeOffset = msgContents['timeOffset']/100.0
+                    cmdStatus = True
                     break
                     
                 if case(TDMACmds['MeshStatus']):
-                    if self.nodeParams.commStartTime == []: # accept value if one not already present
-                        self.nodeParams.commStartTime = msgContents['commStartTimeSec'] # store comm start time
+                    if not comm.commStartTime: # accept value if one not already present
+                        comm.commStartTime = msgContents['commStartTimeSec'] # store comm start time
+                    cmdStatus = True
 
-                    break
-
-                if case(TDMACmds['TimeOffsetSummary']): # Compiled table of time offsets from all nodes
-                    # Calculate header size
-                    headerSize = calcsize(headers[CmdDict[cmdId].header]['format'])
-                    # Unpack message
-                    msgSize = calcsize(CmdDict[cmdId].packFormat)
-                    timeOffsetFormatSize = calcsize(CmdDict['TimeOffsetSummaryContents'].packFormat)
-                    numNodes = unpack(CmdDict[cmdId].packFormat, msg[headerSize:headerSize + msgSize])[0]
-                    if (len(msg) != (numNodes*timeOffsetFormatSize) + headerSize + msgSize):
-                        print("Serial message length incorrect length:", str(len(msg)))
-                        break
-                    
-                    for i in range(numNodes): # Extract time offset of all nodes
-                        msgContents = deserialize(msg[i*timeOffsetFormatSize + headerSize + msgSize:i*timeOffsetFormatSize+(timeOffsetFormatSize + headerSize + msgSize)], 'TimeOffsetSummaryContents', 'body')
-                        if msgContents == None:
-                            return
-                        nodeStatus[i].timeOffset = msgContents['offset']/100.0
                     break
 
                 if case(TDMACmds['LinkStatus']): # Status of links to other nodes
@@ -76,17 +58,9 @@ def processMsg(self, cmdId, msg, args):
                     # Place received data into appropriate link status subarray
                     for i in range(msgSize):
                        self.nodeParams.linkStatus[node][i] = linkData[i]
+                    cmdStatus = True
                     break
 
-                if case(TDMACmds['LinkStatusSummary']): # Complete table of links between nodes
-                    msgSize = self.nodeParams.config.maxNumNodes
-                    headerSize = calcsize(headers[CmdDict[cmdId].header]['format'])
-                    linkTable = unpack('=' + msgSize*msgSize*CmdDict['LinkStatusSummaryContents'].packFormat, msg[headerSize:])
-                    # Place received data into link status array
-                    for i in range(msgSize):
-                        for j in range(msgSize):
-                            self.nodeParams.linkStatus[i][j] = linkTable[i*msgSize + j]
-                    break
                 if case(TDMACmds['BlockTxRequest']): # Request for a block of transmit time
                     blockTxResponse = False
                     if comm.blockTxStatus['status'] == TDMABlockTxStatus.false: # no current block tx active
@@ -147,7 +121,7 @@ def processMsg(self, cmdId, msg, args):
                     blockData = msg[headerSize:]
                     print("Block data received:", blockData)
                     
-                    
+        return cmdStatus                    
 
 def validateBlockTxRequest(msgContents, header, nodeParams):
     """Check for valid block transmit request."""

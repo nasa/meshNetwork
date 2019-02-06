@@ -1,4 +1,6 @@
 from mesh.generic.nodeState import LinkStatus
+from mesh.generic.cmds import NodeCmds
+from switch import switch
 
 class NodeController(object):   
     """Generic node controller to subtype for specific vehicle types.
@@ -34,6 +36,10 @@ class NodeController(object):
 
     def executeNode(self):
         """Executes any processing logic required by this node."""
+
+        # Update node status
+        self.updateStatus()
+
         pass        
 
     def processFCCommands(self, FCComm):
@@ -42,7 +48,18 @@ class NodeController(object):
 
     def processNodeCommands(self, comm):
         """Performs initial processing of incoming commands and messages from the mesh network."""
-        pass
+            
+        for cmdId in list(comm.cmdQueue.keys()): # New commands to process
+            cmdContents = comm.cmdQueue.pop(cmdId)
+            for case in switch(cmdId):
+                if case(NodeCmds['ConfigRequest']):
+                    configHash = self.nodeParams.config.calculateHash()
+                    if configHash == cmdContents:
+                        self.nodeParams.configConfirmed = True
+                    else:
+                        self.nodeParams.configConfirmed = False    
+                    break           
+            
 
     def processCommands(self):
         """Performs more specific processing and implementation of commands received over the 
@@ -52,6 +69,13 @@ class NodeController(object):
     def logData(self):
         """Logs pertinent node operational and state data."""
         pass
+
+    def updateStatus(self):
+        """Update status information."""
+        
+        self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1].status = 0
+        if (self.nodeParams.configConfirmed == True):
+            self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1].status += 64 # bit 6
 
     def monitorNodeUpdates(self):
         """Monitors time since last state update from other nodes."""
