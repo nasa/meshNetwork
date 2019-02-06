@@ -8,13 +8,15 @@
 #include "comm/defines.hpp"
 #include "comm/message.hpp"
 
+#include <serial/serial.h>
+
 namespace comm {
     
     enum RadioMode {
-        OFF = 0,
-        SLEEP = 1,
-        RECEIVE = 2,
-        TRANSMIT = 3
+        RADIO_OFF = 0,
+        RADIO_SLEEP = 1,
+        RADIO_RECEIVE = 2,
+        RADIO_TRANSMIT = 3
     };
 
     struct RadioConfig {
@@ -69,6 +71,11 @@ namespace comm {
              * Radio configuration settings.
              */
             RadioConfig config; 
+            
+            /**
+             * Serial instance.
+             */
+            serial::Serial * serial;
 
             /**
              * Buffer of received bytes.
@@ -118,9 +125,10 @@ namespace comm {
 
             /**
              * Constructor.
+             * @param serialIn Serial interface.
              * @param configIn Radio configuration.
              */
-            Radio(RadioConfig & configIn);
+            Radio(serial::Serial * serialIn, RadioConfig & configIn);
 
             /**
              * This function clears the receive buffer.
@@ -128,12 +136,17 @@ namespace comm {
             void clearRxBuffer(void);
 
             /**
-             * This function clears the receive buffer.
+             * This function reads from the radio source.
              * @param bufferFlag Whether or not to buffer new bytes or replace existing.
-             * @param bytesToRead Number of bytes to attempt to read.
-             * @return Returns number of new bytes buffered.
+             * @return Returns number of new bytes read.
              */
-            virtual int readBytes(bool bufferFlag, int bytesToRead = 65536);
+            virtual int readBytes(bool bufferFlag);
+
+            /**
+             * This function transmits provided message bytes.
+             * @param msgBytes Bytes to be transmitted.
+             */
+            virtual void sendBytes(std::vector<uint8_t> msgBytes);
 
             /**
              * This function processes newly received bytes.
@@ -190,6 +203,13 @@ namespace comm {
              * @return Returns 1 if only part of the buffer is sent.
              */
             unsigned int sendBuffer(unsigned int maxBytesToSend = 0);
+    
+            /**
+             * This function sends command to the radio hardware.
+             * @param cmd Command to pass to the radio.
+             */
+            void sendCommand(std::vector<uint8_t> cmd);
+
     };
 }
 #endif // COMM_RADIO_HPP

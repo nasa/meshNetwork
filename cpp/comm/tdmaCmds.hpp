@@ -70,7 +70,7 @@ namespace comm {
              * @param header Command header.
              * @param txInterval Command re-transmit interval.
              */
-            TDMA_MeshStatus(unsigned int commStartTimeSecIn, unsigned int statusIn, CmdHeader header, double txInterval = node::NodeParams::config.commConfig.statusTxInterval);
+            TDMA_MeshStatus(uint32_t commStartTimeSecIn, uint8_t statusIn, CmdHeader header, double txInterval = node::NodeParams::config.commConfig.statusTxInterval);
 
             /**
              * Parsing constructor for creating command from message bytes.
@@ -82,7 +82,13 @@ namespace comm {
              * Command serialization method.
              * @return Returns serialized command for transmission.
              */
-            virtual std::vector<uint8_t> serialize();
+            virtual std::vector<uint8_t> packBody();
+            
+            /**
+             * Checks if raw bytes are valid command.
+             * @param msgBytes Raw message bytes.
+             */ 
+            static bool isValid(std::vector<uint8_t> & msgBytes);
     };
     
     class TDMA_LinkStatus : public Command {
@@ -111,7 +117,13 @@ namespace comm {
              * Command serialization method.
              * @return Returns serialized command for transmission.
              */
-            virtual std::vector<uint8_t> serialize();
+            virtual std::vector<uint8_t> packBody();
+            
+            /**
+             * Checks if raw bytes are valid command.
+             * @param msgBytes Raw message bytes.
+             */ 
+            static bool isValid(std::vector<uint8_t> & msgBytes);
     };
 
     class TDMA_LinkStatusSummary : public Command {
@@ -120,7 +132,7 @@ namespace comm {
             /**
              * Inter-node network link status table.
              */
-            std::vector<uint8_t> linkTable;
+            std::vector<std::vector<uint8_t> > linkTable;
 
             /**
              * Primary constructor.
@@ -140,14 +152,20 @@ namespace comm {
              * Command serialization method.
              * @return Returns serialized command for transmission.
              */
-            virtual std::vector<uint8_t> serialize();
+            virtual std::vector<uint8_t> packBody();
+            
+            /**
+             * Checks if raw bytes are valid command.
+             * @param msgBytes Raw message bytes.
+             */ 
+            static bool isValid(std::vector<uint8_t> & msgBytes);
     };
 
     class TDMA_TimeOffset : public Command {
         public:
 
             /**
-             * Current clock time offset.
+             * Current clock time offset. (ms)
              */
             double timeOffset;
 
@@ -169,29 +187,37 @@ namespace comm {
              * Command serialization method.
              * @return Returns serialized command for transmission.
              */
-            virtual std::vector<uint8_t> serialize();
+            virtual std::vector<uint8_t> packBody();
 
-
+            /**
+             * Checks if raw bytes are valid command.
+             * @param msgBytes Raw message bytes.
+             */ 
+            static bool isValid(std::vector<uint8_t> & msgBytes);
     };
 
     class TDMA_TimeOffsetSummary : public Command {
         public:
 
             /**
-             * Clock time offset values received from all nodes.
+             * Clock time offset values received from all nodes. (ms)
              */
             std::vector<double> timeOffset;
 
             /**
-             * Default constructor.
+             * Constructor without provided offsets.
+             * @param header Command header.
+             * @param txInterval Command re-transmit interval.
              */
-            TDMA_TimeOffsetSummary();
+            TDMA_TimeOffsetSummary(CmdHeader header, double txInterval = node::NodeParams::config.commConfig.offsetTxInterval);
 
             /**
-             * Primary constructor.
+             * Constructor with offsets.
              * @param offsets Clock time offsets of all nodes.
+             * @param header Command header.
+             * @param txInterval Command re-transmit interval.
              */
-            TDMA_TimeOffsetSummary(std::vector<double> & offsets);
+            TDMA_TimeOffsetSummary(std::vector<double> & offsets, CmdHeader header, double txInterval = node::NodeParams::config.commConfig.offsetTxInterval);
 
             /**
              * Parsing constructor for creating command from message bytes.
@@ -203,8 +229,13 @@ namespace comm {
              * Command serialization method.
              * @return Returns serialized command for transmission.
              */
-            virtual std::vector<uint8_t> serialize();
+            virtual std::vector<uint8_t> packBody();
 
+            /**
+             * Checks if raw bytes are valid command.
+             * @param msgBytes Raw message bytes.
+             */ 
+            static bool isValid(std::vector<uint8_t> & msgBytes);
     };
 
 

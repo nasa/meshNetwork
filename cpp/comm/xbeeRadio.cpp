@@ -3,7 +3,7 @@
 
 namespace comm {
     XbeeRadio::XbeeRadio(serial::Serial * serialIn, RadioConfig & configIn, int sleepPinIn) :
-        SerialRadio(serialIn, configIn),
+        Radio(serialIn, configIn),
         sleepPin(sleepPinIn)
     {
         if (sleepPinIn > -1) { // sleep pin available
@@ -13,7 +13,7 @@ namespace comm {
     
     bool XbeeRadio::setOff(void) {
         setSleep();
-        mode = OFF;
+        mode = RADIO_OFF;
         return true;
     }
 
@@ -22,20 +22,20 @@ namespace comm {
             GPIOWrapper::setValue((unsigned int)sleepPin, GPIOWrapper::HIGH);
         }
 
-        mode = SLEEP;
+        mode = RADIO_SLEEP;
 
         return true;
     }
 
     bool XbeeRadio::setReceive(void) {
         wake();
-        mode = RECEIVE;
+        mode = RADIO_RECEIVE;
         return true;
     }
 
     bool XbeeRadio::setTransmit(void) {
         wake();
-        mode = TRANSMIT;
+        mode = RADIO_TRANSMIT;
         return true;
     }
 

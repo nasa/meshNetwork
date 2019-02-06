@@ -37,10 +37,10 @@ namespace node {
         monitorFormationStatus();
     }
 
-    void NodeController::processFCCommands(comm::Comm * FCComm) {
+    void NodeController::processFCCommands(comm::SerialComm * FCComm) {
     }
 
-    void NodeController::processNodeCommands(comm::Comm * comm) {
+    void NodeController::processNodeCommands(comm::SerialComm * comm) {
     }
 
     void NodeController::processCommands() {

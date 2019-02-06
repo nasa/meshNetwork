@@ -5,14 +5,14 @@
 #include <vector>
 #include <cstdint>
 
-#include "comm/serialRadio.hpp"
+#include "comm/radio.hpp"
 #include "comm/defines.hpp"
 #include <serial/serial.h>
 
 namespace comm {
     static const uint8_t FPGA_MSG_START = 250;
 
-    class FPGARadio : public SerialRadio {
+    class FPGARadio : public Radio {
 
         public:
             /**

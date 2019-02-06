@@ -10,6 +10,9 @@ using std::vector;
 namespace {
     vector<uint8_t> pixhawkTruthHash = {171, 39, 134, 6, 10, 6, 132, 68, 222, 18, 100, 103, 186, 133, 81, 34, 188, 217, 248, 202}; 
     vector<uint8_t> satFCTruthHash = {178, 113, 109, 91, 28, 157, 193, 113, 170, 101, 180, 243, 248, 134, 88, 77, 81, 141, 171, 227};    
+    
+    std::string badConfigFilePath = "nodeConfig_bad.json";
+    std::string noNodeConfigFilePath = "nodeConfig_noNodeId.json";
 }
 
 namespace node
@@ -26,61 +29,55 @@ namespace node
     {
     }
 
-    TEST_F(NodeConfig_UT, readNodeId_gpio) {
-        std::string temp;
-	// This test requires user interaction to change switches
-        std::cout << "Testing nodeId load from dip switches." << std::endl;
-        std::cout << "Set all switches to zero and hit enter..." << std::endl;
-        
-//	usleep(5*1e6); // sleep 5 seconds to wait for user
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 0);
-        std::cout << "Set switches to 1 and hit enter..." << std::endl;
-      	std::getline(std::cin, temp); 
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 1);
-        std::cout << "Set switches to 2 and hit enter..." << std::endl;
-      	std::getline(std::cin, temp); 
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 2);
-        std::cout << "Set switches to 3 and hit enter..." << std::endl;
-      	std::getline(std::cin, temp); 
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 3);
-        std::cout << "Set switches to 4 and hit enter..." << std::endl;
-      	std::getline(std::cin, temp); 
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 4);
-        std::cout << "Set switches to 5 and hit enter..." << std::endl;
-      	std::getline(std::cin, temp); 
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 5);
-        std::cout << "Set switches to 6 and hit enter..." << std::endl;
-      	std::getline(std::cin, temp); 
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 6);
-        std::cout << "Set switches to 7 and hit enter..." << std::endl;
-      	std::getline(std::cin, temp); 
-        m_nodeConfig.readNodeId();
-        EXPECT_TRUE(m_nodeConfig.nodeId == 7);
+    TEST_F(NodeConfig_UT, invalidFileLoad) {
+        NodeConfig nodeConfig = NodeConfig("");
+        EXPECT_TRUE(nodeConfig.loadSuccess == false);
+    }
+
+    TEST_F(NodeConfig_UT, standardConfigLoad) {
+        // Check for successful configuration load
+        EXPECT_TRUE(m_nodeConfig.loadSuccess == true);
+    }
+   
+    TEST_F(NodeConfig_UT, tdmaConfigLoad) {
+        EXPECT_TRUE(m_nodeConfig.commType == TDMA); // tdma config found
+        EXPECT_TRUE(m_nodeConfig.commConfig.fpga == true); // fpga config found
+        EXPECT_TRUE(m_nodeConfig.loadSuccess == true); // successful load of required parameters
+    }
+ 
+    TEST_F(NodeConfig_UT, missingConfigEntry) {
+        NodeConfig nodeConfig = NodeConfig(badConfigFilePath);
+        EXPECT_TRUE(nodeConfig.loadSuccess == false);
+
+    }
+
+    TEST_F(NodeConfig_UT, readNodeId) {
+        NodeConfig nodeConfig = NodeConfig(noNodeConfigFilePath);
+        EXPECT_TRUE(nodeConfig.nodeId == 1); // default to 1 when no nodeId provided
+    }
+
+    TEST_F(NodeConfig_UT, updateParameter) {
+        // Test attempted update of invalid parameter
+        std::vector<uint8_t> paramValue({1});
+        EXPECT_FALSE(m_nodeConfig.updateParameter(500, paramValue));
+
+        // Test successful update
+        EXPECT_TRUE(m_nodeConfig.parseMsgMax != 500);
+        uint16_t testValue = 500;
+        paramValue.resize(2);
+        std::memcpy(paramValue.data(), &testValue, 2);
+        EXPECT_TRUE(m_nodeConfig.updateParameter(PARAMID_PARSE_MSG_MAX, paramValue));
+        EXPECT_TRUE(m_nodeConfig.parseMsgMax == 500);
+
     }
 
     TEST_F(NodeConfig_UT, calculateHash) {
-		// Check Pixhawk hash
-        m_nodeConfig = NodeConfig("nodeConfig.json");
-        std::string hash = m_nodeConfig.calculateHash();
-		ASSERT_TRUE(hash.size() == pixhawkTruthHash.size());
-		for (unsigned int i = 0; i < hash.size(); i++) {
-		    EXPECT_TRUE((uint8_t)hash[i] == pixhawkTruthHash[i]);
-        }    
+        // Verify that hash does not include unique parameters
+        NodeConfig nodeConfig = NodeConfig(noNodeConfigFilePath); // default to node id of 1
+        
+        EXPECT_TRUE(nodeConfig.nodeId != m_nodeConfig.nodeId); // verify that node id differs
 
-		// Check SatFC hash
-        m_nodeConfig = NodeConfig("nodeConfig-sat.json");
-        hash = m_nodeConfig.calculateHash();
-		ASSERT_TRUE(hash.size() == satFCTruthHash.size());
-		for (unsigned int i = 0; i < hash.size(); i++) {
-		    EXPECT_TRUE((uint8_t)hash[i] == satFCTruthHash[i]);
-        }    
+        EXPECT_TRUE(nodeConfig.calculateHash() == m_nodeConfig.calculateHash()); // hash should match
     }    
 
 }

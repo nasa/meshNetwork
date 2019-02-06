@@ -1,7 +1,7 @@
 #ifndef COMM_LI1_RADIO_HPP
 #define COMM_LI1_RADIO_HPP
 
-#include "comm/serialRadio.hpp"
+#include "comm/radio.hpp"
 #include "comm/commBuffer.hpp"
 #include <serial/serial.h>
 #include <vector>
@@ -64,7 +64,7 @@ namespace comm {
         {};
     };
 
-    class Li1Radio : public SerialRadio {
+    class Li1Radio : public Radio {
 
         public:
             /**

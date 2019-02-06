@@ -17,17 +17,22 @@ namespace comm {
              */
             static std::unordered_map<uint8_t, HeaderType> cmdDict;
 
+            static std::vector<uint8_t> cmdsToRelay;
             /*
              * Utility function to load command ID dictionaries.
              */
             static void updateCmdDict(std::unordered_map<uint8_t, HeaderType> & newDict);
+        
+            /*
+             * Function to update list of commands to relayed
+             */
+            static void updateRelayCmds(std::vector<uint8_t> & relayCmds);
 
             /*
              * Returns vector of all values in a command ID map.
              */
             //static std::vector<uint8_t> getCmds(std::map<std::string, uint8_t> & cmds);
 
-            static std::vector<uint8_t> cmdsToRelay;
     };
 
 //    struct CmdMessage {

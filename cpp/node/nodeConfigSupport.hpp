@@ -3,11 +3,16 @@
 
 #include "rapidjson/JSON_Wrapper.hpp"
 #include <cmath>
+#include <algorithm>
 
 namespace node {
 
+    enum ParamId {
+        PARAMID_PARSE_MSG_MAX = 1
+    };
+    
     enum ParamName {
-        
+            
     };
 
     // Communication type.
@@ -36,9 +41,43 @@ namespace node {
     };
 
     struct SoftwareInterface {
+        /**
+         * IP address to interface with platform.
+         */
         std::string nodeCommIntIP;
+
+        /**
+         * Input UDP port from platform.
+         */
         unsigned int commRdPort;
+        
+        /**
+         * Output UDP port to platform.
+         */
         unsigned int commWrPort;
+        
+        /**
+         * Load success flag.
+         */
+        bool loadSuccess;
+    
+        /**
+         * Default constructor.
+         */
+        SoftwareInterface() {};
+
+        /**
+         * Constructor for loading config from a JSON file.
+         * @param value JSON configuration data.
+         */
+        SoftwareInterface(const rapidjson::Value & intConfig) : 
+            loadSuccess(true)
+        {
+            // Load values from JSON
+            loadSuccess &= get_string(intConfig, "nodeCommIntIP", nodeCommIntIP);
+            loadSuccess &= get_int(intConfig, "commRdPort", commRdPort);
+            loadSuccess &= get_int(intConfig, "commWrPort", commWrPort);
+        }
     };
 
     struct CommConfig {
@@ -61,11 +100,6 @@ namespace node {
          * Transmit length.
          */
         double txLength;
-
-        /**
-         * Transmission baudrate.
-         */
-        unsigned int txBaudrate;
 
         /**
          * TDMA enable length.
@@ -168,6 +202,11 @@ namespace node {
         unsigned int maxTransferSize;
 
         /**
+         * Receive buffer size.
+         */
+        unsigned int rxBufferSize;
+
+        /**
          * Maximum size of data to transmit in a single message during a block transfer.
          */
         unsigned int maxBlockTransferSize;
@@ -186,7 +225,27 @@ namespace node {
          * FPGA failsafe pin
          */
         std::string fpgaFailsafePin;
+        
+        /**
+         * FPGA fifo size.
+         */
+        unsigned int fpgaFifoSize;
 
+        /**
+         * FPGA enable pin
+         */
+        std::string enablePin;
+        
+        /**
+         * FPGA status pin
+         */
+        std::string statusPin;
+
+        /**
+         * Load success flag.
+         */
+        bool loadSuccess;
+    
         /**
          * Default constructor.
          */
@@ -198,38 +257,60 @@ namespace node {
          * @param type Communication protocol type.
          * @param value JSON configuration data.
          */
-        CommConfig(unsigned int nodeId, CommType type, const rapidjson::Value & value) {
+        CommConfig(unsigned int nodeId, unsigned int meshBaudrate, CommType type, const rapidjson::Value & value) :
+            fpga(false),
+            loadSuccess(true)
+        {
             // Load values from JSON
-            get_string(value, "sleepPin", sleepPin);
-            get_int(value, "txBaudrate", txBaudrate);
-            get_double(value, "enableLength", enableLength);
-            get_double(value, "slotGuardLength", slotGuardLength);
-            get_double(value, "preTxGuardLength", preTxGuardLength);
-            get_double(value, "postTxGuardLength", postTxGuardLength);
-            get_double(value, "txLength", txLength);
-            get_double(value, "rxDelay", rxDelay);
-            get_double(value, "initTimeToWait", initTimeToWait);
-            get_int(value, "maxNumSlots", maxNumSlots);
-            get_double(value, "desiredDataRate", desiredDataRate);
-            get_double(value, "initSyncBound", initSyncBound);
-            get_double(value, "operateSyncBound", operateSyncBound);
-            get_double(value, "offsetTimeout", offsetTimeout);
-            get_double(value, "offsetTxInterval", offsetTxInterval);
-            get_double(value, "statusTxInterval", statusTxInterval);
-            get_double(value, "linksTxInterval", linksTxInterval);
-            get_int(value, "maxTxBlockSize", maxTxBlockSize);
-            get_int(value, "blockTxRequestTimeout", blockTxRequestTimeout);
-            get_int(value, "minBlockTxDelay", minBlockTxDelay);
-            get_bool(value, "fpga", fpga);
-            get_string(value, "fpgaFailsafePin", fpgaFailsafePin);
+            loadSuccess &= get_string(value, "sleepPin", sleepPin);
+            loadSuccess &= get_double(value, "enableLength", enableLength);
+            loadSuccess &= get_double(value, "slotGuardLength", slotGuardLength);
+            loadSuccess &= get_double(value, "preTxGuardLength", preTxGuardLength);
+            loadSuccess &= get_double(value, "postTxGuardLength", postTxGuardLength);
+            loadSuccess &= get_double(value, "txLength", txLength);
+            loadSuccess &= get_double(value, "rxDelay", rxDelay);
+            loadSuccess &= get_double(value, "initTimeToWait", initTimeToWait);
+            loadSuccess &= get_int(value, "maxNumSlots", maxNumSlots);
+            loadSuccess &= get_double(value, "desiredDataRate", desiredDataRate);
+            loadSuccess &= get_double(value, "initSyncBound", initSyncBound);
+            loadSuccess &= get_double(value, "operateSyncBound", operateSyncBound);
+            loadSuccess &= get_double(value, "offsetTimeout", offsetTimeout);
+            loadSuccess &= get_double(value, "offsetTxInterval", offsetTxInterval);
+            loadSuccess &= get_double(value, "statusTxInterval", statusTxInterval);
+            loadSuccess &= get_double(value, "linksTxInterval", linksTxInterval);
+            loadSuccess &= get_int(value, "maxTxBlockSize", maxTxBlockSize);
+            loadSuccess &= get_int(value, "blockTxRequestTimeout", blockTxRequestTimeout);
+            loadSuccess &= get_int(value, "minBlockTxDelay", minBlockTxDelay);
+         
+            if (value.HasMember("fpga")) {
+                loadSuccess &= get_bool(value, "fpga", fpga);
+                if (fpga == true) {
+                    loadSuccess &= get_string(value, "fpgaFailsafePin", fpgaFailsafePin);
+                    loadSuccess &= get_int(value, "fpgaFifoSize", fpgaFifoSize);
+                    loadSuccess &= get_string(value, "enablePin", enablePin);
+                    loadSuccess &= get_string(value, "statusPin", statusPin);
+                }
+            }
 
             // Process comm inputs
             rxLength = preTxGuardLength + txLength + postTxGuardLength;
             slotLength = enableLength + rxLength + slotGuardLength;
-            frameLength = 1.0 / desiredDataRate;
+            if (desiredDataRate > 0) {
+                frameLength = 1.0 / desiredDataRate;
+            }
+            else {
+                loadSuccess = false;
+            }
             cycleLength = slotLength * maxNumSlots;
-            maxTransferSize = (unsigned int)(0.8 * txLength * txBaudrate / 8.0);
-            maxBlockTransferSize = (unsigned int)(0.8 * cycleLength * txBaudrate / 8.0);
+            maxTransferSize = (unsigned int)(0.8 * txLength * meshBaudrate / 8.0);
+            if (fpga == true) {
+                maxTransferSize = std::min(maxTransferSize, fpgaFifoSize);
+            }
+            maxTransferSize = (unsigned int)(0.8 * maxTransferSize); // apply margin
+
+            rxBufferSize = maxNumSlots * maxTransferSize;
+
+            maxBlockTransferSize = (unsigned int)(0.8 * cycleLength * meshBaudrate/8.0);
 
             if (rxDelay > 1.0 || rxDelay < 0.0) {
                 std::cout << "ERROR: Invalid TDMA Rx Delay percentage!" << std::endl;
@@ -244,13 +325,7 @@ namespace node {
             }
 
             if (get_int(value, "transmitSlot", transmitSlot) == false) { // transmit slot not provided
-                // Determine transmit slot
-                if (nodeId == 0) { // ground node
-                    transmitSlot = maxNumSlots;
-                }
-                else { // standard node
-                    transmitSlot = nodeId;
-                }
+                transmitSlot = nodeId;
             }
 
         }

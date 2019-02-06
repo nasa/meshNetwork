@@ -3,7 +3,7 @@
 using std::vector;
 namespace comm {
     UDPRadio::UDPRadio(std::string udpInterfaceIn, std::string udpPortIn, RadioConfig & configIn) :
-        Radio(configIn)
+        Radio(NULL, configIn)
     {
     };
 

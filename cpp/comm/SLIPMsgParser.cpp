@@ -1,5 +1,6 @@
 #include "comm/SLIPMsgParser.hpp"
 #include "crc.hpp"
+#include <iostream> 
 
 using std::vector;
 
@@ -26,7 +27,6 @@ namespace comm {
             }
             return slipMsg.msgEnd;
         } 
-
         return msgBytes.size(); // no message found - return length of parsed bytes
     }
 

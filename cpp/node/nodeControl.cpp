@@ -1,8 +1,8 @@
 #include "node/nodeControl.hpp"
 #include "node/nodeParams.hpp"
-#include "comm/comm.hpp"
 #include "comm/SLIPMsgParser.hpp"
-#include "comm/serialRadio.hpp"
+#include "comm/radio.hpp"
+#include "comm/msgProcessor.hpp"
 //#include "node/nodeConfigSupport.hpp"
 //#include "node/pixhawk/pixhawkComm.hpp"
 //#include "node/pixhawk/pixhawkNodeController.hpp"
@@ -23,7 +23,7 @@ namespace node {
         comm::RadioConfig config;
         config.numBytesToRead = NodeParams::config.uartNumBytesToRead;
         config.rxBufferSize = NodeParams::config.rxBufferSize;
-        FCRadio = unique_ptr<comm::Radio>(new comm::SerialRadio(&FCSer, config)); // FC radio
+        FCRadio = unique_ptr<comm::Radio>(new comm::Radio(&FCSer, config)); // FC radio
 
         // Create message parsers
         switch (NodeParams::config.msgParsers[meshNum]) {
@@ -37,13 +37,13 @@ namespace node {
         FCMsgParser = unique_ptr<comm::MsgParser>(new comm::SLIPMsgParser(NodeParams::config.parseMsgMax, 256)); // FC comm message parser
 
         // Instantiate specific node software
-        switch (NodeParams::config.platform) { // Platform specific initializations
+        switch (NodeParams::config.platform) {
             case GENERIC:
-                comms.push_back(unique_ptr<comm::Comm>(new comm::Comm(NULL, radioIn, msgParsers.front().get())));
-                FCComm = unique_ptr<comm::Comm>(new comm::Comm(NULL, FCRadio.get(), FCMsgParser.get()));
+                comms.push_back(unique_ptr<comm::SerialComm>(new comm::SerialComm(std::vector<comm::MsgProcessor *>(), radioIn, msgParsers.front().get())));
+                FCComm = unique_ptr<comm::SerialComm>(new comm::SerialComm(std::vector<comm::MsgProcessor *>(), FCRadio.get(), FCMsgParser.get()));
                 nodeController = unique_ptr<NodeController>(new NodeController(nodeLogFile));
                 nodeExecutive = unique_ptr<NodeExecutive>(new NodeExecutive(nodeController.get(), comms, NULL, fcLogFile));
-                break;
+            break;
 //            case PIXHAWK:
 //                comms.push_back(unique_ptr<comm::Comm>(new PixhawkComm(radioIn, msgParsers.front().get())));
 //                FCComm = unique_ptr<comm::Comm>(new PixhawkComm(FCRadio.get(), msgParsers.back().get()));

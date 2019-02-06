@@ -1,0 +1,56 @@
+{
+	"node": {
+        "nodeId": 1,
+		"maxNumNodes": 6,
+		"platform": "generic",
+		"nodeUpdateTimeout": 5.0,
+		"FCCommWriteInterval": 0.2,
+		"FCCommDevice": "/dev/ttyO1",
+		"FCBaudrate": 57600,
+    	"cmdInterval": 0.2,
+    	"logInterval": 0.05,
+		"commType": "TDMA",
+		"numMeshNetworks": 1,
+		"meshDevices": ["/dev/ttyO4"],
+    	"radios": ["Xbee"],
+    	"msgParsers": ["SLIP"],
+		"meshBaudrate": 57600,
+		"parseMsgMax": 50,
+		"rxBufferSize": 2000,
+        "gcsPresent": true
+	},
+
+	"interface": {
+        "nodeCommIntIP": "127.0.0.1",
+        "commRdPort": 30000,
+        "commWrPort": 30001
+	},
+		
+	"tdmaConfig": {
+		"sleepPin": "P8_12",
+		"enableLength": 0.005,
+		"slotGuardLength": 0.005,
+		"preTxGuardLength": 0.005,
+		"postTxGuardLength": 0.005,
+		"txLength": 0.100,
+		"rxDelay": 0.0,
+        "initTimeToWait": 5.0,
+		"maxNumSlots": 6,
+		"desiredDataRate": 1.0,
+		"initSyncBound": 1.0,
+		"operateSyncBound": 2.0,
+		"offsetTimeout": 60.0,
+        "offsetTxInterval": 10.0,
+        "statusTxInterval": 0.0,
+        "linksTxInterval": 1.0,
+		"maxTxBlockSize": 5,
+		"blockTxRequestTimeout": 3,
+		"minBlockTxDelay": 6,
+        "fpga": true,
+        "fpgaFailsafePin": "P8_16",
+        "fpgaFifoSize": 512,
+        "enablePin": "P8_15", 
+        "statusPin": "P8_18"
+	}
+
+}

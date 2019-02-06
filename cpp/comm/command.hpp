@@ -43,7 +43,15 @@ namespace comm {
              */
             double timestamp;
 
+            /**
+             * Packed serialized command data.
+             */
             std::vector<uint8_t> packed;
+
+            /**
+             * Valid command flag.
+             */
+            bool valid;
 
             /**
              * Default constructor.
@@ -78,11 +86,10 @@ namespace comm {
             //Command(std::vector<uint8_t> & msg);
 
             /**
-             * Pack all command data.
-             * @param timestamp Transmit timestamp.
-             * @return Returns vector of packed command data.
+             * Pack body of command.  Method should be overwritten by derived classes.
+             * @return Returns vector of packed command body bytes.
              */
-            std::vector<uint8_t> pack(double timestamp = util::getTime());
+            virtual std::vector<uint8_t> packBody();
 
             /**
              * Pack provided data.
@@ -102,8 +109,12 @@ namespace comm {
 
             /**
              * Serialize command data for transmission.
+             * @param timestamp Transmit timestamp.
+             * @return Returns fully packed command data.
              */
-            virtual std::vector<uint8_t> serialize();
+            virtual std::vector<uint8_t> serialize(double timestamp = util::getTime());
+
+            static bool isValid(std::vector<uint8_t> & msgBytes);
     };
 
 }

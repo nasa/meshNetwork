@@ -5,12 +5,11 @@
 #include "node/nodeInterface.pb.h"
 #include <serial/serial.h>
 #include "comm/radio.hpp"
-#include "comm/serialRadio.hpp"
 #include "comm/msgParser.hpp"
 #include "comm/SLIPMsgParser.hpp"
-#include "comm/commProcessor.hpp"
+//#include "comm/commProcessor.hpp"
 #include "comm/tdmaMsgProcessor.hpp"
-#include "comm/comm.hpp"
+#include "comm/serialComm.hpp"
 #include "comm/tdmaComm.hpp"
 #include <memory>
 
@@ -23,7 +22,7 @@ namespace comm {
             /** 
              * Node to comm interface comm.
              */
-            Comm nodeComm;
+            SerialComm nodeComm;
 
             /**
              * Node to comm interface message parser.
@@ -38,7 +37,7 @@ namespace comm {
             /**
              * Radio for mesh network communication.
              */
-            std::unique_ptr<SerialRadio> radio;
+            std::unique_ptr<Radio> radio;
 
             /**
              * Message parser for mesh network communication.
@@ -53,7 +52,7 @@ namespace comm {
             /**
              * Mesh network communication processor.
              */
-            CommProcessor commProcessor = CommProcessor(std::vector<MsgProcessor *>({&tdmaMsgProcessor}));
+            //CommProcessor commProcessor = CommProcessor(std::vector<MsgProcessor *>({&tdmaMsgProcessor}));
 
             /**
              * Mesh network comm instance.

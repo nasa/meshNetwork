@@ -8,7 +8,7 @@ TEST_SRC:=
 TGT:=rapidjson
 TGTTYPE:=static_lib
 
-CPPFLAGS+=
+CPPFLAGS+= -fPIC
 
 SP:=./
 include $(SP)rules.mk

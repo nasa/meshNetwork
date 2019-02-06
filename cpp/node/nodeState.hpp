@@ -21,7 +21,7 @@ namespace node {
              * Constructor.
              * @param id Node id number.
              */
-            NodeState(uint8_t id);
+            NodeState(uint8_t id = 0);
 
             /**
              * Node id number.

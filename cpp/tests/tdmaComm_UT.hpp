@@ -15,20 +15,17 @@ namespace comm
     {
       public:  
          
-        comm::TDMAMsgProcessor tdmaProcessor;    
-        std::vector<comm::MsgProcessor *> msgProcessors;
-        serial::Serial serOut;
-        serial::Serial serIn;
-        comm::RadioConfig config;
-        comm::SerialRadio radio;
-        comm::CommProcessor commProcessor;
-        comm::SLIPMsgParser msgParser;
-      
       protected:
         TDMAComm_UT();
 
         virtual void SetUp(void);
         static void SetUpTestCase(void);
+
+        /*
+         * Support objects.
+         */
+        comm::TDMAMsgProcessor m_tdmaProcessor;    
+        std::vector<comm::MsgProcessor *> m_msgProcessors;
 
         /* The class under test.
          */

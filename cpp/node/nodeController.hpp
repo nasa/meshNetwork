@@ -4,7 +4,7 @@
 #include <fstream>
 #include <map>
 #include <memory>
-#include "comm/comm.hpp"
+#include "comm/serialComm.hpp"
 #include "comm/command.hpp"
 
 namespace node {
@@ -58,12 +58,12 @@ namespace node {
              * Performs initial processing of incoming flight computer commands and messages.
              * @param FCComm Flight computer communication instance pointer.
              */   
-            virtual void processFCCommands(comm::Comm * FCComm);
+            virtual void processFCCommands(comm::SerialComm * FCComm);
 
             /**
              * Performs initial processing of incoming node commands and messages."
              */
-            virtual void processNodeCommands(comm::Comm * comm);
+            virtual void processNodeCommands(comm::SerialComm * comm);
 
             /**
              * Performs lower level processing and implementation of received commands."

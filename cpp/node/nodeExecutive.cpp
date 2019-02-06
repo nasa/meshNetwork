@@ -11,7 +11,7 @@ namespace node {
         fcLogFile(NULL)
     {}
 
-    NodeExecutive::NodeExecutive(NodeController * controllerIn, vector<unique_ptr<comm::Comm>> & nodeCommIn, comm::Comm * FCCommIn, std::ofstream * fcLogFileIn) :
+    NodeExecutive::NodeExecutive(NodeController * controllerIn, vector<unique_ptr<comm::SerialComm>> & nodeCommIn, comm::SerialComm * FCCommIn, std::ofstream * fcLogFileIn) :
         nodeController(controllerIn),
         FCComm(FCCommIn),
         fcLogFile(fcLogFileIn)
@@ -48,7 +48,7 @@ namespace node {
         }
     }
 
-    void NodeExecutive::processNodeMsg(comm::Comm * comm) {
+    void NodeExecutive::processNodeMsg(comm::SerialComm * comm) {
         if (comm != NULL) {
             comm->readMsgs();
         }

@@ -156,7 +156,7 @@ namespace util {
      * @param context SHA1 hash structure.
      * @param elem String element to hash.
      */
-    inline void hashElement(SHA_CTX * context, unsigned int elem) {
+    template <typename T> inline void hashElement(SHA_CTX * context, T elem) {
         std::string out = std::to_string(elem);
         SHA1_Update(context, out.c_str(), out.size());
     }

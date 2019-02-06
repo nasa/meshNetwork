@@ -12,8 +12,8 @@ using std::unique_ptr;
 
 namespace comm {
 
-    TDMAComm_FPGA::TDMAComm_FPGA(CommProcessor * commProcessorIn, Radio * radioIn, MsgParser * msgParserIn) :
-        TDMAComm(commProcessorIn, radioIn, msgParserIn),
+    TDMAComm_FPGA::TDMAComm_FPGA(std::vector<MsgProcessor *> msgProcessorsIn, Radio * radioIn, MsgParser * msgParserIn) :
+        TDMAComm(msgProcessorsIn, radioIn, msgParserIn),
         transmitInterval(1.0/NodeParams::config.commConfig.desiredDataRate),
         lastTransmitTime(-1.0)
     {

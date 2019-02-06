@@ -1,4 +1,5 @@
 #include "comm/msgParser.hpp"
+#include <iostream>
 
 using std::vector;
 

@@ -3,6 +3,9 @@
 
 #include <gtest/gtest.h>
 #include "comm/serialComm.hpp"
+#include "comm/msgProcessor.hpp"
+#include "comm/nodeMsgProcessor.hpp"
+#include <vector>
 
 namespace comm
 {
@@ -16,9 +19,21 @@ namespace comm
         virtual void SetUp(void);
         static void SetUpTestCase(void);
 
-        /* The class under test.
+        /* 
+         * Message processor container.
+         */
+        std::vector<comm::MsgProcessor *> m_msgProcessors;
+    
+        /*
+         * Message processor for test usage
+         */
+        NodeMsgProcessor m_nodeProcessor;    
+        
+        /* 
+         * The class under test.
          */
         SerialComm m_serialComm;
+        
 
     };
 }

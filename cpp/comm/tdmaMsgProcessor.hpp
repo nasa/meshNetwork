@@ -21,7 +21,7 @@ namespace comm {
              * @param msg Command message bytes.
              * @param args Message processor arguments.
              */
-            virtual void processMsg(uint8_t cmdId, std::vector<uint8_t> & msg, MsgProcessorArgs & args);
+            virtual bool processMsg(uint8_t cmdId, std::vector<uint8_t> & msg, MsgProcessorArgs & args);
 
     };
 }

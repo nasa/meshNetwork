@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <cstdint>
+#include <openssl/sha.h>
 #include "rapidjson/document.h"
 #include "rapidjson/JSON_Wrapper.hpp"
 #include "node/nodeConfigSupport.hpp"
@@ -26,48 +27,66 @@ namespace node {
             NodeConfig(std::string configFile);
 
             /**
+             * Load node configuration file.
+             * @param configFile Configuration file path.
+             */
+            void loadConfigFile(std::string configFile);
+            
+            /**
              * Load general node configuration.
              * @param json Configuration JSON structure.
              */
-            void loadNodeConfig(rapidjson::Document & json);
+            bool loadNodeConfig(rapidjson::Document & json);
             
             /**
              * Load software interface configuration.
              * @param json Configuration JSON structure.
              */
-            void loadSoftwareInterface(rapidjson::Document & json);
+            bool loadInterfaceConfig(rapidjson::Document & json);
             
             /**
              * Loads platform specific configuration parameters.
              * @param json Configuration JSON structure.
              */
-            virtual void loadPlatformConfig(rapidjson::Document & json) {};
+            virtual bool loadPlatformConfig(rapidjson::Document & json);
 
             /**
              * Load communication configuration parameters.
              * @param json Configuration JSON structure.
              */
-            void loadCommConfig(rapidjson::Document & json);
+            bool loadCommConfig(rapidjson::Document & json);
 
             /**
              * Reads DIP switch states to determine node ID.
              * @return Returns true if node ID successfully read.
              */
-            bool readNodeId();
+            virtual bool readNodeId();
 
             /**
              * Update parameter.
-             * @param name Name of parameter to update.
-             * @param value New parameter value.
+             * @param paramId Parameter id number.
+             * @param paramValue New parameter value.
+             * @return Returns true if parameter updated successfully.
              */
-            bool updateParam(ParamName param, std::vector<uint8_t> value); 
+            bool updateParameter(unsigned int paramId, std::vector<uint8_t> & paramValue);
 
             /**
              * Calculates a hash of configuration parameters for comparison.
+             * @return Returns vector of hash.
              */
-            std::string calculateHash();
+            std::vector<uint8_t> calculateHash();
+            
+            /**
+             * Hash platform specific configuration parameters
+             */
+            virtual void hashPlatformConfig(SHA_CTX & context) {};
 
             // *** Basic node parameters ***
+
+            /**
+             * Load success flag.
+             */
+            bool loadSuccess;
 
             /**
              * Type of node platform.
@@ -77,7 +96,7 @@ namespace node {
             /**
              * Node ID number.
              */
-            unsigned int nodeId;
+            int nodeId;
 
             /**
              * Maximum number of nodes in network.
@@ -92,7 +111,7 @@ namespace node {
             /**
              * Size of configuration hash.
              */
-            int hashSize;
+            unsigned int hashSize;
 
             // *** Communication parameters ***
 
@@ -175,6 +194,16 @@ namespace node {
              * Communication configuration structure.
              */
             CommConfig commConfig;
+
+            /**
+             * Ground control system presence flag.
+             */
+            bool gcsPresent;
+
+            /**
+             * GCS node ID.
+             */
+            unsigned int gcsNodeId;
 
     };
 }

@@ -1,6 +1,7 @@
 #include "comm/cmdHeader.hpp"
 #include "comm/commands.hpp"
 #include <cstring>
+#include <iostream>
 
 using std::vector;
 
@@ -21,13 +22,14 @@ namespace comm {
         sourceId(sourceIdIn)
     {}
     
-    CmdHeader::CmdHeader(uint8_t cmdIdIn, unsigned int sourceIdIn, unsigned int cmdCounterIn) :
+    CmdHeader::CmdHeader(uint8_t cmdIdIn, unsigned int sourceIdIn, uint16_t cmdCounterIn) :
         type(NODE_HEADER),
         cmdId(cmdIdIn),
         sourceId(sourceIdIn),
         cmdCounter(cmdCounterIn)
-    {}
-    
+    {
+    }
+
     vector<uint8_t> CmdHeader::packHeader() {
         vector<uint8_t> header;
         switch(type) {
@@ -39,9 +41,11 @@ namespace comm {
                 header.push_back(sourceId);
                 break;
             case NODE_HEADER:
-                header.push_back(cmdId);
-                header.push_back(sourceId);
-                header.push_back(cmdCounter);
+                header.resize(4);
+                header[0] = cmdId;
+                header[1] = sourceId;
+                memcpy(header.data() + 2, &cmdCounter, 2);
+                //header.push_back(cmdCounter);
                 break;
             default:
                 break;
@@ -50,6 +54,58 @@ namespace comm {
         return header;
     }
 
+    CmdHeader createHeader(uint8_t cmdId, uint8_t sourceId, uint16_t cmdCounter) {
+        CmdHeader header;
+        std::vector<uint8_t> headerInputs(3);
+        headerInputs[0] = cmdId;
+        headerInputs[1] = sourceId;
+        memcpy(headerInputs.data() + 2, &cmdCounter, 2);
+        return createHeader(cmdId, headerInputs);
+
+    }
+        
+    CmdHeader createHeader(uint8_t cmdId, std::vector<uint8_t> & headerInputs) {
+        CmdHeader header;
+        
+        // Attempt to determine header type
+        if(Cmds::cmdDict.size() > 0 && Cmds::cmdDict.find(cmdId) != Cmds::cmdDict.end()) {
+            return createHeader(Cmds::cmdDict[cmdId], headerInputs);
+        }
+
+        return header;
+    }
+    
+    CmdHeader createHeader(HeaderType headerType, std::vector<uint8_t> & headerInputs) {
+        CmdHeader header;
+        
+        switch(headerType) {
+                case NO_HEADER:
+                    break;
+                case MINIMAL_HEADER:
+                    if (headerInputs.size() >= 1) { 
+                        header = CmdHeader(headerInputs[0]);
+                    }
+                    break;
+                case SOURCE_HEADER:
+                    if (headerInputs.size() >= 2) { 
+                        header = CmdHeader(headerInputs[0], headerInputs[1]);
+                    }
+                    break;
+                case NODE_HEADER:     
+                    if (headerInputs.size() >= 3) { 
+                        uint16_t counter;
+                        memcpy(&counter, &headerInputs[2], 2);
+                        header = CmdHeader(headerInputs[0], headerInputs[1], counter);
+                    }
+                    break;
+                default:
+                    break;
+        }
+
+        return header;
+
+    }
+        
     unsigned int unpackHeader(vector<uint8_t> & bytes, HeaderType type, CmdHeader & retHeader) {
         unsigned int retValue = 0;        
 
@@ -104,5 +160,26 @@ namespace comm {
         
         return retValue;
     }
+
+    unsigned int headerSize(HeaderType type) {
+        // Return size of header type
+        switch (type) {
+            case HEADER_UNKNOWN:
+                return 0;
+                break;
+            case NODE_HEADER:
+                return sizeof(NodeHeader);
+                break;
+            case SOURCE_HEADER:
+                return sizeof(SourceHeader);
+                break;
+            case MINIMAL_HEADER:
+                return sizeof(MinimalHeader);
+                break;
+            default:
+                return 0;
+        }
+    }
+
     
 }

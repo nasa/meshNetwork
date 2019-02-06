@@ -1,4 +1,5 @@
 #include "comm/commControl.hpp"
+#include "comm/msgProcessor.hpp"
 #include "comm/tdmaComm_fpga.hpp"
 #include "node/nodeParams.hpp"
 #include "comm/xbeeRadio.hpp"
@@ -34,14 +35,14 @@ namespace comm {
                     if (NodeParams::config.commConfig.sleepPin.length() > 0) {
                         printf("Xbee sleep pin: %s\n", NodeParams::config.commConfig.sleepPin.c_str());
                         //radio = comm::XbeeRadio(&ser, config, (int)GPIOWrapper::getPin(NodeParams::config.commConfig.sleepPin));
-                        radio = std::unique_ptr<comm::SerialRadio>(new comm::XbeeRadio(&ser, config, (int)GPIOWrapper::getPin(NodeParams::config.commConfig.sleepPin)));
+                        radio = std::unique_ptr<comm::Radio>(new comm::XbeeRadio(&ser, config, (int)GPIOWrapper::getPin(NodeParams::config.commConfig.sleepPin)));
                     }
                     else {
-                        radio = std::unique_ptr<comm::SerialRadio>(new comm::XbeeRadio(&ser, config));
+                        radio = std::unique_ptr<comm::Radio>(new comm::XbeeRadio(&ser, config));
                     }
                     break;
                 case node::LI1:
-                    radio = std::unique_ptr<comm::SerialRadio>(new comm::Li1Radio(&ser, config));
+                    radio = std::unique_ptr<comm::Radio>(new comm::Li1Radio(&ser, config));
                     break;
             }
         }
@@ -58,17 +59,19 @@ namespace comm {
                 break;
         }
         tdmaMsgProcessor = TDMAMsgProcessor();
-        commProcessor = CommProcessor(std::vector<MsgProcessor *>({&tdmaMsgProcessor}));
+        //commProcessor = CommProcessor(std::vector<MsgProcessor *>({&tdmaMsgProcessor}));
 
         if (NodeParams::config.commConfig.fpga == true) {
-            comm = std::unique_ptr<comm::TDMAComm_FPGA>(new comm::TDMAComm_FPGA(&commProcessor, radio.get(), msgParser.get()));
+            //comm = std::unique_ptr<comm::TDMAComm_FPGA>(new comm::TDMAComm_FPGA(&commProcessor, radio.get(), msgParser.get()));
+            comm = std::unique_ptr<comm::TDMAComm_FPGA>(new comm::TDMAComm_FPGA(std::vector<MsgProcessor *>({&tdmaMsgProcessor}), radio.get(), msgParser.get()));
         }
         else {
-            comm = std::unique_ptr<comm::TDMAComm>(new comm::TDMAComm(&commProcessor, radio.get(), msgParser.get()));
+            //comm = std::unique_ptr<comm::TDMAComm>(new comm::TDMAComm(&commProcessor, radio.get(), msgParser.get()));
+            comm = std::unique_ptr<comm::TDMAComm>(new comm::TDMAComm(std::vector<MsgProcessor *>({&tdmaMsgProcessor}), radio.get(), msgParser.get()));
         }
         
         // Setup node comm interface
-        nodeComm = Comm(NULL, radioIn, nodeMsgParser.get());        
+        nodeComm = SerialComm(std::vector<MsgProcessor *>(), radioIn, nodeMsgParser.get());        
 
         // Set node control run time bounds
         if (comm.get()->transmitSlot == 1) {
@@ -130,13 +133,15 @@ namespace comm {
                         //    comm.cmdRelayBuffer.push_back(vector<uint8_t>(cmd.begin(), cmd.end()));
                         //}
                         std::string cmdRelay = msg.cmdrelay();
-                        commPtr->cmdRelayBuffer.push_back(vector<uint8_t>(cmdRelay.begin(), cmdRelay.end()));
+                        //commPtr->cmdRelayBuffer.push_back(vector<uint8_t>(cmdRelay.begin(), cmdRelay.end()));
+                        commPtr->cmdRelayBuffer.insert(commPtr->cmdRelayBuffer.end(), cmdRelay.begin(), cmdRelay.end());
                     }
                     if (msg.cmds().size() > 0) { // cmds received
                         commPtr->cmdBuffer.clear(); // clear existing buffer
                         for (auto cmd : msg.cmds()) {
                             std::string cmdMsg = cmd.msgbytes();
-                            commPtr->cmdBuffer.push_back(Command(vector<uint8_t>(cmdMsg.begin(), cmdMsg.end()), cmd.txinterval()));
+                            /* TODO : UPDATE
+                            commPtr->cmdBuffer.push_back(Command(vector<uint8_t>(cmdMsg.begin(), cmdMsg.end()), cmd.txinterval()));*/
                         }
                     }
                 }

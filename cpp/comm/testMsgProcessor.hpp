@@ -12,7 +12,7 @@ namespace comm {
         public:
             TestMsgProcessor();
  
-            virtual void processMsg(uint8_t cmdId, std::vector<uint8_t> & msg, MsgProcessorArgs args);
+            virtual bool processMsg(uint8_t cmdId, std::vector<uint8_t> & msg, MsgProcessorArgs args);
 
     };
 }

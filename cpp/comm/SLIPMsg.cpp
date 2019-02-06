@@ -1,4 +1,5 @@
 #include "comm/SLIPMsg.hpp"
+#include <iostream>
 
 using std::vector;
 
@@ -22,7 +23,7 @@ namespace comm {
         if (bytes.size() == 0) {
             return false;
         }
-
+        
         if (msgFound == true) {
             if (msgEnd != 0) { // Clear previous message results
                 msg.clear();

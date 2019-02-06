@@ -21,31 +21,23 @@ namespace comm {
         cmdIds.insert(cmdIds.end(), tdmaCmds.begin(), tdmaCmds.end());
     }
     
-    void TDMAMsgProcessor::processMsg(uint8_t cmdId, vector<uint8_t> & msg, MsgProcessorArgs & args) {
-        // Parse command
+    bool TDMAMsgProcessor::processMsg(uint8_t cmdId, vector<uint8_t> & msg, MsgProcessorArgs & args) {
+        // Parse command header
         //unique_ptr<Command> cmd = deserialize(msg, cmdId);
         Command cmd(msg);
-
-        // Update node message received status
-        if (cmd.header.type != NO_HEADER && cmd.header.type != HEADER_UNKNOWN) {
-            updateNodeMsgRcvdStatus(cmd.header);
+        bool cmdStatus = processHeader(cmd, msg, args);
+        if (cmdStatus == false) { // stale or invalid command
+            return false;
         }
-
-        // Check command counter
-        if (cmd.header.type == NODE_HEADER) {
-            bool newCmd = checkCmdCounter(cmd, msg, args.relayBuffer);
-            if (newCmd == false) { // old command counter value
-                return;
-            }
-        }            
 
         // Process message by command id
         switch (cmdId) {
             case TDMACmds::TimeOffset:
                 {
-                    TDMA_TimeOffset timeOffset = TDMA_TimeOffset(msg);
-                    if (NodeParams::nodeStatus.size() >= cmd.header.sourceId) {
-                        NodeParams::nodeStatus[cmd.header.sourceId-1].timeOffset = timeOffset.timeOffset;
+                    std::unique_ptr<TDMA_TimeOffset> timeOffset(new TDMA_TimeOffset(msg));
+                    cmdStatus = timeOffset->valid;
+                    if (cmdStatus && NodeParams::nodeStatus.size() >= cmd.header.sourceId) {
+                        NodeParams::nodeStatus[cmd.header.sourceId-1].timeOffset = timeOffset->timeOffset;
                     }
 
                     break;
@@ -53,28 +45,42 @@ namespace comm {
 
             case TDMACmds::TimeOffsetSummary:
                 {
-                    TDMA_TimeOffsetSummary timeOffset = TDMA_TimeOffsetSummary(msg);
-                
+                    std::unique_ptr<TDMA_TimeOffsetSummary> timeOffset(new TDMA_TimeOffsetSummary(msg));
+                    cmdStatus = timeOffset->valid;
+                    if (cmdStatus) {
+                        //args.cmdQueue->insert({TDMACmds::TimeOffsetSummary, std::move(timeOffset)});
+                        args.cmdQueue->insert({TDMACmds::TimeOffsetSummary, msg});
+                    }
                     break;
                 }
             case TDMACmds::MeshStatus:
                 {
                     std::cout << "Mesh status message received" << std::endl;
-                    TDMA_MeshStatus meshStatus = TDMA_MeshStatus(msg);
-                    NodeParams::commStartTime = meshStatus.commStartTimeSec;
-                    std::cout << "commStartTime: " << NodeParams::commStartTime << std::endl; 
+                    std::unique_ptr<TDMA_MeshStatus> meshStatus(new TDMA_MeshStatus(msg));
+                    cmdStatus = meshStatus->valid;
+                    if (cmdStatus) {
+                        //args.queueMsg(TDMACmds::MeshStatus, std::move(meshStatus));
+                        args.cmdQueue->insert({TDMACmds::MeshStatus, msg});
+                    }
+                    // TODO: UPDATE
+                    //NodeParams::commStartTime = meshStatus.commStartTimeSec;
+                    //std::cout << "commStartTime: " << NodeParams::commStartTime << std::endl; 
                     break;
                 }
            
             case TDMACmds::LinkStatus:
                 {
-                    TDMA_LinkStatus linkStatus = TDMA_LinkStatus(msg);
+                    
+                    std::unique_ptr<TDMA_LinkStatus> linkStatus(new TDMA_LinkStatus(msg));
+                    cmdStatus = linkStatus->valid;
                     
                     // Sending node
-                    uint8_t node = linkStatus.header.sourceId;
+                    uint8_t node = linkStatus->header.sourceId - 1;
 
                     // Store received status
-                    NodeParams::linkStatus[node] = linkStatus.linkStatus;
+                    if (cmdStatus) {
+                        NodeParams::linkStatus[node] = linkStatus->linkStatus;
+                    }
                        
                     break;
                 } 
@@ -83,6 +89,8 @@ namespace comm {
                 std::cout << "Invalid message type" << std::endl;
                 break;
         }
+
+        return cmdStatus;
               
     };
 }    

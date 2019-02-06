@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <memory>
-#include "comm/comm.hpp"
+#include "comm/serialComm.hpp"
 #include "node/nodeController.hpp"
 
 namespace node {
@@ -21,12 +21,12 @@ namespace node {
             /**
              * Container of node communication instances.
              */
-            std::vector<comm::Comm *> nodeComm;
+            std::vector<comm::SerialComm *> nodeComm;
 
             /**
              * Flight computer comm instance.
              */
-            comm::Comm * FCComm;
+            comm::SerialComm * FCComm;
 
             /**
              * Flight computer logging file stream.
@@ -45,7 +45,7 @@ namespace node {
              * @param FCComm Flight computer comm instance.
              * @param fcLogFile Flight computer logging file stream.
              */
-            NodeExecutive(NodeController * controller, std::vector<std::unique_ptr<comm::Comm>> & nodeComm, comm::Comm * FCComm, std::ofstream * fcLogFile);
+            NodeExecutive(NodeController * controller, std::vector<std::unique_ptr<comm::SerialComm>> & nodeComm, comm::SerialComm * FCComm, std::ofstream * fcLogFile);
 
             /**
              * Controls execution of all node software in the proper sequence.
@@ -61,7 +61,7 @@ namespace node {
              * Processes messages from other nodes.
              * @param comm Comm instance to processes messages from.
              */
-            virtual void processNodeMsg(comm::Comm * comm);
+            virtual void processNodeMsg(comm::SerialComm * comm);
 
             /**
              * Sends outgoing flight computer messages.

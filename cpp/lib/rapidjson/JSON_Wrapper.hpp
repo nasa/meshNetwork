@@ -11,6 +11,7 @@ namespace rapidjson {
     int get_strings(const rapidjson::Document & d, const char *entry, std::string *value, int numEntries);
     bool get_int(const rapidjson::Document & d, const char *entry, int &value);
     int get_ints(const rapidjson::Document & d, const char *entry, int *value, int numEntries);
+    bool get_int(const rapidjson::Document & d, const char *entry, unsigned int &value);
     bool get_bool(const rapidjson::Document & d, const char *entry, bool &value);
     bool get_double(const rapidjson::Document & d, const char *entry, double &value);
     int get_doubles(const rapidjson::Document & d, const char *entry, double *value, int numEntries);

@@ -1,7 +1,7 @@
 #include "JSON_Wrapper.hpp"
 #include "filereadstream.h"
 #include <stdio.h>
-
+#include <iostream>
 namespace rapidjson {
 
     bool loadJSONDocument(rapidjson::Document & d, std::string filename) {
@@ -10,6 +10,7 @@ namespace rapidjson {
     
     bool loadJSONDocument(rapidjson::Document & d, const char *filename) {
         FILE *fp = fopen(filename, "r");
+        
         if(NULL == fp)
         {
             perror("fopen");
@@ -73,6 +74,19 @@ namespace rapidjson {
         {
             const Value & val = d[entry];
             return get_ints(val, value, numEntries);
+        }
+
+        return 0;
+    }
+    
+    bool get_int(const rapidjson::Document & d, const char *entry, unsigned int &value) {
+        if(d.HasMember(entry))
+        {
+            if(d[entry].IsUint())
+            {
+                value = d[entry].GetUint();
+                return true;
+            }
         }
 
         return 0;

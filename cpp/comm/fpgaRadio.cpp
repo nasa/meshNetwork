@@ -7,7 +7,7 @@ using std::vector;
 namespace comm {
 
     FPGARadio::FPGARadio(serial::Serial * serialIn, RadioConfig & configIn) :
-        SerialRadio(serialIn, configIn)
+        Radio(serialIn, configIn)
     {
     };
 
@@ -25,7 +25,7 @@ namespace comm {
         outMsg.insert(outMsg.end(), msgBytes.begin(), msgBytes.end());
         crcToBytes(outMsg, crc);
 
-        return SerialRadio::sendMsg(outMsg);
+        return Radio::sendMsg(outMsg);
 
     }
 

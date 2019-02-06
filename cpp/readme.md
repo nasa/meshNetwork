@@ -1,8 +1,8 @@
 Library dependencies:
     -Serial (https://github.com/wjwwood/serial)
-        -Requires catkin to build (Install from source option: http://wiki.ros.org/catkin)
-    -JSON (https://github.com/miloyip/rapidjson) with additional wrapper functions
-    -Google test (https://github.com/google/googletest)
+        -Requires catkin to build (Install from source option: http://wiki.ros.org/catkin, 'sudo apt-get install catkin')
+    -JSON (https://github.com/miloyip/rapidjson) with additional wrapper functions. Wrapper library folder already includes rapidjson required files.
+    -Google test (https://github.com/abseil/googletest)
     -GPIO
         -Beaglebone Black (https://github.com/mkaczanowski/BeagleBoneBlack-GPIO)
         -Raspberry Pi (wiringpi.com)

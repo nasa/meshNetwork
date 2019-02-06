@@ -1,5 +1,5 @@
-#ifndef __COMM_NODE_CONFIG_UT_HPP__
-#define __COMM_NODE_CONFIG_UT_HPP__
+#ifndef __NODE_NODE_CONFIG_UT_HPP__
+#define __NODE_NODE_CONFIG_UT_HPP__
 
 #include <gtest/gtest.h>
 #include "node/nodeConfig.hpp"
@@ -22,4 +22,4 @@ namespace node
     };
 }
 
-#endif // __COMM_NODE_CONFIG_UT_HPP__
+#endif // __NODE_NODE_CONFIG_UT_HPP__

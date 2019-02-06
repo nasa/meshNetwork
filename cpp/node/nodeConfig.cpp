@@ -1,6 +1,6 @@
 #include "node/nodeConfig.hpp"
 #include "GPIOWrapper.hpp"
-#include <openssl/sha.h>
+#include <cstring>
 #include "comm/utilities.hpp"
 #include "comm/defines.hpp"
 #include "rapidjson/JSON_Wrapper.hpp"
@@ -9,178 +9,201 @@ namespace node {
    
     NodeConfig::NodeConfig() {}
 
-    NodeConfig::NodeConfig(std::string configFile) {
-        // Load configuration from file
-        rapidjson::Document config;
-        loadJSONDocument(config, configFile.c_str());
- 
-        // Load general node parameters
-        loadNodeConfig(config);
-        
-        // Load software interface config
-        loadSoftwareInterface(config);       
-        
-        // Load communication network config
-        loadCommConfig(config);
-        
-        // Calculate hash
-        hashSize = calculateHash().size();
+    NodeConfig::NodeConfig(std::string configFile) :
+        loadSuccess(false),
+        nodeId(-1),
+        maxNumNodes(-1),
+        hashSize(20),
+        numMeshNetworks(1),
+        uartNumBytesToRead(100),
+        gcsPresent(false),
+        gcsNodeId(0)
+    {
+        // Attempt load from configuration file
+        loadConfigFile(configFile);
+
     }
 
-    void NodeConfig::loadNodeConfig(rapidjson::Document & config) {
+    void NodeConfig::loadConfigFile(std::string configFile) {
+        
+        // Load configuration from file
+        rapidjson::Document config;
+        if (loadJSONDocument(config, configFile.c_str())) {
+            loadSuccess = true; // default to success
+            
+            // Load general node parameters
+            loadSuccess &= loadNodeConfig(config);
+        
+            // Load software interface config
+            loadSuccess &= loadInterfaceConfig(config);       
+        
+            // Load communication network config
+            loadSuccess &= loadCommConfig(config);
+        }            
+    
+    }
+    
+    bool NodeConfig::loadNodeConfig(rapidjson::Document & config) {
         std::string tempString;
         std::string temp[3];
         int numRet = 0;
-        
+        bool loadStatus = true;        
+
         if (config.HasMember("node") == false) {
-            return;
+            return false;
         }
 
         const rapidjson::Value & node = config["node"];
-        
-        get_int(node, "maxNumNodes", maxNumNodes);
-        if (readNodeId() == false) {
+       
+        // General node configuration 
+        loadStatus &= get_int(node, "maxNumNodes", maxNumNodes);
+        loadStatus &= get_bool(node, "gcsPresent", gcsPresent);
+        if (gcsPresent) {
+            gcsNodeId = maxNumNodes;
+        }
+        if (node.HasMember("nodeId") == true) {
             // Get node ID from config file
-            get_int(node, "nodeId", nodeId);
+            loadStatus &= get_int(node, "nodeId", nodeId);
         }
-        get_string(node, "platform", tempString);
-        if (tempString.compare("Pixhawk") == 0) {
-            platform = PIXHAWK;
+        else {
+            readNodeId();
         }
-        else if (tempString.compare("SatFC") == 0) {
-            platform = SATFC;
-        }
-        else if (tempString.compare("generic") == 0) {
-            platform = GENERIC;
-        }
-        get_double(node, "nodeUpdateTimeout", nodeUpdateTimeout);
-        get_double(node, "FCCommWriteInterval", FCCommWriteInterval);
-        get_string(node, "FCCommDevice", FCCommDevice);
-        get_int(node, "FCBaudrate", FCBaudrate);
-        get_double(node, "cmdInterval", cmdInterval);
-        get_double(node, "logInterval", logInterval);
+        loadStatus &= get_double(node, "nodeUpdateTimeout", nodeUpdateTimeout);
+        loadStatus &= get_double(node, "FCCommWriteInterval", FCCommWriteInterval);
+        loadStatus &= get_string(node, "FCCommDevice", FCCommDevice);
+        loadStatus &= get_int(node, "FCBaudrate", FCBaudrate);
+        loadStatus &= get_double(node, "cmdInterval", cmdInterval);
+        loadStatus &= get_double(node, "logInterval", logInterval);
        
         // Network config
-        get_string(node, "commType", tempString);
+        loadStatus &= get_string(node, "commType", tempString);
         if (tempString.compare("TDMA") == 0) {
             commType = TDMA;
         }
-        else if (tempString.compare("Standard") == 0) {
+        else if (tempString.compare("standard") == 0) {
             commType = STANDARD;
         }
-        get_int(node, "uartNumBytesToRead", uartNumBytesToRead);
-        get_int(node, "parseMsgMax", parseMsgMax);
-        get_int(node, "rxBufferSize", rxBufferSize);
-        get_int(node, "meshBaudrate", meshBaudrate);
-        get_int(node, "numMeshNetworks", numMeshNetworks);
+        loadStatus &= get_int(node, "meshBaudrate", meshBaudrate);
+        if (node.HasMember("uartNumBytesToRead") == true) {
+            loadStatus &= get_int(node, "uartNumBytesToRead", uartNumBytesToRead);
+        }
+        else { // Calculate based on serial baudrates
+            uartNumBytesToRead = std::max(FCBaudrate, meshBaudrate) / 8;
+        }
+        loadStatus &= get_int(node, "parseMsgMax", parseMsgMax);
+        loadStatus &= get_int(node, "rxBufferSize", rxBufferSize);
+        loadStatus &= get_int(node, "numMeshNetworks", numMeshNetworks);
         numRet = get_strings(node, "meshDevices", temp, 3);
         if (numRet > 0) {
             meshDevices.assign(temp, temp + numRet);
         }
+        else {
+            loadStatus = false;
+        }
 
         // Radios
-
         numRet = get_strings(node, "radios", temp, 3);
-        for (unsigned int i = 0; i < numRet; i++) {
-            if (temp[i].compare("Xbee") == 0) {
-                radios.push_back(XBEE);
+        if (numRet > 0 ) {
+            for (int i = 0; i < numRet; i++) {
+                if (temp[i].compare("Xbee") == 0) {
+                    radios.push_back(XBEE);
+                }
+                else if (temp[i].compare("Li-1") == 0) {
+                    radios.push_back(LI1);
+                }
             }
-            else if (temp[i].compare("Li-1") == 0) {
-                radios.push_back(LI1);
-            }
-        }        
+        }    
+        else {
+            loadStatus = false;
+        }    
 
         // Message parsers 
         numRet = get_strings(node, "msgParsers", temp, 3);
-        for (unsigned int i = 0; i < numRet; i++) {
-            if (temp[i].compare("SLIP") == 0) {
-                msgParsers.push_back(SLIP_PARSER);
+        if (numRet > 0 ) {
+            for (int i = 0; i < numRet; i++) {
+                if (temp[i].compare("SLIP") == 0) {
+                    msgParsers.push_back(SLIP_PARSER);
+                }
+                else if (temp[i].compare("Standard") == 0) {
+                    msgParsers.push_back(STANDARD_PARSER);
+                }
             }
-            else if (temp[i].compare("Standard") == 0) {
-                msgParsers.push_back(STANDARD_PARSER);
-            }
+        }
+        else {
+            loadStatus = false;
         }         
 
         // Load platform specific parameters 
-        loadPlatformConfig(config);
+        //loadSuccess &= get_string(node, "platform", tempString);
+        //if (tempString.compare("generic") == 0) {
+        //    platform = GENERIC;
+        //}
+        //else if (tempString.compare("Pixhawk") == 0) {
+        //    platform = PIXHAWK;
+        //}
+        //else if (tempString.compare("SatFC") == 0) {
+        //    platform = SATFC;
+        //}
+        
+        loadStatus &= loadPlatformConfig(config);
+
+        return loadStatus;
     }
 
-    void NodeConfig::loadSoftwareInterface(rapidjson::Document & config) {
+    bool NodeConfig::loadInterfaceConfig(rapidjson::Document & config) {
         if (config.HasMember("interface") == false) {
-            return;
+            return false;
         }
+            
         const rapidjson::Value & intConfig = config["interface"];
-        get_string(intConfig, "nodeCommIntIP", interface.nodeCommIntIP);
-        get_int(intConfig, "commRdPort", interface.commRdPort);
-        get_int(intConfig, "commWrPort", interface.commWrPort);
+        interface = SoftwareInterface(intConfig);
+
+        return interface.loadSuccess;
     }
 
-    void NodeConfig::loadCommConfig(rapidjson::Document & config) {
+    bool NodeConfig::loadCommConfig(rapidjson::Document & config) {
         // Specific comm config
 	    if (commType == TDMA) {
             if (config.HasMember("tdmaConfig") == false) {
-                return;
+                return false;
             }
             const rapidjson::Value & tdmaConfig = config["tdmaConfig"];
-            commConfig = CommConfig(nodeId, TDMA, tdmaConfig);
+            commConfig = CommConfig(nodeId, meshBaudrate, TDMA, tdmaConfig);
         }
+
+        return commConfig.loadSuccess;
+    }
+           
+    bool NodeConfig::loadPlatformConfig(rapidjson::Document & json) {
+        platform = GENERIC;
+
+        return true;
     }
 
     bool NodeConfig::readNodeId() {
-        if (HAS_GPIO == 0) { // not on a platform with GPIO
-            return false;
-        }
-
-        // Enable switches
-        GPIOWrapper::setupPin("P8_7", GPIOWrapper::INPUT);
-        GPIOWrapper::setupPin("P8_8", GPIOWrapper::INPUT);
-        GPIOWrapper::setupPin("P8_9", GPIOWrapper::INPUT);
-        GPIOWrapper::setupPin("P8_10", GPIOWrapper::INPUT);
-         
-        // Check switch positions
-        if(GPIOWrapper::getValue("P8_7") == 0 && GPIOWrapper::getValue("P8_10") == 0 && GPIOWrapper::getValue("P8_9") == 0) {
-            nodeId = 0;
-        }
-        else if(GPIOWrapper::getValue("P8_7") == 0 && GPIOWrapper::getValue("P8_10") == 0 && GPIOWrapper::getValue("P8_9") == 1) {
-            nodeId = 1;
-        }
-        else if(GPIOWrapper::getValue("P8_7") == 0 && GPIOWrapper::getValue("P8_10") == 1 && GPIOWrapper::getValue("P8_9") == 0) {
-            nodeId = 2;
-        }
-        else if(GPIOWrapper::getValue("P8_7") == 0 && GPIOWrapper::getValue("P8_10") == 1 && GPIOWrapper::getValue("P8_9") == 1) {
-            nodeId = 3;
-        }
-        else if(GPIOWrapper::getValue("P8_7") == 1 && GPIOWrapper::getValue("P8_10") == 0 && GPIOWrapper::getValue("P8_9") == 0) {
-            nodeId = 4;
-        }
-        else if(GPIOWrapper::getValue("P8_7") == 1 && GPIOWrapper::getValue("P8_10") == 0 && GPIOWrapper::getValue("P8_9") == 1) {
-            nodeId = 5;
-        }
-        else if(GPIOWrapper::getValue("P8_7") == 1 && GPIOWrapper::getValue("P8_10") == 1 && GPIOWrapper::getValue("P8_9") == 0) {
-            nodeId = 6;
-        }
-        else if(GPIOWrapper::getValue("P8_7") == 1 && GPIOWrapper::getValue("P8_10") == 1 && GPIOWrapper::getValue("P8_9") == 1) {
-            nodeId = 7;
-        }
-
+        nodeId = 1; // default to 1
         return true;
-
     }
 
-    std::string NodeConfig::calculateHash() {
+    std::vector<uint8_t> NodeConfig::calculateHash() {
         SHA_CTX context;
         SHA1_Init(&context);
 
-        // Hash non-unique parameters
-        util::hashElement(&context, (unsigned int)platform);
+        // Hash global non-unique parameters
         util::hashElement(&context, maxNumNodes);
+        util::hashElement(&context, (unsigned int)gcsPresent);
+        util::hashElement(&context, gcsNodeId);
         util::hashElement(&context, nodeUpdateTimeout);
+        util::hashElement(&context, FCCommWriteInterval);
+        util::hashElement(&context, FCCommDevice);
+        util::hashElement(&context, FCBaudrate);
+        util::hashElement(&context, cmdInterval);
+        util::hashElement(&context, logInterval);
         util::hashElement(&context, (unsigned int)commType);
-        util::hashElement(&context, uartNumBytesToRead);
         util::hashElement(&context, parseMsgMax);
         util::hashElement(&context, rxBufferSize);
         util::hashElement(&context, meshBaudrate);
-        util::hashElement(&context, FCBaudrate);
+        util::hashElement(&context, uartNumBytesToRead);
         util::hashElement(&context, numMeshNetworks);
         for (unsigned int i = 0; i < meshDevices.size(); i++) {
             util::hashElement(&context, meshDevices[i]);
@@ -191,38 +214,50 @@ namespace node {
         for (unsigned int i = 0; i < msgParsers.size(); i++) {
             util::hashElement(&context, (unsigned int)msgParsers[i]);
         }
-        util::hashElement(&context, FCCommDevice);
-        util::hashElement(&context, cmdInterval);
-        util::hashElement(&context, logInterval);
-       
-        // Comm params
-        util::hashElement(&context, commConfig.preTxGuardLength);
-        util::hashElement(&context, commConfig.postTxGuardLength);
-        util::hashElement(&context, commConfig.txLength);
-        util::hashElement(&context, commConfig.txBaudrate);
-        util::hashElement(&context, commConfig.enableLength);
-        util::hashElement(&context, commConfig.rxDelay);
-        util::hashElement(&context, commConfig.maxNumSlots);
-        util::hashElement(&context, commConfig.slotGuardLength);
+      
+        // Interface params (order is alphabetical)
+        util::hashElement(&context, interface.commRdPort);
+        util::hashElement(&context, interface.commWrPort);
+        util::hashElement(&context, interface.nodeCommIntIP);
+        
+        
+ 
+        // Comm params (order is alphabetical)
+        util::hashElement(&context, commConfig.frameLength);
+        util::hashElement(&context, commConfig.blockTxRequestTimeout);
+        util::hashElement(&context, commConfig.cycleLength);
         util::hashElement(&context, commConfig.desiredDataRate);
-        util::hashElement(&context, commConfig.initTimeToWait);
+        util::hashElement(&context, commConfig.enableLength);
+        util::hashElement(&context, commConfig.enablePin);
+        util::hashElement(&context, (unsigned int)commConfig.fpga);
+        util::hashElement(&context, commConfig.fpgaFailsafePin);
+        util::hashElement(&context, commConfig.fpgaFifoSize);
+        util::hashElement(&context, commConfig.frameLength);
         util::hashElement(&context, commConfig.initSyncBound);
-        util::hashElement(&context, commConfig.operateSyncBound);
+        util::hashElement(&context, commConfig.initTimeToWait);
+        util::hashElement(&context, commConfig.linksTxInterval);
+        util::hashElement(&context, commConfig.maxBlockTransferSize);
+        util::hashElement(&context, commConfig.maxNumSlots);
+        util::hashElement(&context, commConfig.maxTransferSize);
+        util::hashElement(&context, commConfig.maxTxBlockSize);
+        util::hashElement(&context, commConfig.minBlockTxDelay);
         util::hashElement(&context, commConfig.offsetTimeout);
         util::hashElement(&context, commConfig.offsetTxInterval);
-        util::hashElement(&context, commConfig.statusTxInterval);
-        util::hashElement(&context, commConfig.linksTxInterval);
-        util::hashElement(&context, commConfig.maxTxBlockSize);
-        util::hashElement(&context, commConfig.blockTxRequestTimeout);
-        util::hashElement(&context, commConfig.minBlockTxDelay);
+        util::hashElement(&context, commConfig.operateSyncBound);
+        util::hashElement(&context, commConfig.postTxGuardLength);
+        util::hashElement(&context, commConfig.preTxGuardLength);
+        util::hashElement(&context, commConfig.rxDelay);
         util::hashElement(&context, commConfig.rxLength);
+        util::hashElement(&context, commConfig.sleepPin);
+        util::hashElement(&context, commConfig.slotGuardLength);
         util::hashElement(&context, commConfig.slotLength);
-        util::hashElement(&context, commConfig.frameLength);
-        util::hashElement(&context, commConfig.cycleLength);
-        util::hashElement(&context, commConfig.maxTransferSize);
-        util::hashElement(&context, commConfig.maxBlockTransferSize);
+        util::hashElement(&context, commConfig.statusPin);
+        util::hashElement(&context, commConfig.statusTxInterval);
+        util::hashElement(&context, commConfig.txLength);
 
         // Platform specific params
+        hashPlatformConfig(context);
+
         /*if (platform == PIXHAWK) {
             // Command fence
             util::hashElement(&context, pixhawk.cmdFence.minLat);
@@ -271,17 +306,31 @@ namespace node {
         // Get hash value
         unsigned char hash[20];
         SHA1_Final(hash, &context);
-        return std::string(reinterpret_cast<char*>(hash));
+        std::vector<uint8_t> output(20);
+        std::memcpy(output.data(), hash, 20);
+        
+        return output;
             
     }
-    
-    bool NodeConfig::updateParam(ParamName param, std::vector<uint8_t> value) {
-        bool retValue = false;
+            
+    bool NodeConfig::updateParameter(unsigned int paramId, std::vector<uint8_t> & paramValue) { 
+        bool updateSuccess = true;
 
-        // Update desired parameter
-        switch (param) {
-        }
+        // Update selected parameter
+        switch (paramId) {
+            case PARAMID_PARSE_MSG_MAX:
+                if (paramValue.size() == 2) {
+                    std::memcpy(&parseMsgMax, &paramValue[0], 2);
+                }
+                else {
+                    updateSuccess = false;
+                }
+                break;
+            default: // undefined parameter
+                updateSuccess = false;
+                break;
+            }
 
-        return retValue;
-    } 
+        return updateSuccess;
+    }
 }       

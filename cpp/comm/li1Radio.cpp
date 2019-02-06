@@ -17,7 +17,7 @@ namespace comm {
     unsigned int Li1Radio::maxPayload = 255;
 
     Li1Radio::Li1Radio() : 
-        SerialRadio(),
+        Radio(),
         cmdBuffer(CommBuffer<Li1Cmd>(5)),
         bigendian(util::isbigendian())
     {
@@ -25,7 +25,7 @@ namespace comm {
     }
 
     Li1Radio::Li1Radio(serial::Serial * serialIn, RadioConfig & configIn) :
-        SerialRadio(serialIn, configIn),
+        Radio(serialIn, configIn),
         cmdBuffer(CommBuffer<Li1Cmd>(5)),
         bigendian(util::isbigendian())
     {
@@ -195,7 +195,7 @@ namespace comm {
                 
                 // Send message
                 vector<uint8_t> payload = vector<uint8_t>(msgBytes.begin() + i*Li1Radio::maxPayload, msgBytes.begin() + msgEnd);
-                SerialRadio::sendMsg(payload);
+                Radio::sendMsg(payload);
                 
             }
             return numMsgs;

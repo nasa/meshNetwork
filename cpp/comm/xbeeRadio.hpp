@@ -1,12 +1,12 @@
 #ifndef COMM_XBEE_RADIO_HPP
 #define COMM_XBEE_RADIO_HPP
 
-#include "comm/serialRadio.hpp"
+#include "comm/radio.hpp"
 #include <serial/serial.h>
 
 namespace comm {
 
-    class XbeeRadio : public SerialRadio {
+    class XbeeRadio : public Radio {
     
         public:
             /**
@@ -17,7 +17,7 @@ namespace comm {
             /**
              * Default constructor.
              */
-            XbeeRadio() : SerialRadio(), sleepPin(-1) {};
+            XbeeRadio() : Radio(), sleepPin(-1) {};
             
             /**
              * Constructor.

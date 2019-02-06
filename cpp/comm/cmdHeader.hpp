@@ -95,7 +95,7 @@ namespace comm {
              * @param sourceId Source ID.
              * @param cmdCounter Command counter.
              */
-            CmdHeader(uint8_t cmdId, unsigned int sourceId, unsigned int cmdCounter);
+            CmdHeader(uint8_t cmdId, unsigned int sourceId, uint16_t cmdCounter);
 
             /**
              * Convert header elements to vector of bytes.
@@ -108,6 +108,17 @@ namespace comm {
      */
     unsigned int unpackHeader(std::vector<uint8_t> & bytes, HeaderType type, CmdHeader & retHeader);
 
+    /**
+     * Return size of requested header type.
+     */
+    unsigned int headerSize(HeaderType type);
+
+    /**
+     * Create command header.
+     */
+    CmdHeader createHeader(uint8_t cmdId, std::vector<uint8_t> & headerInputs);
+    CmdHeader createHeader(uint8_t cmdId, uint8_t sourceId = 0, uint16_t cmdCounter = 0);
+    CmdHeader createHeader(HeaderType headerType, std::vector<uint8_t> & headerInputs);
 }
 
 #endif // COMM_CMD_HEADER_HPP

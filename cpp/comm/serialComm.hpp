@@ -1,17 +1,55 @@
-#ifndef COMM_SERIAL_COMM_HPP
-#define COMM_SERIAL_COMM_HPP
+#ifndef COMM_COMM_HPP
+#define COMM_COMM_HPP
 
-#include "comm/comm.hpp"
 #include "comm/msgProcessor.hpp"
+#include "comm/msgParser.hpp"
+#include "comm/radio.hpp"
+#include "comm/command.hpp"
 #include <vector>
-#include <string>
-#include <cstdint>
+#include <unordered_map>
+#include <memory>
 
 namespace comm {
 
-    class SerialComm : public Comm {
+    class SerialComm {
 
         public:
+            /**
+             * Radio.
+             */
+            Radio * radio;
+
+            /**
+             * Message parser.
+             */
+            MsgParser * msgParser;
+            
+            /**
+             * Comm processor.
+             */
+            //CommProcessor * commProcessor;
+            
+            /**
+             * Message processors.
+             */
+            std::vector<MsgProcessor *> msgProcessors;
+
+            /**
+             * Command queue.
+             */
+            //std::unordered_map<uint8_t, Command> cmdQueue;
+            std::unordered_map<uint8_t, std::vector<uint8_t> > cmdQueue;
+
+            /**
+             * Buffer of commands to send.
+             */
+            std::unordered_map<uint8_t, std::vector<uint8_t> > cmdBuffer;
+
+            /**
+             * Command relay buffer
+             */
+            std::vector<uint8_t> cmdRelayBuffer;
+
             /**
              * Time last message was sent.
              */
@@ -23,17 +61,22 @@ namespace comm {
             unsigned int msgCounter;
 
             /**
-             * Default constructor
+             * Default constructor.
              */
             SerialComm() {};
 
             /**
              * Constructor.
-             * @param commProcessorIn Comm message processor.
+             * @param msgProcessorsIn Vector of message processors.
              * @param radioIn Radio to send/receive messages.
              * @param msgParserIn Message parser.
              */ 
-            SerialComm(CommProcessor * commProcessorIn, Radio * radioIn, MsgParser * msgParserIn);
+            SerialComm(std::vector<MsgProcessor *> msgProcessorsIn, Radio * radioIn, MsgParser * msgParserIn = NULL);
+            
+            /**
+             * Send bytes in radio tx buffer.
+             */
+            void sendBuffer();
             
             /**
              * Perform communication operations.
@@ -41,37 +84,62 @@ namespace comm {
             void execute();
             
             /**
-             * Read bytes from serial.
-             * @param bufferFlag Flag to add new data to existing buffer.
-             */
-            void readBytes(bool bufferFlag);
-
-            /**
              * Read from radio and attempt to parse any data received.
              */
-            virtual void readMsgs();
+            virtual bool readMsgs();
 
             /**
              * Parse messages in radio rx buffer.
              */
             void parseMsgs();
+            
+            /**
+             * Read bytes from radio.
+             * @param bufferFlag Flag to add new data to existing buffer.
+             */
+            void readBytes(bool bufferFlag = false);
+
+            /**
+             * Send bytes using radio
+             * @param msgBytes Message bytes to send.
+             * @return Returns number of bytes sent.
+             */
+            unsigned int sendBytes(std::vector<uint8_t> & msgBytes);
+
+            /**
+             * Format bytes into a message and send.
+             * @param msgBytes Message bytes to encode and send.
+             */
+            void sendMsg(std::vector<uint8_t> & msgBytes);
 
             /**
              * Create and buffer a message for transmission.
              * @param msgBytes Message bytes to encode and buffer.
              */
-            void bufferTxMsg(std::vector<uint8_t> msgBytes);
-        
+            void bufferTxMsg(std::vector<uint8_t> & msgBytes);
+
             /**
-             * Process parsed message.
-             * @param msg Message to process.
-             * @param args Arguments to use for message processing.
-             * @return Returns -1 if message is not processed.
+             * This function processes received and parsed serial messages.
+             * @param msg The parsed bytes of a message.
+             * @param args Arguments to use when processing the message.
+             * @return Returns true if message processed successfully.
              */
-            virtual int processMsg(std::vector<uint8_t> msg, MsgProcessorArgs & args);
+            virtual bool processMsg(std::vector<uint8_t> & msg, MsgProcessorArgs args);
+
             
+            /**
+             * Read and process any received messages.
+             * @param args Arguments to use when processing the message.
+             */
+            virtual void processMsgs(MsgProcessorArgs & args);
+    
+            /**
+             * Process command buffers.
+             */
+            void processBuffers();
+
     };
 
 }
 
-#endif // COMM_SERIAL_COMM_HPP
+#endif // COMM_COMM_HPP

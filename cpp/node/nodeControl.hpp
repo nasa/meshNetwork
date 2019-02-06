@@ -5,7 +5,7 @@
 #include <serial/serial.h>
 #include "comm/radio.hpp"
 #include "comm/msgParser.hpp"
-#include "comm/comm.hpp"
+#include "comm/serialComm.hpp"
 #include "node/nodeController.hpp"
 #include "node/nodeExecutive.hpp"
 #include <fstream>
@@ -18,8 +18,8 @@ namespace node {
         public:
 
             serial::Serial FCSer;
-            std::unique_ptr<comm::Comm> FCComm;
-            std::vector<std::unique_ptr<comm::Comm>> comms;
+            std::unique_ptr<comm::SerialComm> FCComm;
+            std::vector<std::unique_ptr<comm::SerialComm>> comms;
             std::unique_ptr<comm::Radio> FCRadio;
             std::vector<std::unique_ptr<comm::MsgParser>> msgParsers;
             std::unique_ptr<comm::MsgParser> FCMsgParser;

@@ -9,12 +9,14 @@ using std::vector;
 
 namespace comm {      
     Command::Command() : // empty command
-        cmdId(0)
+        cmdId(0),
+        valid(false)
     {}
     
     Command::Command(uint8_t cmdIdIn) :
         cmdId(cmdIdIn),
-        timestamp(util::getTime())
+        timestamp(util::getTime()),
+        valid(false)
     {
         // Attempt to determine header type
         if (Cmds::cmdDict.find(cmdId) != Cmds::cmdDict.end()) { // command ID found
@@ -27,29 +29,31 @@ namespace comm {
         header(headerIn),
         lastTxTime(0.0),
         txInterval(txIntervalIn),
-        timestamp(util::getTime())
+        timestamp(util::getTime()),
+        valid(true)
     {}
             
     Command::Command(vector<uint8_t> packedIn, double txIntervalIn) :
         txInterval(txIntervalIn),
-        packed(packedIn)
+        packed(packedIn),
+        valid(true)
     {
         // Attempt to parse header
         unpackHeader(packedIn, HEADER_UNKNOWN, header);
     }
 
-    vector<uint8_t> Command::serialize() {
+    vector<uint8_t> Command::packBody() {
         return vector<uint8_t>();
     }
         
-    vector<uint8_t> Command::pack(double timestamp) {
+    vector<uint8_t> Command::serialize(double timestamp) {
         lastTxTime = timestamp;
 
         // Insert header
         vector<uint8_t> cmd = header.packHeader();
 
         // Insert command data
-        vector<uint8_t> cmdData = serialize();
+        vector<uint8_t> cmdData = packBody();
         cmd.insert(cmd.end(), cmdData.begin(), cmdData.end());
 
         packed = cmd; // stored packed data
@@ -63,10 +67,14 @@ namespace comm {
     }
     
     void Command::packData(void * data, unsigned int dataSize, vector<uint8_t> & packed) {
-        uint8_t buf[dataSize];
-        memcpy(buf, data, dataSize);
-        vector<uint8_t> newData(buf, buf + sizeof(buf));
-        packed.insert(packed.end(), newData.begin(), newData.end());
+        vector<uint8_t> dataOut = packData(data, dataSize);
+        //uint8_t buf[dataSize];
+        //memcpy(buf, data, dataSize);
+        //vector<uint8_t> newData(buf, buf + sizeof(buf));
+        packed.insert(packed.end(), dataOut.begin(), dataOut.end());
     }
     
+    bool Command::isValid(std::vector<uint8_t> & msgBytes) {
+        return true;
+    }
 }

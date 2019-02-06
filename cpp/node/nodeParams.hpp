@@ -10,11 +10,6 @@
 
 namespace node {
 
-    enum TDMAStatus {
-        NOMINAL = 0,
-        BLOCK_TX = 1
-    };
-
     class NodeParams {
 
         public:
@@ -24,29 +19,20 @@ namespace node {
              * @param config Node configuration.
              */
             static void loadParams(NodeConfig & config);
+            static void loadParams(std::string configFile);
+            
+            static void init();
 
             /**
              * Populates command dictionary.
              */
-            static void loadCmdDict();
+            //static void loadCmdDict();
 
             /**
              * Get new command counter value.
              @return Returns command counter value.
              */
-            static int getCmdCounter();
-
-            /**
-             * Check time offset bounds.
-             * @param offset Current time offset value.
-             * @return Returns status of time offset.
-             */
-            static int checkTimeOffset(double offset = comm::FormationClock::invalidOffset);
-
-            /**
-             * Checks for time offset failsafe.
-             */
-            static int checkOffsetFailsafe();
+            static uint16_t getCmdCounter();
 
             /**
              * Node configuration instance.
@@ -54,39 +40,14 @@ namespace node {
             static NodeConfig config;
 
             /**
-             * Mesh communication start time
-             */
-            static double commStartTime;
-
-            /**
-             * Buffer of commands to relay.
-             */
-            static std::vector<uint8_t> cmdRelayBuffer;
-
-            /**
              * Command counter history FIFO buffer.
              */
-            static comm::CommBuffer<uint8_t> cmdHistory;
+            static comm::CommBuffer<uint16_t> cmdHistory;
 
             /**
              * Node status structure.
              */
             static std::vector<NodeState> nodeStatus;
-
-            /**
-             * Status of TDMA mesh network.
-             */
-            static TDMAStatus tdmaStatus;
-
-            /**
-             * TDMA in failsafe status flag.
-             */
-            static bool tdmaFailsafe;
-
-            /**
-             * Time that time offset was found unavailable.
-             */
-            static double timeOffsetTimer;
 
             /**
              * Random number generator.
@@ -107,6 +68,11 @@ namespace node {
              * Node parameters loaded flag.
              */
             static bool nodeParamsLoaded;
+
+            /**
+             * Configuration check confirmation flag.
+             */
+            static bool configConfirmed;
 
             /**
              * Network links status.

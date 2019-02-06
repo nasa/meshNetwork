@@ -5,12 +5,14 @@
 #include <unordered_map>
 #include <memory>
 #include <cstdint>
-#include "comm/comm.hpp"
+#include "comm/serialComm.hpp"
 #include "comm/commProcessor.hpp"
 #include "comm/radio.hpp"
 #include "comm/msgParser.hpp"
 #include "comm/command.hpp"
 #include "comm/utilities.hpp"
+#include "comm/formationClock.hpp"
+
 
 namespace comm {
 
@@ -88,8 +90,14 @@ namespace comm {
          */
         double txInterval;
     };
+    
+    enum TDMAStatus {
+        TDMASTATUS_NOMINAL = 0,
+        TDMASTATUS_BLOCK_TX = 1
+    };
 
-    class TDMAComm : public Comm {
+
+    class TDMAComm : public SerialComm {
 
         public:
             /**
@@ -99,11 +107,11 @@ namespace comm {
 
             /**
              * Constructor.
-             * @param commProcessorIn Comm message processor.
+             * @param msgProcessorsIn Vector of message processors.
              * @param radioIn Radio to send/receive messages.
              * @param msgParserIn Message parser.
              */
-            TDMAComm(CommProcessor * commProcessorIn, Radio * radioIn, MsgParser * msgParserIn);
+            TDMAComm(std::vector<MsgProcessor *> msgProcessorsIn, Radio * radioIn, MsgParser * msgParserIn = NULL);
 
             /**
              * Primary class execution method.
@@ -172,9 +180,8 @@ namespace comm {
             /**
              * Resets TDMA slot parameters.
              * @param frameTime Current frame time.
-             * @param slotNum Current slot number.
              */
-            void resetTDMASlot(double frameTime, int slotNum = -1);
+            void resetTDMASlot(double frameTime);
 
             /**
              * Sets TDMA mode.
@@ -191,13 +198,26 @@ namespace comm {
              * Checks for any received data.
              * @return End of transmission indication.
              */
-            virtual bool readMsg();
+            virtual bool readMsgs();
 
             /**
              * Buffers periodic TDMA command messages.
              */
             void sendTDMACmds();
+    
+            /**
+             * Check clock time offset.
+             * @param offset Current time offset value.
+             * @return Returns status of time offset.
+             */
+            int checkTimeOffset(double offset = FormationClock::invalidOffset);
 
+
+            /**
+             * Checks time offset for failsafe condition.
+             */
+            int checkOffsetFailsafe();
+        
             // *** EXPERIMENTAL ***
 
             /**
@@ -242,6 +262,11 @@ namespace comm {
              * TDMA Comm enable flag.
              */
             bool enabled;
+    
+            /**
+             * TDMA communication start time.
+             */
+            double commStartTime;
 
             /**
              * Transmit slot for this node.
@@ -267,11 +292,6 @@ namespace comm {
              * TDMA cycle length.
              */
             double cycleLength;
-
-            /**
-             * Buffer of commands to send.
-             */
-            std::vector<Command> cmdBuffer;
 
             /**
              * Current TDMA mode.
@@ -371,7 +391,7 @@ namespace comm {
             /**
              * Container of periodic TDMA commands.
              */
-            std::unordered_map<uint8_t, std::unique_ptr<Command>> tdmaCmds;
+            std::unordered_map<uint8_t, std::unique_ptr<Command> > tdmaCmds;
 
             /**
              * Current block transmission status.
@@ -382,6 +402,26 @@ namespace comm {
              * Slot when last mode change occurred.
              */
             unsigned int lastModeChangeSlot;
+
+            /**
+             * Time that time offset was found unavailable.
+             */
+            double timeOffsetTimer;
+
+            /**
+             * TDMA in failsafe status flag.
+             */
+            bool tdmaFailsafe;
+
+            /**
+             * TDMA frame exceedance counter
+             */
+            uint16_t frameExceedanceCount;
+
+            /**
+             * Status of TDMA mesh network.
+             */
+            TDMAStatus tdmaStatus;
 
     };
 

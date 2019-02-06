@@ -18,9 +18,10 @@ using node::NodeParams;
 
 namespace comm {
 
-    TDMAComm::TDMAComm(CommProcessor * commProcessorIn, Radio * radioIn, MsgParser * msgParserIn) :
-        Comm(commProcessorIn, radioIn, msgParserIn),
+    TDMAComm::TDMAComm(std::vector<MsgProcessor *> msgProcessorsIn, Radio * radioIn, MsgParser * msgParserIn) :
+        SerialComm(msgProcessorsIn, radioIn, msgParserIn),
         enabled(true),
+        commStartTime(-1.0),
         transmitSlot(NodeParams::config.commConfig.transmitSlot),
         frameLength(NodeParams::config.commConfig.frameLength),
         slotLength(NodeParams::config.commConfig.slotLength),
@@ -45,12 +46,12 @@ namespace comm {
         rxReadTime(beginTxTime + NodeParams::config.commConfig.rxDelay),
         receiveComplete(false),
         rxBufferReadPos(0),
-        lastModeChangeSlot(0)
+        timeOffsetTimer(-1.0),
+        tdmaFailsafe(false),
+        frameExceedanceCount(0),
+        tdmaStatus(TDMASTATUS_NOMINAL) 
 
     {
-        // Reset comm start time
-        NodeParams::commStartTime = -1.0;
-
         // Block Tx init *** EXPERIMENTAL ***
         resetBlockTxStatus();
         clearDataBlock();
@@ -89,7 +90,7 @@ namespace comm {
 
     void TDMAComm::executeTDMAComm(double currentTime) {
         // Check for block transfers
-        monitorBlockTx();
+        //monitorBlockTx();
 
         // Update frame time
         int frameStatus = updateFrameTime(currentTime);
@@ -105,29 +106,29 @@ namespace comm {
         switch (tdmaMode) {
             case TDMA_SLEEP:
                 // Set radio to sleep mode
-                radio->setMode(SLEEP);
+                radio->setMode(RADIO_SLEEP);
                 break;
 
             case TDMA_INIT:
                 // Prepare radio to receive or transmit
                 if (slotNum == transmitSlot) {
                     // Set radio to transmit mode
-                    radio->setMode(TRANSMIT);
+                    radio->setMode(RADIO_TRANSMIT);
                 }
                 else {
                     // Set radio to receive mode
-                    radio->setMode(RECEIVE);
+                    radio->setMode(RADIO_RECEIVE);
                 }
                 break;
 
             case TDMA_RECEIVE:
                 // Read data if TDMA message end not yet found
                 if (receiveComplete == false && slotTime >= rxReadTime) {
-                    radio->setMode(RECEIVE);
-                    receiveComplete = readMsg();
+                    radio->setMode(RADIO_RECEIVE);
+                    receiveComplete = readMsgs();
                     if (receiveComplete == true) {
                         // Set radio to sleep
-                        radio->setMode(SLEEP);
+                        radio->setMode(RADIO_SLEEP);
                     }
                 }
                 break;
@@ -135,34 +136,34 @@ namespace comm {
             case TDMA_TRANSMIT:
                 // Send data
                 if (transmitComplete == false) {
-                    radio->setMode(TRANSMIT);
+                    radio->setMode(RADIO_TRANSMIT);
                     sendMsg();
                 }
                 else { // Set radio to sleep
-                    radio->setMode(SLEEP);
+                    radio->setMode(RADIO_SLEEP);
                 }
                 break;
 
             case TDMA_FAILSAFE: // Read only failsafe mode
                 // Enable radio in receive mode and read data
-                radio->setMode(RECEIVE);
-                readMsg();
+                radio->setMode(RADIO_RECEIVE);
+                readMsgs();
                 break;
 
             case TDMA_BLOCKRX: // Block receive mode
-                radio->setMode(RECEIVE);
-                readMsg();
+                radio->setMode(RADIO_RECEIVE);
+                readMsgs();
                 break;
 
             case TDMA_BLOCKTX: // Block transmit mode
-                radio->setMode(TRANSMIT);
+                radio->setMode(RADIO_TRANSMIT);
                 sendBlock();
                 break;
         }
     }
 
     void TDMAComm::init(double currentTime) {
-        if (NodeParams::commStartTime < 0.0) { // Mesh not initialized
+        if (commStartTime < 0.0) { // Mesh not initialized
                 initComm(currentTime);
                 return;
         }
@@ -174,13 +175,13 @@ namespace comm {
 
     void TDMAComm::initMesh(double currentTime) {
         // Create TDMA comm messages
-        int flooredStartTime = floor(NodeParams::commStartTime);
-        tdmaCmds[TDMACmds::MeshStatus] = unique_ptr<Command>(new TDMA_MeshStatus(flooredStartTime, NodeParams::tdmaStatus, CmdHeader(TDMACmds::MeshStatus), NodeParams::config.commConfig.statusTxInterval));
+        int flooredStartTime = floor(commStartTime);
+        tdmaCmds[TDMACmds::MeshStatus] = unique_ptr<Command>(new TDMA_MeshStatus(flooredStartTime, tdmaStatus, CmdHeader(TDMACmds::MeshStatus), NodeParams::config.commConfig.statusTxInterval));
         tdmaCmds[TDMACmds::LinkStatus] = unique_ptr<Command>(new TDMA_LinkStatus(NodeParams::linkStatus[NodeParams::config.nodeId-1], CmdHeader(TDMACmds::LinkStatus, NodeParams::config.nodeId), NodeParams::config.commConfig.linksTxInterval));
         
-        //if (NodeParams::config.nodeId != 0) { // do not do for ground node
-        tdmaCmds[TDMACmds::TimeOffset] = unique_ptr<Command>(new TDMA_TimeOffset(NodeParams::nodeStatus[NodeParams::config.nodeId-1].timeOffset, CmdHeader(TDMACmds::TimeOffset, NodeParams::config.nodeId), NodeParams::config.commConfig.offsetTxInterval));
-        //}
+        if (NodeParams::config.nodeId != 0) { // do not do for ground node
+            tdmaCmds[TDMACmds::TimeOffset] = unique_ptr<Command>(new TDMA_TimeOffset(NodeParams::nodeStatus[NodeParams::config.nodeId-1].timeOffset, CmdHeader(TDMACmds::TimeOffset, NodeParams::config.nodeId), NodeParams::config.commConfig.offsetTxInterval));
+        }
 
         // Determine where in frame mesh network currently is
         syncTDMAFrame(currentTime);
@@ -198,7 +199,7 @@ namespace comm {
         }
         else if ((currentTime - initStartTime) >= initTimeToWait) { // init timer expired
             // Assume no existing mesh and initialize network
-            NodeParams::commStartTime = floor(currentTime);
+            commStartTime = ceil(currentTime);
             std::cout << "Initializing new mesh network" << std::endl;
             initMesh();
         }
@@ -210,27 +211,34 @@ namespace comm {
 
     void TDMAComm::checkForInit() {
         // Look for tdma status message
-        radio->setMode(RECEIVE);
-        readBytes(true);
+        radio->setMode(RADIO_RECEIVE);
+        MsgProcessorArgs args(&cmdQueue, &cmdRelayBuffer);
+        radio->readBytes(true);
+        parseMsgs();
+        processMsgs(args); // process messages to find MeshStatus messages
+        if (cmdQueue.find(TDMACmds::MeshStatus) != cmdQueue.end()) {
+            //commStartTime = dynamic_cast<TDMA_MeshStatus *>(cmdQueue[TDMACmds::MeshStatus].get())->commStartTimeSiec;
+            commStartTime = TDMA_MeshStatus(cmdQueue[TDMACmds::MeshStatus]).commStartTimeSec;
+        }    
+        /*readBytes(true);
         if (radio->rxBuffer.size() > 0) {
             parseMsgs();
             while (msgParser->parsedMsgs.size() > 0) {
-
+            
                 std::vector<uint8_t> msg;
                 msgParser->getMsg(msg);
                 uint8_t cmdId = msg[0]; // first element should be the command ID
                 if (cmdId == TDMACmds::MeshStatus) {
-                    MsgProcessorArgs args;
-                    args.relayBuffer = &cmdRelayBuffer;
+                    MsgProcessorArgs args(&cmdQueue, &cmdRelayBuffer);
                     processMsg(msg, args);
                 }
             }
-        }
+        }*/
     }
 
     void TDMAComm::syncTDMAFrame(double currentTime) {
         // Determine where in the frame the mesh network current is
-        frameTime = std::fmod(currentTime - NodeParams::commStartTime, frameLength);
+        frameTime = std::fmod(currentTime - commStartTime, frameLength);
         frameStartTime = currentTime - frameTime;
 
         // Update periodic mesh messages
@@ -240,15 +248,16 @@ namespace comm {
         rxBufferReadPos = 0;
 
         // Check for TDMA failsafe
-        std::thread offsetThread(NodeParams::checkTimeOffset, FormationClock::invalidOffset);
-        offsetThread.detach();
+        //std::thread offsetThread(checkTimeOffset, FormationClock::invalidOffset);
+        //offsetThread.detach();
         //NodeParams::checkTimeOffset();
+        checkTimeOffset();
     }
 
     void TDMAComm::updateMeshMsgs() {
         // Update TDMA status
         if (tdmaCmds.find(TDMACmds::MeshStatus) != tdmaCmds.end()) {
-            dynamic_cast<TDMA_MeshStatus *>(tdmaCmds[TDMACmds::MeshStatus].get())->status = NodeParams::tdmaStatus;
+            dynamic_cast<TDMA_MeshStatus *>(tdmaCmds[TDMACmds::MeshStatus].get())->status = tdmaStatus;
         }
 
         // Update time offset
@@ -270,7 +279,8 @@ namespace comm {
             usleep((remainingFrameTime - 0.010)*1.0e6);
         }
         else if (remainingFrameTime < -0.01) { // significant frame exceedance
-            std::cout << "WARNING: Frame length exceeded!" << remainingFrameTime << std::endl;
+            std::cout << "WARNING: Frame length exceeded! Exceedance- " << std::abs(remainingFrameTime) << std::endl;
+            frameExceedanceCount++;
         }
     }
 
@@ -279,7 +289,7 @@ namespace comm {
         resetTDMASlot(frameTime);
 
         // Check for TDMA failsafe
-        if (NodeParams::tdmaFailsafe == true) {
+        if (tdmaFailsafe == true) {
             setTDMAMode(TDMA_FAILSAFE);
             return;
         }
@@ -317,19 +327,20 @@ namespace comm {
                 }
             }
             else { // receive slot
-                if (slotTime < endRxTime) { // begin receiving
-                    setTDMAMode(TDMA_RECEIVE);
-                }
-                else { // sleep
-                    setTDMAMode(TDMA_SLEEP);
+                if (slotTime >= beginRxTime) { // begin receiving
+                    if (slotTime < endRxTime) { // receive
+                        setTDMAMode(TDMA_RECEIVE);
+                    }
+                    else { // receive period over
+                        setTDMAMode(TDMA_SLEEP);
+                    }
                 }
             }
         }
     }
 
     void TDMAComm::setTDMAMode(TDMAMode mode) {
-        if (tdmaMode != mode || lastModeChangeSlot != slotNum) { // not current mode in this slot
-            lastModeChangeSlot = slotNum;
+        if (tdmaMode != mode) { // not current mode
             tdmaMode = mode;
             if (mode == TDMA_RECEIVE) {
                 receiveComplete = false;
@@ -340,21 +351,21 @@ namespace comm {
         }
     }
 
-    void TDMAComm::resetTDMASlot(double frameTime, int slotNumIn) {
+    void TDMAComm::resetTDMASlot(double frameTime) {
         // Reset slot number
-        if (slotNumIn > 0) { // slot number provided
+        /*if (slotNumIn > 0) { // slot number provided
             if (slotNum <= maxNumSlots) {
                 slotNum = slotNumIn;
             }
         }
-        else { // determine slot number
+        else { // determine slot number */
             if (frameTime < cycleLength) { // during cycle
                 slotNum = (int)(frameTime / slotLength) + 1;
             }
             else { // sleep period
                 slotNum = maxNumSlots;
             }
-        }
+        //}
 
         // Set slot time parameters
         slotStartTime = (slotNum - 1) * slotLength;
@@ -367,13 +378,20 @@ namespace comm {
             return;
         }
 
-        // Send periodic TDMA commands
-        sendTDMACmds();
-
         // Transmit
         if (tdmaMode == TDMA_TRANSMIT) {
+            // Send periodic TDMA commands
+            sendTDMACmds();
+            
+            // Send all data including relay and command buffers
+            processBuffers();
+            vector<uint8_t> temp = {(uint8_t)SLIP_END_TDMA};
+            radio->bufferTxMsg(temp); // add TDMA END byte
+            sendBuffer();
+
             // Send any buffered commands
-            vector<uint8_t> nonRepeatCmds;
+            //vector<uint8_t> nonRepeatCmds;
+            /* TODO - UPDATE
             for (unsigned int i = 0; i < cmdBuffer.size(); i++) {
                 bufferTxMsg(cmdBuffer[i].packed); // encode and buffer command
                 cmdBuffer[i].lastTxTime = util::getTime(); // update last transmit time
@@ -384,22 +402,22 @@ namespace comm {
             // Remove non-repeating commands
             for (unsigned int i = 0; i < nonRepeatCmds.size(); i++) {
                 cmdBuffer.erase(cmdBuffer.begin() + nonRepeatCmds[i]);
-            }
+            }*/
 
             // Check for commands to relay
-            if (cmdRelayBuffer.size() > 0) {
+            //if (cmdRelayBuffer.size() > 0) {
                 // Send buffer and then clear
-                for (unsigned int i = 0; i < cmdRelayBuffer.size(); i++) {
-                    radio->bufferTxMsg(cmdRelayBuffer[i]); // buffer raw command relay buffer
-                }
-                cmdRelayBuffer.clear();
-            }
+              //  for (unsigned int i = 0; i < cmdRelayBuffer.size(); i++) {
+                    //radio->bufferTxMsg(cmdRelayBuffer[i]); // buffer raw command relay buffer
+                //}
+                //cmdRelayBuffer.clear();
+            //}
 
             // Send tx buffer
-            vector<uint8_t> temp = {(uint8_t)SLIP_END_TDMA};
-            radio->bufferTxMsg(temp); // add TDMA END byte
-            printf("%f - Transmitting %lu bytes\n", util::getTime(), radio->txBuffer.size());
-            radio->sendBuffer(NodeParams::config.commConfig.maxTransferSize);
+            //vector<uint8_t> temp = {(uint8_t)SLIP_END_TDMA};
+            //radio->bufferTxMsg(temp); // add TDMA END byte
+            //printf("%f - Transmitting %lu bytes\n", util::getTime(), radio->txBuffer.size());
+            //radio->sendBuffer(NodeParams::config.commConfig.maxTransferSize);
 
             // End transmit period
             transmitComplete = true;
@@ -407,7 +425,7 @@ namespace comm {
 
     }
 
-    bool TDMAComm::readMsg() {
+    bool TDMAComm::readMsgs() {
         // Read from radio and look for end of transmission byte
         radio->readBytes(true);
         for (unsigned int i = rxBufferReadPos; i < radio->rxBuffer.size(); i++) {
@@ -424,17 +442,74 @@ namespace comm {
         double timestamp = util::getTime();
 
         // Update time offset
-        if (tdmaCmds.find(TDMACmds::TimeOffset) != tdmaCmds.end()) {
-            dynamic_cast<TDMA_TimeOffset *>(tdmaCmds[TDMACmds::TimeOffset].get())->timeOffset = NodeParams::nodeStatus[NodeParams::config.nodeId-1].timeOffset;
-        }
+        //if (tdmaCmds.find(TDMACmds::TimeOffset) != tdmaCmds.end()) {
+        //    dynamic_cast<TDMA_TimeOffset *>(tdmaCmds[TDMACmds::TimeOffset].get())->timeOffset = NodeParams::nodeStatus[NodeParams::config.nodeId-1].timeOffset;
+        //}
     
         for (auto iter = tdmaCmds.begin(); iter != tdmaCmds.end(); iter++) {
-            if (ceil(timestamp*100)/100.0 >= ceil((iter->second->lastTxTime + iter->second->txInterval)*100)/100.0) { // only compare down to milliseconds
+            if (timestamp > 0.0 && ceil(timestamp*100)/100.0 >= ceil((iter->second->lastTxTime + iter->second->txInterval)*100)/100.0) { // only compare down to milliseconds
             //if (timestamp - iter->second->lastTxTime) >= iter->second->txInterval) {
-                vector<uint8_t> msg = iter->second->pack(timestamp);
+                vector<uint8_t> msg = iter->second->serialize(timestamp);
                 bufferTxMsg(msg);
             }
         }
+    }
+    
+    int TDMAComm::checkTimeOffset(double offset) {
+        //if (NodeParams::config.commType == node::TDMA) {
+            /*if (NodeParams::config.commConfig.fpga == true && NodeParams::config.commConfig.fpgaFailsafePin.size() > 0) { // TDMA time controlled by FPGA
+                if (GPIOWrapper::getValue(NodeParams::config.commConfig.fpgaFailsafePin) == 0) { //failsafe not set
+                    timeOffsetTimer = -1; // reset timer
+                }
+                else { // failsafe condition set
+                    if (timeOffsetTimer >= 0) { // timer started
+                        if (NodeParams::clock.getTime() - timeOffsetTimer > NodeParams::config.commConfig.offsetTimeout) { // no time offset reading for longer than allowed
+                            tdmaFailsafe = true; // set TDMA failsafe flag
+                            return 3;    
+                        }
+                    }
+                    else { // start timer
+                        timeOffsetTimer = NodeParams::clock.getTime();
+                    }
+                }
+            }*/
+            //else { // check offset 
+                if (offset == FormationClock::invalidOffset) { // no offset provided so get from clock
+                    offset = NodeParams::clock.getOffset();
+                }
+                if (offset != FormationClock::invalidOffset) { // time offset available
+                    timeOffsetTimer = -1.0;
+                    NodeParams::nodeStatus[NodeParams::config.nodeId-1].timeOffset = offset;
+                    if (std::abs(offset) > NodeParams::config.commConfig.operateSyncBound) { // time offset out of bounds
+                        return 1;
+                    }
+                }
+                else { // no offset available
+                    return checkOffsetFailsafe();
+                }
+
+                return 0;
+            //}
+        //}
+
+        //return -1;
+    } 
+
+    int TDMAComm::checkOffsetFailsafe() {
+        NodeParams::nodeStatus[NodeParams::config.nodeId-1].timeOffset = FormationClock::invalidOffset; // set to invalid value
+                
+        // Check time offset timer
+        if (timeOffsetTimer > 0) { // timer started
+            if (NodeParams::clock.getTime() - timeOffsetTimer >= NodeParams::config.commConfig.offsetTimeout) { // offset unavailablity timeout
+                tdmaFailsafe = true;
+                return 2;
+            }
+        }
+        else { // start timer
+            timeOffsetTimer = NodeParams::clock.getTime();
+        }
+        
+        return 0;
     }
 
     void TDMAComm::sendBlock() {

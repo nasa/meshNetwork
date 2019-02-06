@@ -18,11 +18,11 @@ namespace comm {
 
             /**
              * Constructor.
-             * @param commProcessorIn Comm message processor.
+             * @param msgProcessorsIn Vector of message processors.
              * @param radioIn Radio to send/receive messages.
              * @param msgParserIn Message parser.
              */
-            TDMAComm_FPGA(CommProcessor * commProcessorIn, Radio * radioIn, MsgParser * msgParserIn);
+            TDMAComm_FPGA(std::vector<MsgProcessor *> msgProcessorsIn, Radio * radioIn, MsgParser * msgParserIn = NULL);
 
             /**
              * Executes TDMA communication logic.
