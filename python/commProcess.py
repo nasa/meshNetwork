@@ -62,10 +62,10 @@ class CommProcess(Process):
 
         # Node control run time bounds
         if (self.nodeParams.config.commConfig['fpga'] == False):
-            if self.comm.transmitSlot == 1:
+            if self.comm.transmitSlot == 1: # For first node, run any time after transmit slot
                 self.maxNodeControlTime = self.comm.frameLength - self.comm.slotLength
-                self.minNodeControlTime = self.comm.transmitSlot * self.comm.slotLength
-            else:
+                self.minNodeControlTime = self.comm.slotLength
+            else: # For other nodes, avoid running near transmit slot
                 self.minNodeControlTime = (self.comm.transmitSlot-2) * self.comm.slotLength # don't run within 1 slot of transmit 
                 self.maxNodeControlTime = self.comm.transmitSlot * self.comm.slotLength
             #self.minNodeControlTime = 0.8*((self.comm.transmitSlot-1) * self.comm.slotLength)
@@ -99,8 +99,8 @@ class CommProcess(Process):
                         self.nodeParams.linkStatus[entry] = nodeMsg.linkStatus
      
                         if (nodeMsg.cmdRelay): # command relay data                    
-                            for cmd in nodeMsg.cmdRelay:
-                                self.comm.cmdRelayBuffer.append(cmd)
+                            #for cmd in nodeMsg.cmdRelay:
+                                self.comm.cmdRelayBuffer.append(nodeMsg.cmdRelay)
                                 #print("Cmds to relay:",self.comm.cmdRelayBuffer)
                         if (nodeMsg.cmds): # commands received
                             #self.comm.cmdBuffer = [] # clear existing buffer
@@ -112,7 +112,7 @@ class CommProcess(Process):
                 # Execute comm  
                 self.comm.execute()
 
-                # Run node control (only when comm is running in software)
+                # Managed node control run flag (only when comm is running in software)
                 if (self.nodeParams.config.commConfig['fpga'] == False):
                     if self.comm.transmitSlot == 1 and (self.comm.frameTime > self.minNodeControlTime and self.comm.frameTime < self.maxNodeControlTime):
                         self.nodeControlRunFlag.value = 1

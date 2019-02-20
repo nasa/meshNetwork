@@ -88,7 +88,7 @@ class NodeControlProcess(Process):
                     #print("Node execution start time:", time.time())
                     self.nodeExecutive.executeNodeSoftware()
                     
-                    self.runFlag.value = 0 # reset run flag
+                    #self.runFlag.value = 0 # reset run flag
                 
                     # Minimum delay time between executions
                     time.sleep(0.5)
