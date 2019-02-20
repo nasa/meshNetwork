@@ -5,7 +5,7 @@
 #include "comm/tdmaComm.hpp"
 #include "comm/tdmaMsgProcessor.hpp"
 #include "comm/serialRadio.hpp"
-#include "comm/commProcessor.hpp"
+//#include "comm/commProcessor.hpp"
 #include "comm/SLIPMsgParser.hpp"
 #include <vector>
 

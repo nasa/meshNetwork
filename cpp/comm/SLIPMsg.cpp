@@ -30,9 +30,19 @@ namespace comm {
                 msgLength = 0;
                 msgFound = false;
                 msgEnd = 0;
+                buffer.clear();
             }
             else { // partial message found
-                return decodeSLIPMsgContents(bytes, 0);
+                if (buffer.size() > 0) { // bytes in waiting in buffer
+                    std::vector<uint8_t> msgBytes;
+                    msgBytes.insert(msgBytes.end(), buffer.begin(), buffer.end());
+                    msgBytes.insert(msgBytes.end(), bytes.begin() + msgStart, bytes.end());
+                    buffer.clear();
+                    return decodeSLIPMsgContents(msgBytes, 0);
+                }
+                else {
+                    return decodeSLIPMsgContents(bytes, 0);
+                }
             }
         }
 
@@ -50,18 +60,25 @@ namespace comm {
         while (pos < bytes.size() && msg.size() < maxLength) {
             // Parse message contents
             if (bytes[pos] != SLIP_END) {
-                if ((bytes[pos] == SLIP_ESC) && (pos + 1) < bytes.size()) { // ESC character found
-                    if (bytes[pos+1] == SLIP_ESC_END) { // replace ESC sequence with END character
-                        msg.push_back(SLIP_END);
-                    }
-                    else if (bytes[pos+1] == SLIP_ESC_END_TDMA) { // replace with TDMA END character
-                        msg.push_back(SLIP_END_TDMA);
-                    }
-                    else { // replace with ESC character
-                        msg.push_back(SLIP_ESC);
-                    }
+                //if ((bytes[pos] == SLIP_ESC) && (pos + 1) < bytes.size()) { // ESC character found
+                if (bytes[pos] == SLIP_ESC) { // ESC character found
+                    if ((pos + 1) < bytes.size()) { // remainder of ESC sequence available
+                        if (bytes[pos+1] == SLIP_ESC_END) { // replace ESC sequence with END character
+                            msg.push_back(SLIP_END);
+                        }
+                        else if (bytes[pos+1] == SLIP_ESC_END_TDMA) { // replace with TDMA END character
+                            msg.push_back(SLIP_END_TDMA);
+                        }
+                        else { // replace with ESC character
+                            msg.push_back(SLIP_ESC);
+                        }
 
-                    pos++;
+                        pos++;
+                    }
+                    else { // Add partial sequence to buffer and return
+                        buffer.push_back(bytes[pos]);
+                        return false;
+                    }
                 }  
                 else { // insert raw byte
                     msg.push_back(bytes[pos]);

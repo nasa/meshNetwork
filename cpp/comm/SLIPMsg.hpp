@@ -48,6 +48,11 @@ namespace comm {
             std::vector<uint8_t> msg;
 
             /**
+             * Pending message bytes buffer.
+             */
+            std::vector<uint8_t> buffer;
+            
+            /**
              * Default constructor.
              */
             SLIPMsg();
@@ -64,7 +69,7 @@ namespace comm {
              * @param msgStart Location to begin search.
              * @return True if message decoded.
              */
-            bool decodeSLIPMsg(const std::vector<uint8_t> & bytes, unsigned int msgStart);
+            bool decodeSLIPMsg(const std::vector<uint8_t> & bytes, unsigned int msgStart = 0);
 
             /**
              * Parses SLIP message to remove control bytes.

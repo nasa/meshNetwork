@@ -30,8 +30,9 @@ class SLIPmsg:
         self.msgLength = 0
         self.msg = b''
         self.slip = b''
-    
-    def decodeSLIPmsg(self, byteList, msgStart):
+        self.buffer = b''   
+ 
+    def decodeSLIPmsg(self, byteList, msgStart=0):
         """Searches provided raw serial bytes to locate any SLIP messages.
         
         Args:
@@ -39,18 +40,25 @@ class SLIPmsg:
             msgStart: Array location to begin searching for SLIP messages in raw serial data.
         """
         # Check for existing partial message
-        if self.msgFound and self.msgEnd != -1: # Discard results and restart search
-            # Reset message parameters
-            self.msg = b''
-            self.msgLength = 0
-            self.msgFound = False
-            self.msgEnd = -1
+        if (self.msgFound):
+            if (self.msgEnd != -1): # Discard results and restart search
+                # Reset message parameters
+                self.msg = b''
+                self.msgLength = 0
+                self.msgFound = False
+                self.msgEnd = -1
+                self.buffer = b''
+            else: # continue parsing partial message
+                # Look for buffer contents
+                if (self.buffer):
+                    byteList = self.buffer + byteList
+                    self.buffer = b''
+                self.decodeSLIPmsgContents(byteList, msgStart)
+                return
+
+        # Parse bytes
         for i in range(msgStart, len(byteList)):
             byte = byteList[i:i+1]
-            if self.msgFound and self.msgEnd == -1: # existing partial message
-                pos = i
-                self.decodeSLIPmsgContents(byteList, pos)
-                break # exit loop to process message search results 
             if byte == SLIP_END: # message start found
                 self.msgFound = True
                 pos = i + 1
@@ -63,19 +71,25 @@ class SLIPmsg:
         Args:
             byteList: Raw serial data array.
             pos: Array position of start of SLIP message in raw serial data.
-        """ 
+        """
         while pos < len(byteList) and len(self.msg) < self.msgMaxLength:
+            #byte = byteList[pos:pos+1]
             byte = byteList[pos:pos+1]
             if byte != SLIP_END: # parse msg contents
-                if byte == SLIP_ESC and (pos + 1) < len(byteList): # SLIP ESC character found (second condition guards against overflowing msg buffer)
-                    byte = byteList[pos+1:pos+2]
-                    if byte == SLIP_ESC_END: # replace ESC sequence with END character
-                        self.msg = self.msg + SLIP_END
-                    elif byte == SLIP_ESC_END_TDMA: # replace ESC sequence with TDMA END character
-                        self.msg = self.msg + SLIP_END_TDMA
-                    else: # replace ESC sequence with ESC character
-                        self.msg = self.msg + SLIP_ESC
-                    pos += 1
+                if byte == SLIP_ESC: # SLIP ESC character found
+                    if (pos + 1) < len(byteList): # remainder of escape sequence available
+                        byte = byteList[pos+1:pos+2]
+                        if byte == SLIP_ESC_END: # replace ESC sequence with END character
+                            self.msg = self.msg + SLIP_END
+                        elif byte == SLIP_ESC_END_TDMA: # replace ESC sequence with TDMA END character
+                            self.msg = self.msg + SLIP_END_TDMA
+                        else: # replace ESC sequence with ESC character
+                            self.msg = self.msg + SLIP_ESC
+                        pos += 1
+                    else: # escape sequence not completely available
+                        # Add partial sequence to buffer and return
+                        self.buffer += byte
+                        break
                 else: # insert raw SLIP msg byte into buffer
                     self.msg = self.msg + byte
 

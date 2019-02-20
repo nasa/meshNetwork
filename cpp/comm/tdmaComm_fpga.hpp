@@ -2,7 +2,7 @@
 #define COMM_TDMA_COMM_FPGA_HPP
 
 #include "comm/tdmaComm.hpp"
-#include "comm/commProcessor.hpp"
+//#include "comm/commProcessor.hpp"
 #include "comm/radio.hpp"
 #include "comm/msgParser.hpp"
 

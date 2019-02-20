@@ -65,5 +65,29 @@ namespace comm
         EXPECT_TRUE(m_slipmsg.msgFound == true);
         EXPECT_TRUE(m_slipmsg.msgEnd == partial.size());
 
+        // Parse message with escape sequence
+        m_slipmsg = SLIPMsg(100);
+        vector<uint8_t> msg = {0, 1, SLIP_ESC, 4, 5};
+        vector<uint8_t> msgOut = m_slipmsg.encodeSLIPMsg(msg);
+
+        partial = vector<uint8_t>(msgOut.begin(), msgOut.begin()+3); // parse prior to escape sequence
+        m_slipmsg.decodeSLIPMsg(partial, 0);
+        int msgLength = m_slipmsg.msg.size();
+        
+        partial = vector<uint8_t>(msgOut.begin()+3, msgOut.begin()+4); // parse start of escape sequence
+        m_slipmsg.decodeSLIPMsg(partial, 0);
+        EXPECT_TRUE(m_slipmsg.msg.size() == msgLength); // message length should not increment
+
+        partial = vector<uint8_t>(msgOut.begin()+4, msgOut.begin()+5); // parse remainder of escape sequence
+        m_slipmsg.decodeSLIPMsg(partial, 0);
+        EXPECT_TRUE(m_slipmsg.msg.size() == msgLength + 1); // message length should increment
+
+        partial = vector<uint8_t>(msgOut.begin()+5, msgOut.end()); // parse remainder of message    
+        m_slipmsg.decodeSLIPMsg(partial, 0);
+        EXPECT_TRUE(m_slipmsg.msg.size() == msg.size());
+        for (unsigned int i = 0; i < msg.size(); i++) {
+            EXPECT_TRUE(m_slipmsg.msg[i] == msg[i]);
+        }
+        
     }
 }

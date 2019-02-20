@@ -451,6 +451,7 @@ namespace comm
                 m_tdmaComm.sendBytes(testMsg); // send test message
                 std::vector<uint8_t> endTDMA = {SLIP_END_TDMA};
                 m_tdmaComm.sendBytes(endTDMA);
+                usleep(100000);
             }
             else if (i == 2) { // post receive
                 EXPECT_TRUE(m_tdmaComm.radio->mode == RADIO_SLEEP); // receive terminated once end byte received
