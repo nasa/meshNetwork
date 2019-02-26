@@ -18,7 +18,7 @@ class TestSLIPMsgParser:
         assert(self.msgParser.parsedMsgs == []) # message rejected      
 
         # Check acceptance of message with valid CRC    
-        crc = self.msgParser.crc16(testMsg)
+        crc = self.msgParser.crc(testMsg)
         slipMsg = SLIPmsg(256)
         slipMsg.encodeSLIPmsg(testMsg + pack('H',crc)) # re-encode slip with CRC
         self.msgParser.parseSerialMsg(slipMsg.slip, 0)
@@ -35,7 +35,7 @@ class TestSLIPMsgParser:
         
     def test_encodeMsg(self):
         """Test encodeMsg method of SLIPMsgParser."""
-        crc = self.msgParser.crc16(testMsg)
+        crc = self.msgParser.crc(testMsg)
         slipMsg = SLIPmsg(256)
         slipMsg.encodeSLIPmsg(testMsg + pack('H',crc))
         encodedMsg = self.msgParser.encodeMsg(testMsg)

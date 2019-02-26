@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <vector>
 #include "comm/crc.hpp"
+#include "comm/utilities.hpp"
 
 using std::vector;
 
@@ -26,11 +27,13 @@ namespace comm
 
     TEST_F(SLIPMsgParser_UT, encodeMsg) {
         // Test that CRC is appended
-        crc_t crc = crc_create(msgIn);
+        crc8_t crc = crc8_create(msgIn);
         vector<uint8_t> encoded = m_slipmsgparser.encodeMsg(msgIn);
         m_slipmsgparser.slipMsg.decodeSLIPMsg(encoded, 0);
-        EXPECT_TRUE(m_slipmsgparser.slipMsg.msg.size() == msgIn.size() + 2); // length matches
-        EXPECT_TRUE(crc == bytesToCrc(m_slipmsgparser.slipMsg.msg, m_slipmsgparser.slipMsg.msg.size()-2)); // crc is correct
+        EXPECT_TRUE(m_slipmsgparser.slipMsg.msg.size() == msgIn.size() + sizeof(crc)); // length matches
+        crc8_t crcParsed;
+        util::serialBytesToVariable(m_slipmsgparser.slipMsg.msg, m_slipmsgparser.slipMsg.msg.size()-sizeof(crc), &crcParsed);
+        EXPECT_TRUE(crc == crcParsed); // crc is correct
 
     }
     
@@ -38,7 +41,7 @@ namespace comm
         // Test that valid message is parsed
         vector<uint8_t> encoded = m_slipmsgparser.encodeMsg(msgIn);
         m_slipmsgparser.parseSerialMsg(encoded, 0);
-        EXPECT_TRUE(m_slipmsgparser.parsedMsgs.size() == 1);
+        ASSERT_TRUE(m_slipmsgparser.parsedMsgs.size() == 1);
         EXPECT_TRUE(m_slipmsgparser.parsedMsgs[0].size() == msgIn.size());
         for (unsigned int i = 0; i < m_slipmsgparser.parsedMsgs[0].size(); i++) {
             EXPECT_TRUE(m_slipmsgparser.parsedMsgs[0][i] == msgIn[i]);

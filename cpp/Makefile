@@ -12,7 +12,8 @@ COMM_SRC:=comm/utilities.cpp \
      comm/xbeeRadio.cpp \
      comm/li1Radio.cpp \
      comm/fpgaRadio.cpp \
-     comm/crc.cpp \
+     comm/crc_8.cpp \
+     comm/crc_16.cpp \
      comm/checksum.cpp \
      comm/SLIPMsg.cpp \
      comm/SLIPMsgParser.cpp \

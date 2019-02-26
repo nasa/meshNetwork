@@ -180,5 +180,49 @@ namespace util {
     
     std::vector<uint8_t> packBytes(void * data, unsigned int dataSize);
 
+    /**
+     * Copies serial bytes from vector to variable (accounting for endianness, assuming serial data is transmitted as little endian)
+     * @param bytes Vector of input serial bytes.
+     * @param pos Position in input vector to copy from.
+     * @param varOut Parsed variable.
+     */
+    template <class T>    
+    void serialBytesToVariable(std::vector<uint8_t> & bytes, unsigned int pos, T * varOut) {
+
+        if (isbigendian() == false) { // copy directly for little endian platform
+            std::memcpy(varOut, bytes.data() + pos, sizeof(T));
+        }
+        else { // reverse bytes for a big endian platform
+            std::vector<uint8_t> varBytes(sizeof(T));
+            uint8_t memPos = sizeof(T);
+            for (unsigned int i = 0; i < sizeof(T); i++) {
+                std::cout << (int)bytes[pos+i] << std::endl;
+                varBytes[--memPos] = bytes[pos+i];
+            }
+            std::memcpy(varOut, varBytes.data(), sizeof(T));
+        }
+            
+    }
+
+    /**
+     * Copies variable into vector of serial bytes (accounting for endianness, assuming serial data is transmitted as little endian
+     * @parma bytes Vector for output serial bytes.
+     * @param varIn Input variable.
+     */
+    template <class T>    
+    void variableToSerialBytes(std::vector<uint8_t> & bytes, T varIn) {
+        std::vector<uint8_t> outVec(sizeof(T));
+        std::memcpy(outVec.data(), &varIn, sizeof(T)); // copy variable into vector
+        if (isbigendian() == false) { // copy directly for little endian platform
+            bytes.insert(bytes.end(), outVec.begin(), outVec.end());
+        }
+        else { // reverse bytes for a big endian platform
+            for (int i = sizeof(T) - 1; i >= 0; i--) {
+                bytes.push_back(outVec[i]);
+            }
+        }
+    }
+    
+
 }
 #endif // UTIL_UTILITIES_HPP

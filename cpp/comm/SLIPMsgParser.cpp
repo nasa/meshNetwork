@@ -1,5 +1,6 @@
 #include "comm/SLIPMsgParser.hpp"
 #include "crc.hpp"
+#include "utilities.hpp"
 #include <iostream> 
 
 using std::vector;
@@ -17,11 +18,13 @@ namespace comm {
             return 0;
         }
 
-        if (slipMsg.decodeSLIPMsg(msgBytes, msgStart) == true && slipMsg.msg.size() >= sizeof(crc_t)) { // minimum size should be crc length
+        if (slipMsg.decodeSLIPMsg(msgBytes, msgStart) == true && slipMsg.msg.size() >= sizeof(crc8_t)) { // minimum size should be crc length
             // Compare CRC
-            vector<uint8_t> msgOnly = vector<uint8_t>(slipMsg.msg.begin(), slipMsg.msg.end()-2);
-            crc_t crc = crc_create(msgOnly);
-            if (crc == bytesToCrc(slipMsg.msg, slipMsg.msg.size()-2)) {
+            vector<uint8_t> msgOnly = vector<uint8_t>(slipMsg.msg.begin(), slipMsg.msg.end()-sizeof(crc8_t));
+            crc8_t crc = crc8_create(msgOnly);
+            crc8_t msgCrc;
+            util::serialBytesToVariable(slipMsg.msg, slipMsg.msg.size()-sizeof(msgCrc), &msgCrc);
+            if (crc == msgCrc) {
                 // Add message to parsed messages
                 parsedMsgs.push_back(msgOnly);
             }
@@ -33,8 +36,8 @@ namespace comm {
     vector<uint8_t> SLIPMsgParser::encodeMsg(vector<uint8_t> msgBytes) {
         if (msgBytes.size() > 0) {
             // Add CRC    
-            crc_t crc = crc_create(msgBytes);
-            crcToBytes(msgBytes, crc);
+            crc8_t crc = crc8_create(msgBytes);
+            util::variableToSerialBytes(msgBytes, crc);
             //msgBytes.push_back((uint8_t)((crc & 0xFF00) >> 8));
             //msgBytes.push_back((uint8_t)((crc & 0x00FF)));
             return slipMsg.encodeSLIPMsg(msgBytes);

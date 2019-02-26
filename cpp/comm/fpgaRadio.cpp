@@ -1,5 +1,5 @@
 #include "comm/fpgaRadio.hpp"
-#include "crc.hpp"
+#include "crc_16.hpp"
 #include "SLIPMsg.hpp"
 #include "utilities.hpp"
 
@@ -13,7 +13,7 @@ namespace comm {
 
     unsigned int FPGARadio::sendMsg(vector<uint8_t> & msgBytes) {
         // Create message crc    
-        crc_t crc = crc_create(msgBytes);
+        crc16_t crc = crc16_create(msgBytes);
 
         // Add FPGA message header and crc to outgoing message
         vector<uint8_t> outMsg;
@@ -23,7 +23,7 @@ namespace comm {
         std::vector<uint8_t> lengthBytes = util::packBytes(&msgLength, 2);
         outMsg.insert(outMsg.end(), lengthBytes.begin(), lengthBytes.end());
         outMsg.insert(outMsg.end(), msgBytes.begin(), msgBytes.end());
-        crcToBytes(outMsg, crc);
+        util::variableToSerialBytes(outMsg, crc);
 
         return Radio::sendMsg(outMsg);
 

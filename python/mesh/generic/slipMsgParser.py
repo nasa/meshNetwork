@@ -1,4 +1,5 @@
-import crcmod.predefined # crc
+#import crcmod.predefined # crc
+import crcmod
 from mesh.generic.msgParser import MsgParser
 from mesh.generic.slipMsg import SLIPmsg
 from struct import pack
@@ -7,7 +8,7 @@ class SLIPMsgParser(MsgParser):
     """This class is responsible for taking raw serial bytes and searching them for valid SLIP messages.
 
     Attributes:
-        crc16: 16-bit CRC calculator.
+        crc: CRC calculator.
         slipMsg: Parsed SLIP message with SLIP bytes extracted.
         parsedMsg: Valid serial message stored in this variable upon confirmation of valid CRC.
     """
@@ -15,7 +16,7 @@ class SLIPMsgParser(MsgParser):
     def __init__(self, config):
         MsgParser.__init__(self, config)
 
-        self.crc16 = crcmod.predefined.mkCrcFun('crc16')
+        self.crc = crcmod.mkCrcFun(0x107, initCrc=0, xorOut=0, rev=False) # CRC-8
         self.slipMsg = SLIPmsg(256)
 
     def parseSerialMsg(self, msgBytes, msgStart):
@@ -31,7 +32,7 @@ class SLIPMsgParser(MsgParser):
             if self.slipMsg.msgFound == True: # Message start found
                 if self.slipMsg.msgEnd != -1: # entire msg found
                     # Check msg CRC
-                    crc = self.crc16(self.slipMsg.msg[:-2])
+                    crc = self.crc(self.slipMsg.msg[:-2])
                     if self.slipMsg.msg[-2:] == pack('H',crc): # CRC matches - valid message
                         #print("CRC matches")
                         self.parsedMsgs.append(self.slipMsg.msg[:-2])
@@ -52,7 +53,7 @@ class SLIPMsgParser(MsgParser):
 
     def encodeMsg(self, msgBytes):
         if msgBytes: # Add CRC
-            crc = self.crc16(msgBytes)
+            crc = self.crc(msgBytes)
             msgBytes = msgBytes + pack('H',crc)
             self.slipMsg.encodeSLIPmsg(msgBytes)
             return self.slipMsg.slip
