@@ -1,5 +1,6 @@
 from struct import pack
-from switch import switch
+from mesh.generic.utilities import packData
+import crcmod
 
 SLIP_END = pack('B',192)
 SLIP_ESC = pack('B',219)
@@ -8,7 +9,7 @@ SLIP_ESC_END = pack('B',220)
 SLIP_ESC_ESC = pack('B',221)        
 SLIP_ESC_END_TDMA = pack('B',222)
 
-class SLIPmsg:
+class SLIPMsg:
     """An implementation of the Serial Line Internet Protocol (SLIP).
     
     SLIP messages provide a structure for serial messages with special byte values that define the beginning and end of serial messages.  These values allow for easily parsing individual serial messages from raw serial bytes.
@@ -19,7 +20,7 @@ class SLIPmsg:
         msgMaxLength: Maximum length of valid SLIP messages.
         msgEnd: Location of end of SLIP message found in provided raw serial data array. 
         msgLength: Length of SLIP message.
-        slip: Encoded SLIP message for transmission.
+        encoded: Encoded SLIP message for transmission.
 
     """
 
@@ -29,10 +30,28 @@ class SLIPmsg:
         self.msgEnd = -1
         self.msgLength = 0
         self.msg = b''
-        self.slip = b''
+        self.encoded = b''
         self.buffer = b''   
+        self.crc = crcmod.mkCrcFun(0x107, initCrc=0, xorOut=0, rev=False) # CRC-8
+        self.crcLength = 1
  
-    def decodeSLIPmsg(self, byteList, msgStart=0):
+    def parseMsg(self, msgBytes, msgStart):
+        if len(msgBytes) > 0:
+            # Process serial message
+            self.decodeMsg(msgBytes,msgStart)
+        
+            if self.msgFound == True: # Message start found
+                if self.msgEnd != -1: # entire msg found
+                    # Check msg CRC
+                    crc = self.crc(self.msg[:-self.crcLength])
+                    if self.msg[-self.crcLength:] == packData(crc, self.crcLength): # CRC matches - valid message
+                        #print("CRC matches")
+                        return self.msg[:-self.crcLength]
+                    
+        return [] # no message found  
+                                
+                    
+    def decodeMsg(self, byteList, msgStart=0):
         """Searches provided raw serial bytes to locate any SLIP messages.
         
         Args:
@@ -53,7 +72,7 @@ class SLIPmsg:
                 if (self.buffer):
                     byteList = self.buffer + byteList
                     self.buffer = b''
-                self.decodeSLIPmsgContents(byteList, msgStart)
+                self.decodeMsgContents(byteList, msgStart)
                 return
 
         # Parse bytes
@@ -62,10 +81,10 @@ class SLIPmsg:
             if byte == SLIP_END: # message start found
                 self.msgFound = True
                 pos = i + 1
-                self.decodeSLIPmsgContents(byteList, pos)
+                self.decodeMsgContents(byteList, pos)
                 break
     
-    def decodeSLIPmsgContents(self, byteList, pos):
+    def decodeMsgContents(self, byteList, pos):
         """Helper function to strip special SLIP bytes from identified SLIP message.
 
         Args:
@@ -103,7 +122,7 @@ class SLIPmsg:
             pos += 1
 
 
-    def encodeSLIPmsg(self, byteList):
+    def encodeMsg(self, byteList):
         """Encodes provided serial data into a SLIP message.
 
         Args:
@@ -112,17 +131,21 @@ class SLIPmsg:
         if not byteList: # Check for empty msg
             return
 
-        self.slip = b''
-        self.slip += SLIP_END
+        # Create crc
+        crc = self.crc(byteList)
+        byteList = byteList + packData(crc, self.crcLength)
+
+        self.encoded = b''
+        self.encoded += SLIP_END
         for i in range(len(byteList)):
             byte = byteList[i:i+1]
             if byte == SLIP_END: # Replace END character
-                self.slip += SLIP_ESC + SLIP_ESC_END
+                self.encoded += SLIP_ESC + SLIP_ESC_END
             elif byte == SLIP_ESC: # Replace ESC character
-                self.slip += SLIP_ESC + SLIP_ESC_ESC
+                self.encoded += SLIP_ESC + SLIP_ESC_ESC
             elif byte == SLIP_END_TDMA: # Replace TDMA END character
-                self.slip += SLIP_ESC + SLIP_ESC_END_TDMA
+                self.encoded += SLIP_ESC + SLIP_ESC_END_TDMA
             else: # Insert raw byte into message
-                self.slip += byte
-        self.slip += SLIP_END
+                self.encoded += byte
+        self.encoded += SLIP_END
 

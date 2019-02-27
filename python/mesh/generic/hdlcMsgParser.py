@@ -1,27 +1,26 @@
 #import crcmod.predefined # crc
 import crcmod
 from mesh.generic.msgParser import MsgParser
-from mesh.generic.slipMsg import SLIPmsg
+from mesh.generic.hdlcMsg import HDLCMsg
 from mesh.generic.utilities import packData
 
-class SLIPMsgParser(MsgParser):
+class HDLCMsgParser(MsgParser):
     """This class is responsible for taking raw serial bytes and searching them for valid SLIP messages.
 
     Attributes:
         crc: CRC calculator.
-        msg: Parsed SLIP message with SLIP bytes extracted.
-        parsedMsg: Valid serial message stored in this variable upon confirmation of valid CRC.
+        msg: Parsed HDLC message with HDLC bytes extracted.
     """
 
     def __init__(self, config):
         MsgParser.__init__(self, config)
 
-        self.crc = crcmod.mkCrcFun(0x107, initCrc=0, xorOut=0, rev=False) # CRC-8
-        self.crcLength = 1
-        self.msg = SLIPmsg(256)
+        self.crc = crcmod.mkCrcFun(0x11021, initCrc=0xFFFF, xorOut=0, rev=False) # CRC-16
+        self.crcLength = 2
+        self.msg = HDLCMsg(2058)
 
     def parseSerialMsg(self, msgBytes, msgStart):
-        """Searches raw serial data for SLIP messages and then validates message integrity by comparing a computed CRC to the CRC found in the message.  Valid messages are then stored for processing.
+        """Searches raw serial data for HDLC messages and then validates message integrity by comparing a computed CRC to the CRC found in the message.  Valid messages are then stored for processing.
         
         Args:
             msgBytes: Raw serial data to be parsed.
@@ -57,6 +56,6 @@ class SLIPMsgParser(MsgParser):
             crc = self.crc(msgBytes)
             msgBytes = msgBytes + packData(crc, self.crcLength)
             self.msg.encodeMsg(msgBytes)
-            return self.msg.slip
+            return self.msg.hdlc
 
         return msgBytes 

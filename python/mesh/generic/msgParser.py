@@ -7,16 +7,23 @@ class MsgParser:
         parseMsgMax: Maximum attempts at parsing messages from the raw receive buffer.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, msg=[]):
         self.parsedMsgs = []
         self.parseMsgMax = config['parseMsgMax']
+        self.msg = msg
+        
 
     # Parsing methods
     def parseSerialMsg(self, msgBytes, msgStart):
-        """Default parsing just stores all bytes received."""
+        """Searches raw serial data for messages and then parses them using the specified message format. Valid parsed messages are then stored for processing."""
         if len(msgBytes) > 0:
+            if (self.msg): # message format specified
+                parsedMsg = self.msg.parseMsg(msgBytes, msgStart)
+                if (parsedMsg): # message parsed successfully
+                    self.parsedMsgs.append(parsedMsg)
+                    return self.msg.msgEnd
+            else: # no format so store all received bytes
                 self.parsedMsgs.append(msgBytes[msgStart:])
-            
         return len(msgBytes)
     
     def parseMsgs(self, rxBuffer):
@@ -31,6 +38,12 @@ class MsgParser:
         # Message creation methods
     
     def encodeMsg(self, msg):
-        """Default encoding is none."""
-        return msg
+        if msg: # non-zero length message:
+            if self.msg: # Package using message protocol
+                self.msg.encodeMsg(msg)
+                return self.msg.encoded
+            else: # default to returning input bytes
+                return msgBytes 
+        else: # no message
+            return []
 
