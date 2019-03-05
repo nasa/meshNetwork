@@ -4,8 +4,10 @@ import crcmod
 
 HDLC_END = pack('=B', 0x7E)
 HDLC_ESC = pack('=B', 0x7D)
-HDLC_END_SHIFTED = pack('=B', 0x7E ^ (1 << 5))
-HDLC_ESC_SHIFTED = pack('=B', 0x7D ^ (1 << 5))
+HDLC_END_TDMA = pack('<B', 222)
+HDLC_END_SHIFTED = pack('<B', 0x7E ^ (1 << 5))
+HDLC_ESC_SHIFTED = pack('<B', 0x7D ^ (1 << 5))
+HDLC_END_TDMA_SHIFTED = pack('<B', 222 ^ (1 << 5))
 
 class HDLCMsg:
     """An implementation of High-level Data Link Control (HDLC).
@@ -30,8 +32,8 @@ class HDLCMsg:
         self.msg = b''
         self.encoded = b''
         self.buffer = b''   
-        self.crc = crcmod.mkCrcFun(0x107, initCrc=0, xorOut=0, rev=False) # CRC-8
-        self.crcLength = 1
+        self.crc = crcmod.mkCrcFun(0x11021, initCrc=0xFFFF, xorOut=0, rev=False) # CRC-16
+        self.crcLength = 2
  
     def parseMsg(self, msgBytes, msgStart):
         if len(msgBytes) > 0:
@@ -61,7 +63,7 @@ class HDLCMsg:
         # Create crc
         crc = self.crc(inputMsg)
         inputMsg = inputMsg + packData(crc, self.crcLength)
-        
+ 
         outMsg = bytearray() 
         outMsg += HDLC_END # start message
     
@@ -73,6 +75,9 @@ class HDLCMsg:
             elif (byte == HDLC_ESC): # Replace ESC character
                 outMsg += HDLC_ESC
                 outMsg += HDLC_ESC_SHIFTED
+            elif (byte == HDLC_END_TDMA): # Replace TDMA END character
+                outMsg += HDLC_ESC
+                outMsg += HDLC_END_TDMA_SHIFTED
             else: # Insert raw message byte
                 outMsg += byte
     
@@ -130,6 +135,8 @@ class HDLCMsg:
                     if ((msgPos + 1) < len(rawBytes)): # bytes available to parse
                         if (rawBytes[msgPos+1:msgPos+2] == HDLC_END_SHIFTED):
                             self.msg += HDLC_END
+                        elif (rawBytes[msgPos+1:msgPos+2] == HDLC_END_TDMA_SHIFTED):
+                            self.msg += HDLC_END_TDMA
                         else: # ESC byte
                             self.msg += HDLC_ESC
                              
@@ -143,7 +150,7 @@ class HDLCMsg:
                     self.msg += byte
                     msgPos += 1
                     self.msgLength += 1
-            
+                 
         
             else: # end of message found
                 if (self.msgLength > 0): # guards against finding messages of zero length between 2 END characters
