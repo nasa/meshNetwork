@@ -15,7 +15,7 @@ def processMsg(self, cmdId, msg, args):
         clock = args['clock']
 
         cmdStatus = False
-        
+ 
         if len(msg) > 0:
             # Parse command header
             header = deserialize(msg, cmdId, 'header')

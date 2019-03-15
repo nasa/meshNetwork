@@ -5,8 +5,8 @@ from mesh.generic.serialComm import SerialComm
 from mesh.generic.radio import Radio
 from mesh.generic.slipMsgParser import SLIPMsgParser
 from mesh.generic.nodeCmdProcessor import NodeCmdProcessor
-from mesh.generic.slipMsg import SLIPmsg
-from test_SLIPmsg import truthSLIPMsg, testMsg
+from mesh.generic.slipMsg import SLIPMsg
+from test_SLIPMsg import truthSLIPMsg, testMsg
 from mesh.generic.nodeState import NodeState
 from mesh.generic.formationClock import FormationClock
 from mesh.generic.nodeHeader import packHeader

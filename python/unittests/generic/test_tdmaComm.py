@@ -1,16 +1,17 @@
-import serial, time, math
+import serial, time, math, struct, copy
 from mesh.generic.command import Command
 from mesh.generic.tdmaComm import TDMAComm, TDMAMode
 from mesh.generic.tdmaState import TDMABlockTxStatus, TDMAStatus
 from mesh.generic.tdmaCmdProcessor import TDMACmdProcessor
-from mesh.generic.slipMsgParser import SLIPMsgParser
+from mesh.generic.msgParser import MsgParser
+from mesh.generic.hdlcMsg import HDLCMsg
 from mesh.generic.radio import Radio, RadioMode
 from mesh.generic.nodeParams import NodeParams
 from mesh.generic.nodeHeader import packHeader
 from mesh.generic.customExceptions import InvalidTDMASlotNumber
 from unittests.testConfig import configFilePath, testSerialPort
 from mesh.generic.cmds import TDMACmds
-from mesh.generic.slipMsg import SLIP_END_TDMA
+from mesh.generic.hdlcMsg import HDLC_END_TDMA
 from unittests.testCmds import testCmds
 import pytest
 
@@ -25,7 +26,7 @@ class TestTDMAComm:
         self.nodeParams = NodeParams(configFile=configFilePath)
         self.nodeParams.config.commConfig['transmitSlot'] = 1
         self.radio = Radio(serialPort, {'uartNumBytesToRead': self.nodeParams.config.uartNumBytesToRead, 'rxBufferSize': 2000})
-        msgParser = SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax})
+        msgParser = MsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax}, HDLCMsg(256))
         self.tdmaComm = TDMAComm([TDMACmdProcessor], self.radio, msgParser, self.nodeParams)
   
         # Flush radio
@@ -86,6 +87,135 @@ class TestTDMAComm:
         self.tdmaComm.setTDMAMode(TDMAMode.transmit)
         assert(self.tdmaComm.transmitComplete == True) # flag not reset 
 
+    def test_packageMeshPacket(self):
+        """Test packageMeshPacket method of TDMAComm."""
+        packetHeaderLen = 8
+
+        # Test no send of empty message
+        msgBytes = b''
+        destId = 5
+        assert(len(self.tdmaComm.packageMeshPacket(destId, msgBytes)) == 0)
+        
+        # Confirm packet structure
+        msgBytes = b'1234567890'
+        packet = self.tdmaComm.packageMeshPacket(destId, msgBytes)
+        assert(len(packet) == packetHeaderLen + len(msgBytes))
+        packetHeader = struct.unpack('<BBHHH', packet[0:packetHeaderLen])        
+        assert(packetHeader[0] == self.tdmaComm.nodeParams.config.nodeId)
+        assert(packetHeader[1] == destId)
+        assert(packetHeader[2] == 0) # no admin bytes
+        assert(packetHeader[3] == len(msgBytes))
+ 
+        # Test sending of periodic TDMA commands (broadcast message only)
+        cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': int(time.time()), 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
+        encodedCmd = self.tdmaComm.tdmaCmdParser.encodeMsg(cmd.serialize())
+        self.tdmaComm.tdmaCmds = dict()
+        self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = cmd
+
+        destId = 0 # broadcast message
+        packet = self.tdmaComm.packageMeshPacket(destId, msgBytes)
+        assert(len(packet) == packetHeaderLen + len(encodedCmd) + len(msgBytes))
+        assert(packet[packetHeaderLen:packetHeaderLen+len(encodedCmd)] == encodedCmd)
+        assert(packet[packetHeaderLen+len(encodedCmd):] == msgBytes)
+
+        # Confirm admin bytes still sent with zero length message bytes
+        msgBytes = b''
+        self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = cmd
+        packet = self.tdmaComm.packageMeshPacket(destId, msgBytes)
+        assert(len(packet) == packetHeaderLen + len(encodedCmd))
+        assert(packet[packetHeaderLen:packetHeaderLen+len(encodedCmd)] == encodedCmd)
+
+    def test_relayMsg(self):
+        """Test relayMsg method of TDMAComm."""
+        
+        # Test that input message is buffered with no alterations other than sourceId
+        packet = self.tdmaComm.packageMeshPacket(0, b'1234567890')
+        sourceId = int(6)
+        assert(sourceId != self.tdmaComm.nodeParams.config.nodeId)
+        packet[0:1] = struct.pack('<B', sourceId) # change to a nodeId that doesn't match this node
+    
+        assert(len(self.tdmaComm.cmdRelayBuffer) == 0)
+        self.tdmaComm.relayMsg(packet)
+        assert(len(self.tdmaComm.cmdRelayBuffer) > 0)
+        decodedBuffer = self.tdmaComm.msgParser.msg.parseMsg(self.tdmaComm.cmdRelayBuffer, 0)
+        assert(decodedBuffer[0] == self.tdmaComm.nodeParams.config.nodeId) # sourceId updated
+        assert(decodedBuffer[1:] == packet[1:]) # other msg contents unchanged
+
+    def test_processMsgs(self):
+        """Test processMsgs method of TDMAComm."""
+        commStartTime = int(time.time())
+        cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': commStartTime, 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
+        encodedCmd = self.tdmaComm.tdmaCmdParser.encodeMsg(cmd.serialize())
+        self.tdmaComm.tdmaCmds = dict()
+        self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = cmd
+        payloadBytes = b'1234567890'
+        
+        # Verify pre-test conditions
+        assert(len(self.tdmaComm.cmdRelayBuffer) == 0)
+        assert(self.tdmaComm.commStartTime == None)
+
+        # Send test packet
+        packet = self.tdmaComm.packageMeshPacket(0, payloadBytes)
+        self.tdmaComm.bufferTxMsg(packet)
+        self.tdmaComm.sendBuffer()
+        time.sleep(0.1)
+        
+        # Confirm payload bytes buffered for host
+        assert(len(self.tdmaComm.hostBuffer) == 0)
+        self.tdmaComm.readMsgs()
+        self.tdmaComm.processMsgs()
+        assert(len(self.tdmaComm.hostBuffer) > 0)
+        assert(self.tdmaComm.hostBuffer == payloadBytes)
+
+        # Confirm mesh admin message processed
+        assert(self.tdmaComm.commStartTime == commStartTime)
+
+        ## Test proper relaying
+        cmdRelayBufferLen = len(self.tdmaComm.cmdRelayBuffer)
+        assert(cmdRelayBufferLen > 0) # new broadcast command should be relayed
+        self.tdmaComm.bufferTxMsg(packet)
+        self.tdmaComm.sendBuffer()
+        time.sleep(0.1)
+        self.tdmaComm.readMsgs()
+        self.tdmaComm.processMsgs()
+        assert(len(self.tdmaComm.cmdRelayBuffer) == cmdRelayBufferLen) # stale command should be tossed
+        # Send msg with destination that should be relayed
+        self.tdmaComm.maxNumSlots = 7
+        self.tdmaComm.meshPaths = [[]*7]*7
+        self.tdmaComm.nodeParams.linkStatus = [[0, 1, 1, 0, 0, 0, 0],
+                                               [1, 0, 0, 1, 0 ,0, 0],
+                                               [1, 0, 0, 1, 0, 0, 0],
+                                               [0, 1, 1, 0, 1, 1, 0],
+                                               [0, 0, 0, 1, 0, 0, 1],
+                                               [0, 0, 0, 1, 0, 0, 1],
+                                               [0, 0, 0, 0, 1, 1, 0]]
+        self.tdmaComm.updateShortestPaths()
+        
+        self.tdmaComm.cmdRelayBuffer = bytearray()
+        destId = 3
+        self.tdmaComm.nodeParams.config.nodeId = 2
+        packet = self.tdmaComm.packageMeshPacket(destId, payloadBytes)
+        self.tdmaComm.bufferTxMsg(packet)
+        self.tdmaComm.sendBuffer()
+        time.sleep(0.1)
+        self.tdmaComm.readMsgs()
+        self.tdmaComm.nodeParams.config.nodeId = 1
+        self.tdmaComm.processMsgs()
+        assert(len(self.tdmaComm.cmdRelayBuffer) > 0)
+
+        # Send msg with destination that should not be relayed
+        self.tdmaComm.cmdRelayBuffer = bytearray()
+        destId = 4
+        self.tdmaComm.nodeParams.config.nodeId = 2
+        packet = self.tdmaComm.packageMeshPacket(destId, payloadBytes)
+        self.tdmaComm.bufferTxMsg(packet)
+        self.tdmaComm.sendBuffer()
+        time.sleep(0.1)
+        self.tdmaComm.readMsgs()
+        self.tdmaComm.nodeParams.config.nodeId = 1
+        self.tdmaComm.processMsgs()
+        assert(len(self.tdmaComm.cmdRelayBuffer) == 0)
+
     def test_checkForInit(self):
         """Test checkForInit method of TDMAComm."""
         # Confirm radio is off
@@ -98,8 +228,9 @@ class TestTDMAComm:
         
         # Test with MeshStatus message
         startTime = int(time.time())
-        cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': startTime, 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
-        self.tdmaComm.bufferTxMsg(cmd.serialize())
+        self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': startTime, 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId], 0)
+        self.tdmaComm.bufferTxMsg(self.tdmaComm.packageMeshPacket(0, b''))
+        #self.tdmaComm.bufferTxMsg(cmd.serialize())
         self.tdmaComm.sendBuffer()
         time.sleep(0.1)
         self.tdmaComm.checkForInit()
@@ -207,9 +338,11 @@ class TestTDMAComm:
         
         # Send MeshStatus message and confirm that commStartTime is updated
         commStartTime = int(testTime)
-        cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': commStartTime, 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
+        self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': commStartTime, 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId], 0)
         assert(self.tdmaComm.commStartTime != commStartTime) # check that comm start times do not match
-        self.tdmaComm.bufferTxMsg(cmd.serialize())
+        #print(cmd.serialize())
+        #self.tdmaComm.bufferTxMsg(cmd.serialize())
+        self.tdmaComm.bufferTxMsg(self.tdmaComm.packageMeshPacket(0, b''))
         self.tdmaComm.sendBuffer()
         time.sleep(0.1)
         self.tdmaComm.initComm(testTime)
@@ -281,11 +414,30 @@ class TestTDMAComm:
         
     def test_sleep(self):
         """Test sleep method of TDMAComm."""
+        self.tdmaComm.maxNumSlots = 7
+        self.tdmaComm.meshPaths = [[]*7]*7
+        self.tdmaComm.nodeParams.linkStatus = [[0, 1, 1, 0, 0, 0, 0],
+                                               [1, 0, 0, 1, 0 ,0, 0],
+                                               [1, 0, 0, 1, 0, 0, 0],
+                                               [0, 1, 1, 0, 1, 1, 0],
+                                               [0, 0, 0, 1, 0, 0, 1],
+                                               [0, 0, 0, 1, 0, 0, 1],
+                                               [0, 0, 0, 0, 1, 1, 0]]
+        self.tdmaComm.lastGraphUpdate = time.time()
+        meshPaths = copy.deepcopy(self.tdmaComm.meshPaths)        
+       
         # Test for frame exceedance
         self.tdmaComm.frameStartTime = time.time() - self.tdmaComm.frameLength - 0.011
         assert(self.tdmaComm.frameExceedanceCount == 0)
         self.tdmaComm.sleep()
         assert(self.tdmaComm.frameExceedanceCount == 1)
+        assert(meshPaths == self.tdmaComm.meshPaths) # meshPaths not updated
+        
+        # Test path update
+        self.tdmaComm.lastGraphUpdate = time.time() - self.tdmaComm.nodeParams.config.commConfig['linksTxInterval'] - 0.001
+        self.tdmaComm.sleep()
+        assert(meshPaths != self.tdmaComm.meshPaths) # meshPaths updated
+         
 
     def test_sendTDMACmds(self):
         """Test sendTDMACmds method of TDMAComm."""
@@ -293,20 +445,97 @@ class TestTDMAComm:
         flooredStartTime = math.floor(self.tdmaComm.commStartTime)
         self.tdmaComm.tdmaCmds.update({TDMACmds['MeshStatus']: Command(TDMACmds['MeshStatus'], {'commStartTimeSec': flooredStartTime, 'status': self.tdmaComm.tdmaStatus}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId], 0.500)})
 
-        # Check command properly buffered
-        assert(len(self.tdmaComm.radio.txBuffer) == 0)
-        self.tdmaComm.sendTDMACmds()
-        assert(len(self.tdmaComm.radio.txBuffer) > 0)
+        # Check command serialized and returned
+        tdmaCmdBytes = self.tdmaComm.sendTDMACmds()
+        assert(len(tdmaCmdBytes) > 0)
 
         # Wait for resend
-        self.tdmaComm.radio.txBuffer = bytearray()
         time.sleep(0.1)
-        assert(len(self.tdmaComm.radio.txBuffer) == 0)
-        self.tdmaComm.sendTDMACmds() # should not send
-        assert(len(self.tdmaComm.radio.txBuffer) == 0) 
+        assert(len(self.tdmaComm.sendTDMACmds()) == 0) # should not return anything
         time.sleep(0.4)
-        self.tdmaComm.sendTDMACmds() # should send
-        assert(len(self.tdmaComm.radio.txBuffer) > 0)
+        assert(len(self.tdmaComm.sendTDMACmds()) > 0) # should return bytes
+
+        # Confirm non-periodic commands are returned and then removed
+        self.tdmaComm.tdmaCmds = {TDMACmds['MeshStatus']: Command(TDMACmds['MeshStatus'], {'commStartTimeSec': flooredStartTime, 'status': self.tdmaComm.tdmaStatus}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])}
+        assert(len(self.tdmaComm.sendTDMACmds()) > 0)
+        assert(len(self.tdmaComm.tdmaCmds) == 0)
+
+    def test_updateShortestPaths(self):
+        """ Test updateShortestPaths method of TDMAComm."""
+        self.tdmaComm.maxNumSlots = 12
+        self.tdmaComm.meshPaths = [[]*12]*12
+        nodeId = 1
+        sourceId = 11
+        self.nodeParams.linkStatus = [[0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0], # tight grid mesh layout
+                     [1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0],
+                     [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1],
+                     [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0],
+                     [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0],
+                     [0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0],
+                     [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+                     [0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                     [0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+                     [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0],
+                     [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+                     [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0]]
+        
+        shortestPathLengths = [[0, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2], # expected lengths to all nodes
+                               [1, 0, 1, 1, 2, 1, 2, 1, 2, 2, 2, 2],
+                               [1, 1, 0, 2, 2, 2, 1, 1, 3, 3, 1, 1],
+                               [1, 1, 2, 0, 1, 1, 2, 2, 1, 1, 3, 3],
+                               [1, 2, 2, 1, 0, 2, 1, 3, 1, 2, 2, 3],
+                               [2, 1, 2, 1, 2, 0, 3, 1, 2, 1, 3, 2],
+                               [1, 2, 1, 2, 1, 3, 0, 2, 2, 3, 1, 2],
+                               [2, 1, 1, 2, 3, 1, 2, 0, 3, 2, 2, 1],
+                               [2, 2, 3, 1, 1, 2, 2, 3, 0, 1, 3, 4],
+                               [2, 2, 3, 1, 2, 1, 3, 2, 1, 0, 4, 3],
+                               [2, 2, 1, 3, 2, 3, 1, 2, 3, 4, 0, 1],
+                               [2, 2, 1, 3, 3, 2, 2, 1, 4, 3, 1, 0]]
+
+        self.tdmaComm.updateShortestPaths()
+
+        # Verify all computed paths meet expected lengths
+        for startNode in range(self.tdmaComm.maxNumSlots):
+            for node in range(self.tdmaComm.maxNumSlots):
+                assert(len(self.tdmaComm.meshPaths[startNode][node][0]) - 1 == shortestPathLengths[startNode][node])
+
+    def test_checkForRelay(self):
+        """Test checkForRelay method of TDMAComm."""
+ 
+        # Test relay is true if current node on shortest path
+        self.tdmaComm.maxNumSlots = 12
+        self.tdmaComm.meshPaths = [[]*12]*12
+        nodeId = 1
+        sourceId = 11
+        self.nodeParams.linkStatus = [[0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0], # tight grid mesh layout
+                     [1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0],
+                     [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1],
+                     [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0],
+                     [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0],
+                     [0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0],
+                     [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+                     [0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                     [0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+                     [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0],
+                     [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+                     [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0]]
+        self.tdmaComm.updateShortestPaths() # determine shortest paths
+
+        truthRelay = [False, False, False, True, False, False, False, False, False, True, False, False]
+        for node in range(len(self.nodeParams.linkStatus)):
+            assert(self.tdmaComm.checkForRelay(nodeId, node + 1, sourceId) == truthRelay[node])
+
+    def test_queueMeshMsg(self):
+        """Test queueMeshMsg method of TDMAComm."""
+        destId = 3
+
+        # Verify pre-test conditions
+        assert(len(self.tdmaComm.meshQueueIn[destId-1]) == 0)
+        
+        # Run test
+        testMsg = b'1234567890'
+        self.tdmaComm.queueMeshMsg(destId, testMsg)
+        assert(self.tdmaComm.meshQueueIn[destId-1] == testMsg)
 
     def test_sendMsg(self):
         """Test sendMsg method of TDMAComm."""
@@ -326,20 +555,20 @@ class TestTDMAComm:
         self.tdmaComm.tdmaMode = TDMAMode.transmit
         self.tdmaComm.sendMsg()
         assert(len(self.tdmaComm.radio.txBuffer) == 0) # message sent
-        assert(self.tdmaComm.transmitComplete == True) # check that transmitComplete flag set
+        
 
         # Test transmission of periodic commands
-        serBytes = self.tdmaComm.radio.getRxBytes() # clear incoming bytes
-        assert(len(self.tdmaComm.cmdBuffer) == 0)
-        assert(len(self.tdmaComm.cmdRelayBuffer) == 0)
-        cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': int(time.time()), 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
-        self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = cmd
-        self.tdmaComm.sendMsg()
-        time.sleep(0.1)
-        self.tdmaComm.readBytes()
-        serBytes = self.tdmaComm.radio.getRxBytes()
-        assert(len(serBytes) > 0)
-        assert(serBytes[-1:] == SLIP_END_TDMA) # check for end of message indicator
+        #serBytes = self.tdmaComm.radio.getRxBytes() # clear incoming bytes
+        #assert(len(self.tdmaComm.cmdBuffer) == 0)
+        #assert(len(self.tdmaComm.cmdRelayBuffer) == 0)
+        #cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': int(time.time()), 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
+        #self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = cmd
+        #self.tdmaComm.sendMsg()
+        #time.sleep(0.1)
+        #self.tdmaComm.readBytes()
+        #serBytes = self.tdmaComm.radio.getRxBytes()
+        #assert(len(serBytes) > 0)
+        #assert(serBytes[-1:] == HDLC_END_TDMA) # check for end of message indicator
 
         # Test command relay buffer
         testMsg = b'1234567890'
@@ -349,7 +578,7 @@ class TestTDMAComm:
         time.sleep(0.1)
         self.tdmaComm.readBytes()
         serBytes = self.tdmaComm.radio.getRxBytes()
-        assert(serBytes == testMsg + SLIP_END_TDMA)
+        assert(testMsg in serBytes)
        
         # Test command buffer
         self.tdmaComm.radio.clearRxBuffer()
@@ -360,6 +589,58 @@ class TestTDMAComm:
         time.sleep(0.1)
         self.tdmaComm.readBytes()
         assert(len(self.tdmaComm.radio.getRxBytes()) > 0)
+
+        ## Test meshQueue processing
+        # Test no output for empty queue
+        self.tdmaComm.sendMsg()
+        time.sleep(0.1)
+        self.tdmaComm.readBytes()
+        assert(len(self.tdmaComm.radio.getRxBytes()) > 0) # nothing sent when meshQueue is empty (and no periodic commands)
+
+        # Test broadcast message output
+        cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': int(time.time()), 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
+        self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = cmd
+        encodedCmd = self.tdmaComm.tdmaCmdParser.encodeMsg(cmd.serialize())
+        self.tdmaComm.sendMsg()
+        time.sleep(0.1)
+        self.tdmaComm.readBytes()
+        assert(len(self.tdmaComm.radio.getRxBytes()) > 0) # message sent when periodic commands pending
+        self.tdmaComm.parseMsgs()
+        assert(len(self.tdmaComm.msgParser.parsedMsgs) == 1)
+        packetHeader = struct.unpack('<BBHHH', self.tdmaComm.msgParser.parsedMsgs[0][0:8])
+        assert(packetHeader[1] == 0) # broadcast message
+        assert(encodedCmd in self.tdmaComm.msgParser.parsedMsgs[0]) # tdmaCmds included in message
+
+        # Test destination specific output
+        self.nodeParams.config.commConfig['recvAllMsgs'] = True # receive all messages, regardless of dest
+        msg1 = b'1234567890'
+        msg1Dest = 3
+        msg2 = b'0987654321'
+        msg2Dest = 5
+        self.tdmaComm.meshQueueIn[msg1Dest-1] = msg1
+        self.tdmaComm.meshQueueIn[msg2Dest-1] = msg2 
+        self.tdmaComm.sendMsg()
+        time.sleep(0.1)
+        self.tdmaComm.readBytes()
+        assert(len(self.tdmaComm.radio.getRxBytes()) > 0)
+        self.tdmaComm.processMsgs()
+        assert(len(self.tdmaComm.hostBuffer) > 0)
+        assert(msg1 in self.tdmaComm.hostBuffer)
+        assert(msg2 in self.tdmaComm.hostBuffer)
+
+        # Test without receiving messages for other nodes
+        self.tdmaComm.hostBuffer = bytearray()
+        self.nodeParams.config.commConfig['recvAllMsgs'] = False
+        msg1Dest = self.nodeParams.config.nodeId
+        self.tdmaComm.meshQueueIn[msg1Dest-1] = msg1
+        self.tdmaComm.meshQueueIn[msg2Dest-1] = msg2 
+        self.tdmaComm.sendMsg()
+        time.sleep(0.1)
+        self.tdmaComm.readBytes()
+        assert(len(self.tdmaComm.radio.getRxBytes()) > 0)
+        self.tdmaComm.processMsgs()
+        assert(len(self.tdmaComm.hostBuffer) > 0)
+        assert(self.tdmaComm.hostBuffer == msg1)
 
     def test_readMsgs(self):
         """Test readMsgs method of TDMAComm."""
@@ -374,12 +655,22 @@ class TestTDMAComm:
         # Send message with END_TDMA byte and check for True returned
         self.tdmaComm.radio.clearRxBuffer()
         self.tdmaComm.rxBufferReadPos = 0
-        self.tdmaComm.sendBytes(testMsg + SLIP_END_TDMA)    
+        self.tdmaComm.sendBytes(testMsg + HDLC_END_TDMA)    
         time.sleep(0.1)
         out = self.tdmaComm.readMsgs()
         print("Read status:", out, self.tdmaComm.rxBufferReadPos)
         assert(out == True)
 
+    def test_processMeshMsgs(self):
+        """Test processMeshMsgs method of TDMAComm."""
+        commStartTime = int(time.time())
+        cmd = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': commStartTime, 'status': TDMAStatus.nominal}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
+        encodedCmd = self.tdmaComm.tdmaCmdParser.encodeMsg(cmd.serialize())
+
+        # Verify pre-test conditions
+        assert(self.tdmaComm.commStartTime == None)
+        self.tdmaComm.processMeshMsgs(encodedCmd)
+        assert(self.tdmaComm.commStartTime == commStartTime)
 
     def test_executeTDMAComm(self):
         """Test executeTDMAComm method of TDMAComm."""
@@ -408,7 +699,7 @@ class TestTDMAComm:
             if i == 1: # prep for read
                 assert(self.tdmaComm.radio.mode == RadioMode.receive)
                 assert(self.tdmaComm.radio.bytesInRxBuffer == 0);
-                self.tdmaComm.sendBytes(testMsg + SLIP_END_TDMA) # send bytes to read
+                self.tdmaComm.sendBytes(testMsg + HDLC_END_TDMA) # send bytes to read
                 time.sleep(0.1)
             if i == 2: # post receive 
                 assert(self.tdmaComm.radio.mode == RadioMode.sleep) # receive terminated once end byte received

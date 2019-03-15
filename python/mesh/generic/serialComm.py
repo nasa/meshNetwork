@@ -112,7 +112,6 @@ class SerialComm(object):
         """Add bytes to transmission buffer."""
         if msgBytes:
             msgOut = self.msgParser.encodeMsg(msgBytes)
-            print(msgOut)
             self.radio.bufferTxMsg(msgOut)
     
     def execute(self):

@@ -5,7 +5,7 @@ from struct import pack
 def processHeader(self, header, msg, nodeStatus, clock, comm):
     cmdStatus = True
     if header != None:
-        updateNodeMsgRcvdStatus(nodeStatus, header, clock)
+        #updateNodeMsgRcvdStatus(nodeStatus, header, clock)
         
         # Check for command counter
         cmdStatus = checkCmdCounter(self, header, msg, comm)

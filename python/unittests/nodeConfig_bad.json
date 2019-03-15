@@ -1,7 +1,6 @@
 {
 	"node": {
-        "nodeId": 2,
-		"maxNumNodes": 6,
+        "nodeId": 1,
 		"platform": "generic",
 		"nodeUpdateTimeout": 5.0,
 		"FCCommWriteInterval": 0.2,
@@ -28,6 +27,7 @@
 		
 	"tdmaConfig": {
 		"sleepPin": "P8_12",
+        "txBaudrate": 57600,
 		"enableLength": 0.005,
 		"slotGuardLength": 0.005,
 		"preTxGuardLength": 0.005,
@@ -42,7 +42,7 @@
 		"offsetTimeout": 60.0,
         "offsetTxInterval": 10.0,
         "statusTxInterval": 0.0,
-        "linksTxInterval": 30.0,
+        "linksTxInterval": 1.0,
 		"maxTxBlockSize": 5,
 		"blockTxRequestTimeout": 3,
 		"minBlockTxDelay": 6,
@@ -50,8 +50,7 @@
         "fpgaFailsafePin": "P8_16",
         "fpgaFifoSize": 512,
         "enablePin": "P8_15", 
-        "statusPin": "P8_18",
-        "recvAllMsgs": true
+        "statusPin": "P8_18"
 	}
 
 }

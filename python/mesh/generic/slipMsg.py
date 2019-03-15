@@ -4,10 +4,9 @@ import crcmod
 
 SLIP_END = pack('B',192)
 SLIP_ESC = pack('B',219)
-SLIP_END_TDMA = pack('B', 193)
+#SLIP_END_TDMA = pack('B', 193)
 SLIP_ESC_END = pack('B',220)
 SLIP_ESC_ESC = pack('B',221)        
-SLIP_ESC_END_TDMA = pack('B',222)
 
 class SLIPMsg:
     """An implementation of the Serial Line Internet Protocol (SLIP).
@@ -100,8 +99,8 @@ class SLIPMsg:
                         byte = byteList[pos+1:pos+2]
                         if byte == SLIP_ESC_END: # replace ESC sequence with END character
                             self.msg = self.msg + SLIP_END
-                        elif byte == SLIP_ESC_END_TDMA: # replace ESC sequence with TDMA END character
-                            self.msg = self.msg + SLIP_END_TDMA
+                        #elif byte == SLIP_ESC_END_TDMA: # replace ESC sequence with TDMA END character
+                        #    self.msg = self.msg + SLIP_END_TDMA
                         else: # replace ESC sequence with ESC character
                             self.msg = self.msg + SLIP_ESC
                         pos += 1
@@ -143,8 +142,8 @@ class SLIPMsg:
                 self.encoded += SLIP_ESC + SLIP_ESC_END
             elif byte == SLIP_ESC: # Replace ESC character
                 self.encoded += SLIP_ESC + SLIP_ESC_ESC
-            elif byte == SLIP_END_TDMA: # Replace TDMA END character
-                self.encoded += SLIP_ESC + SLIP_ESC_END_TDMA
+            #elif byte == SLIP_END_TDMA: # Replace TDMA END character
+            #    self.encoded += SLIP_ESC + SLIP_ESC_END_TDMA
             else: # Insert raw byte into message
                 self.encoded += byte
         self.encoded += SLIP_END
