@@ -2,7 +2,7 @@ import subprocess, time, sys, threading
 
 def getTimeOffset(offsetType='standard'):
     if offsetType == None: # no offset calculation
-        return None
+        return 0.0 # default to no offset
     elif offsetType == 'ntp-pps':
         # Parse ntpq -p command
         try:

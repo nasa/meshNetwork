@@ -26,6 +26,8 @@ class TestFormationClock:
 
     def test_getOffset(self):
         """Test time offset functionality."""
+        # Test zero offset returned when no time source
+        self.clock.timeSource = None
         offset = self.clock.getOffset()
-        assert(offset == None)
+        assert(abs(offset) < 0.00001)
         

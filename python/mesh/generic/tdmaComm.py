@@ -251,6 +251,9 @@ class TDMAComm(SerialComm):
         if ((self.nodeParams.clock.getTime() - self.lastGraphUpdate) > self.nodeParams.config.commConfig['linksTxInterval']):
             self.updateShortestPaths()
 
+        # Process any received messages
+        self.processMsgs()
+
         # Sleep until next frame to save CPU usage
         remainingFrameTime = (self.frameLength - (self.nodeParams.clock.getTime() - self.frameStartTime))
         if (remainingFrameTime > 0.010):
@@ -349,7 +352,7 @@ class TDMAComm(SerialComm):
         """This functions receives messages to be sent over the mesh network and queues them for transmission."""
         
         # Place message in appropriate position in outgoing queue (broadcast messages are stored in the zero position) 
-        self.meshQueueIn[destId-1] += msgBytes
+        self.meshQueueIn[destId] += msgBytes
  
     def sendMsg(self):
         if (self.enabled == False): # Don't send anything if disabled
@@ -367,7 +370,7 @@ class TDMAComm(SerialComm):
                 if (destId == 0):
                     packetBytes = self.packageMeshPacket(destId, self.meshQueueIn[destId])
                 elif (destId != 0 and self.meshQueueIn[destId]): # only send non-zero non-broadcast messages
-                    packetBytes = self.packageMeshPacket(destId+1, self.meshQueueIn[destId])
+                    packetBytes = self.packageMeshPacket(destId, self.meshQueueIn[destId])
                     
                 if (packetBytes):
                     self.bufferTxMsg(packetBytes)
@@ -387,14 +390,18 @@ class TDMAComm(SerialComm):
     def packageMeshPacket(self, destId, msgBytes):
         adminBytes = b''
         if (destId == 0): # package periodic TDMA commands into broadcast message
-            adminBytes += self.sendTDMACmds()
+            adminBytes = self.sendTDMACmds()
+
+        return self.createMeshPacket(destId, msgBytes, adminBytes, self.nodeParams.config.nodeId)
+
+    def createMeshPacket(self, destId, msgBytes, adminBytes, sourceId):
 
         if (len(adminBytes) == 0 and len(msgBytes) == 0): # do not send empty message
-            return b'' 
+            return bytearray()
 
         # Create mesh packet header
         packetHeaderFormat = '<BBHHH'
-        packetHeader = struct.pack(packetHeaderFormat, self.nodeParams.config.nodeId, destId, len(adminBytes), len(msgBytes), self.nodeParams.get_cmdCounter())
+        packetHeader = struct.pack(packetHeaderFormat, sourceId, destId, len(adminBytes), len(msgBytes), self.nodeParams.get_cmdCounter())
         
         # Return mesh packet
         return bytearray(packetHeader + adminBytes + msgBytes)
@@ -467,7 +474,6 @@ class TDMAComm(SerialComm):
                 # Validate message
                 if (len(msg) == (meshHeaderLen + adminLength + payloadLength)): # message length is valid
                     # Update information on direct mesh links based on sourceId
-                    #self.meshGraph[sourceId-1] = self.nodeParams.clock.getTime()
                     self.nodeParams.nodeStatus[sourceId-1].present = True
                     self.nodeParams.nodeStatus[sourceId-1].lastMsgRcvdTime = self.nodeParams.clock.getTime()
 
@@ -489,10 +495,11 @@ class TDMAComm(SerialComm):
                         # Check if should be relayed
                         if (self.checkForRelay(self.nodeParams.config.nodeId, destId, sourceId) == True): # message should be relayed
                             self.relayMsg(bytearray(msg))
-                        
+                else:
+                    pass
+       
     def checkForRelay(self, currentNode, destId, sourceId):
         """This method checks if a message should be relayed based on the current mesh graph."""
-        
         # No relay if this is the destination
         if (currentNode == destId):
             return False

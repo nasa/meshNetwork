@@ -38,7 +38,7 @@ class NodeController(object):
         """Executes any processing logic required by this node."""
 
         # Update node status
-        self.updateStatus()
+        self.nodeParams.updateStatus()
 
         pass        
 
@@ -70,13 +70,6 @@ class NodeController(object):
         """Logs pertinent node operational and state data."""
         pass
 
-    def updateStatus(self):
-        """Update status information."""
-        
-        self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1].status = 0
-        if (self.nodeParams.configConfirmed == True):
-            self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1].status += 64 # bit 6
-
     def monitorNodeUpdates(self):
         """Monitors time since last state update from other nodes."""
         
@@ -89,28 +82,6 @@ class NodeController(object):
             else:
                 node.updating = True 
         
-    def checkNodeLinks(self):
-        """Checks status of links to other nodes."""
-        thisNode = self.nodeParams.config.nodeId - 1
-        for i in range(self.nodeParams.config.maxNumNodes):
-            if (i == thisNode): # this node
-                self.nodeParams.linkStatus[thisNode][i] = LinkStatus.GoodLink
-            else: # other nodes
-                # Check for direct link
-                if (self.nodeParams.nodeStatus[i].present and (self.nodeParams.clock.getTime() - self.nodeParams.nodeStatus[i].lastMsgRcvdTime) < 1.5*self.nodeParams.config.commConfig['frameLength']):
-                    #if ((self.nodeParams.clock.getTime() - self.nodeParams.nodeStatus[i].lastMsgRcvdTime) < 1.5*self.nodeParams.config.commConfig['frameLength']):
-                    self.nodeParams.linkStatus[thisNode][i] = LinkStatus.GoodLink
-                
-                # Check for indirect link
-                elif (self.nodeParams.nodeStatus[i].updating == True): # state data is updating, so at least an indirect link
-                    self.nodeParams.linkStatus[thisNode][i] = LinkStatus.IndirectLink
-                
-                else: # no link
-                    if (self.nodeParams.linkStatus[thisNode][i] != LinkStatus.NoLink): # lost link
-                        self.nodeParams.linkStatus[thisNode][i] = LinkStatus.BadLink
-                #else: # no link ever with this node
-                #    self.nodeParams.linkStatus[thisNode][i] = LinkStatus.NoLink
-
     def monitorNetworkStatus(self):
         """Monitors status of other nodes to determine their current status."""
 
@@ -118,4 +89,4 @@ class NodeController(object):
         self.monitorNodeUpdates()
 
         # Check node links
-        self.checkNodeLinks()
+        self.nodeParams.checkNodeLinks()

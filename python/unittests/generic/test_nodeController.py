@@ -41,12 +41,9 @@ class TestNodeController:
         assert(self.nodeController.nodeParams.nodeStatus[1].updating == True)
  
     def checkNodeLinks(self):
-        self.nodeController.checkNodeLinks()
+        self.nodeController.nodeParams.checkNodeLinks()
         nodeId = self.nodeController.nodeParams.config.nodeId - 1
         
-        # Test link to self
-        assert(self.nodeController.nodeParams.linkStatus[nodeId][nodeId] == LinkStatus.GoodLink)        
-
         # Test direct link
         assert(self.nodeController.nodeParams.linkStatus[nodeId][2] == LinkStatus.GoodLink)        
 
@@ -78,18 +75,6 @@ class TestNodeController:
  
         self.checkNodeUpdates()
         self.checkNodeLinks()
-
-    def test_updateStatus(self):
-        """Test updateStatus method of NodeController."""
-        
-        # Test without confirmed config
-        self.nodeController.updateStatus()
-        assert(self.nodeController.nodeParams.nodeStatus[self.nodeController.nodeParams.config.nodeId-1].status == 0)
-
-        # Test with confirmed config
-        self.nodeController.nodeParams.configConfirmed = True
-        self.nodeController.updateStatus()
-        assert(self.nodeController.nodeParams.nodeStatus[self.nodeController.nodeParams.config.nodeId-1].status == 64)
 
     def test_processNodeCommands(self):
         """Test processNodeCommands method of NodeController."""

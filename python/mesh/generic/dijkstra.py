@@ -19,7 +19,7 @@ def findShortestPaths(numNodes, meshGraph, startNode):
         nextNode = -1
         nextLength = 100
         for node in range(len(meshGraph[currentNode])):
-            mapEntry = [1 if (link == LinkStatus.IndirectLink or link == LinkStatus.GoodLink) else 0 for link in meshGraph[currentNode]] # filter out stale or no links
+            mapEntry = [1 if (link == LinkStatus.GoodLink) else 0 for link in meshGraph[currentNode]] # filter out stale or no links
 
             if (mapEntry[node] > 0): # link exists to this node
                 # Shorter path to this node
@@ -62,11 +62,9 @@ def buildPaths(currentNode, startNode, currentPath, pathArray):
     outPaths = []
     paths = []
     for node in pathArray[currentNode-1][2]: # Check for path branches
-        #print(node, currentNode)
         if (currentNode != node): # path continues
             newPath = deepcopy(currentPath)
             newPath.insert(0,node)
-            #print("New path: ", newPath)
             paths.append(newPath)
     
     if (len(paths) == 0): # no path found # TODO: Is this needed
@@ -77,7 +75,6 @@ def buildPaths(currentNode, startNode, currentPath, pathArray):
         if (path[0] != startNode): # continue path
             newPaths = buildPaths(path[0], startNode, path, pathArray)
             for newPath in newPaths: # Add determined paths to output
-                #print("newPath append: ", newPath)
                 outPaths.append(newPath)
         else: # path ended
             outPaths.append(path)
@@ -144,8 +141,8 @@ for node in range(len(nodeArchitecture)):
     lenPathToSource = len(allPaths[currentNodeId-1][sourceId-1][0])-1
     lenPathToDest = len(allPaths[currentNodeId-1][destId-1][0])-1
     lenSourceToDest = len(allPaths[sourceId-1][destId-1][0])-1
-    print(allPaths[sourceId-1][destId-1])
-    print(lenPathToSource, lenPathToDest, lenSourceToDest)
+    #print(allPaths[sourceId-1][destId-1])
+    #print(lenPathToSource, lenPathToDest, lenSourceToDest)
     if (lenSourceToDest >= (lenPathToDest + lenPathToSource)):
         relay = True
 
@@ -155,7 +152,7 @@ for node in range(len(nodeArchitecture)):
         # relay = True
         # break
 
-    print("Current node, relay: ", currentNodeId, relay)
+    #print("Current node, relay: ", currentNodeId, relay)
 
     relay = False
 

@@ -1,6 +1,7 @@
 from mesh.generic.nodeConfig import NodeConfig
 from mesh.generic.nodeParams import NodeParams
-import pytest
+from mesh.generic.nodeState import LinkStatus
+import pytest, time
 from unittests.testConfig import configFilePath
 
 class TestNodeParams:
@@ -14,6 +15,16 @@ class TestNodeParams:
         if method.__name__ != "test_init":
             self.nodeParams = NodeParams(config=self.nodeConfig) # Create NodeParams instance
             
+    def setup_checkNodeLinks(self):
+        # Setup indirect link
+        self.nodeParams.nodeStatus[0].updating = True
+        
+        # Setup direct link
+        self.nodeParams.nodeStatus[2].present = True
+        self.nodeParams.nodeStatus[2].lastMsgRcvdTime = time.time() - self.nodeParams.config.commConfig['frameLength']
+
+        # Setup bad link
+        self.nodeParams.linkStatus[1][3] = LinkStatus.GoodLink 
 
     def test_init(self):
         """Test NodeParams init function."""
@@ -41,3 +52,41 @@ class TestNodeParams:
         #counter = self.nodeParams.get_cmdCounter()
         #assert(counter >= 0.5 * 1000)
         #assert(counter <= 0.6 * 1000)
+    
+    def checkNodeLinks(self):
+        self.nodeParams.checkNodeLinks()
+        nodeId = self.nodeParams.config.nodeId - 1
+        
+        # Test link to self
+        #assert(self.nodeParams.linkStatus[nodeId][nodeId] == LinkStatus.GoodLink)        
+        
+        # Test direct link
+        assert(self.nodeParams.linkStatus[nodeId][2] == LinkStatus.GoodLink)        
+
+        # Test indirect link
+        assert(self.nodeParams.linkStatus[nodeId][0] == LinkStatus.IndirectLink)        
+
+        # Test bad link
+        assert(self.nodeParams.linkStatus[nodeId][3] == LinkStatus.BadLink)        
+        
+        # Test bad link
+        assert(self.nodeParams.linkStatus[nodeId][4] == LinkStatus.NoLink)        
+
+    def test_checkNodeLinks(self):
+        self.setup_checkNodeLinks()
+
+        # Test different link status possibilities
+        self.checkNodeLinks() 
+    
+    def test_updateStatus(self):
+        """Test updateStatus method of NodeParams."""
+        
+        # Test without confirmed config
+        self.nodeParams.updateStatus()
+        assert(self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1].status == 0)
+
+        # Test with confirmed config
+        self.nodeParams.configConfirmed = True
+        self.nodeParams.updateStatus()
+        assert(self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1].status == 64)
+

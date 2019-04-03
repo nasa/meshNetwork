@@ -253,14 +253,15 @@ class TestTDMAComm:
 
         # Test with no offset available
         ret = self.tdmaComm.checkTimeOffset()
-        assert(self.tdmaComm.nodeParams.nodeStatus[self.tdmaComm.nodeParams.config.nodeId-1].timeOffset == 127)
-        assert(self.tdmaComm.timeOffsetTimer != None)
+        assert(self.tdmaComm.nodeParams.nodeStatus[self.tdmaComm.nodeParams.config.nodeId-1].timeOffset == 0)
+        assert(self.tdmaComm.timeOffsetTimer == None)
 
         # Test timer clear
         ret = self.tdmaComm.checkTimeOffset(self.nodeParams.config.commConfig['operateSyncBound'])
         assert(self.tdmaComm.timeOffsetTimer == None)
 
         # Elapse offset timer
+        self.nodeParams.clock.timeSource = 'pps' # set to something other than None
         self.tdmaComm.timeOffsetTimer = time.time() - (self.tdmaComm.nodeParams.config.commConfig['offsetTimeout'] + 1.0)
         ret = self.tdmaComm.checkTimeOffset()
         assert(self.tdmaComm.tdmaFailsafe == True)
@@ -274,7 +275,7 @@ class TestTDMAComm:
         self.tdmaComm.commStartTime = testTime - 0.5*self.tdmaComm.frameLength
         self.tdmaComm.tdmaCmds[TDMACmds['MeshStatus']] = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': 0.0, 'status': TDMAStatus.blockTx}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId])
         self.tdmaComm.tdmaStatus = TDMAStatus.nominal
-        assert(self.tdmaComm.timeOffsetTimer == None) # no offset timer running
+        assert(self.tdmaComm.nodeParams.nodeStatus[self.tdmaComm.nodeParams.config.nodeId-1].timeOffset == 127) # offset at default value
         
         # Call method under test
         self.tdmaComm.syncTDMAFrame(testTime)
@@ -290,7 +291,7 @@ class TestTDMAComm:
         assert(self.tdmaComm.rxBufferReadPos == 0)
 
         # Verify time offset check
-        assert(self.tdmaComm.timeOffsetTimer != None) # offset timer started
+        assert(self.tdmaComm.nodeParams.nodeStatus[self.tdmaComm.nodeParams.config.nodeId-1].timeOffset != 127) # offset updated
        
     def test_updateFrameTime(self):
         """Test updateFrameTime method of TDMAComm.""" 
@@ -530,12 +531,12 @@ class TestTDMAComm:
         destId = 3
 
         # Verify pre-test conditions
-        assert(len(self.tdmaComm.meshQueueIn[destId-1]) == 0)
+        assert(len(self.tdmaComm.meshQueueIn[destId]) == 0)
         
         # Run test
         testMsg = b'1234567890'
         self.tdmaComm.queueMeshMsg(destId, testMsg)
-        assert(self.tdmaComm.meshQueueIn[destId-1] == testMsg)
+        assert(self.tdmaComm.meshQueueIn[destId] == testMsg)
 
     def test_sendMsg(self):
         """Test sendMsg method of TDMAComm."""
@@ -617,8 +618,8 @@ class TestTDMAComm:
         msg1Dest = 3
         msg2 = b'0987654321'
         msg2Dest = 5
-        self.tdmaComm.meshQueueIn[msg1Dest-1] = msg1
-        self.tdmaComm.meshQueueIn[msg2Dest-1] = msg2 
+        self.tdmaComm.meshQueueIn[msg1Dest] = msg1
+        self.tdmaComm.meshQueueIn[msg2Dest] = msg2 
         self.tdmaComm.sendMsg()
         time.sleep(0.1)
         self.tdmaComm.readBytes()
@@ -632,8 +633,8 @@ class TestTDMAComm:
         self.tdmaComm.hostBuffer = bytearray()
         self.nodeParams.config.commConfig['recvAllMsgs'] = False
         msg1Dest = self.nodeParams.config.nodeId
-        self.tdmaComm.meshQueueIn[msg1Dest-1] = msg1
-        self.tdmaComm.meshQueueIn[msg2Dest-1] = msg2 
+        self.tdmaComm.meshQueueIn[msg1Dest] = msg1
+        self.tdmaComm.meshQueueIn[msg2Dest] = msg2 
         self.tdmaComm.sendMsg()
         time.sleep(0.1)
         self.tdmaComm.readBytes()
