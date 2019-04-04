@@ -15,17 +15,6 @@ class TestNodeParams:
         if method.__name__ != "test_init":
             self.nodeParams = NodeParams(config=self.nodeConfig) # Create NodeParams instance
             
-    def setup_checkNodeLinks(self):
-        # Setup indirect link
-        self.nodeParams.nodeStatus[0].updating = True
-        
-        # Setup direct link
-        self.nodeParams.nodeStatus[2].present = True
-        self.nodeParams.nodeStatus[2].lastMsgRcvdTime = time.time() - self.nodeParams.config.commConfig['frameLength']
-
-        # Setup bad link
-        self.nodeParams.linkStatus[1][3] = LinkStatus.GoodLink 
-
     def test_init(self):
         """Test NodeParams init function."""
 
@@ -53,31 +42,27 @@ class TestNodeParams:
         #assert(counter >= 0.5 * 1000)
         #assert(counter <= 0.6 * 1000)
     
-    def checkNodeLinks(self):
-        self.nodeParams.checkNodeLinks()
-        nodeId = self.nodeParams.config.nodeId - 1
-        
-        # Test link to self
-        #assert(self.nodeParams.linkStatus[nodeId][nodeId] == LinkStatus.GoodLink)        
-        
-        # Test direct link
-        assert(self.nodeParams.linkStatus[nodeId][2] == LinkStatus.GoodLink)        
-
-        # Test indirect link
-        assert(self.nodeParams.linkStatus[nodeId][0] == LinkStatus.IndirectLink)        
-
-        # Test bad link
-        assert(self.nodeParams.linkStatus[nodeId][3] == LinkStatus.BadLink)        
-        
-        # Test bad link
-        assert(self.nodeParams.linkStatus[nodeId][4] == LinkStatus.NoLink)        
-
     def test_checkNodeLinks(self):
-        self.setup_checkNodeLinks()
+        nodeId = self.nodeParams.config.nodeId - 1
 
-        # Test different link status possibilities
-        self.checkNodeLinks() 
-    
+        # Test for direct link 
+        self.nodeParams.nodeStatus[2].present = True
+        self.nodeParams.nodeStatus[2].lastMsgRcvdTime = time.time() - 0.90 * self.nodeParams.config.commConfig['linkTimeout']
+        self.nodeParams.checkNodeLinks()
+        assert(self.nodeParams.linkStatus[nodeId][2] == LinkStatus.GoodLink)
+
+        # Test for indirect link
+        self.nodeParams.nodeStatus[2].present = False
+        self.nodeParams.nodeStatus[2].updating = True
+        self.nodeParams.checkNodeLinks()
+        assert(self.nodeParams.linkStatus[nodeId][2] == LinkStatus.IndirectLink)
+
+        # Test for no link
+        self.nodeParams.nodeStatus[2].present = False
+        self.nodeParams.nodeStatus[2].updating = False
+        self.nodeParams.checkNodeLinks()
+        assert(self.nodeParams.linkStatus[nodeId][2] == LinkStatus.NoLink)
+        
     def test_updateStatus(self):
         """Test updateStatus method of NodeParams."""
         

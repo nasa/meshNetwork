@@ -32,7 +32,7 @@ class TestNodeController:
         self.nodeController.nodeParams.nodeStatus[2].present = True
         self.nodeController.nodeParams.nodeStatus[2].lastMsgRcvdTime = time.time() - self.nodeController.nodeParams.config.commConfig['frameLength']
 
-        # Setup bad link
+        # Setup no link
         self.nodeController.nodeParams.linkStatus[1][3] = LinkStatus.GoodLink 
 
     def checkNodeUpdates(self):   
@@ -49,18 +49,8 @@ class TestNodeController:
 
         # Test indirect link
         assert(self.nodeController.nodeParams.linkStatus[nodeId][0] == LinkStatus.IndirectLink)        
-
-        # Test bad link
-        assert(self.nodeController.nodeParams.linkStatus[nodeId][3] == LinkStatus.BadLink)        
-        
-        # Test bad link
+        # Test no link
         assert(self.nodeController.nodeParams.linkStatus[nodeId][4] == LinkStatus.NoLink)        
-
-    def test_checkNodeLinks(self):
-        self.setup_checkNodeLinks()
-
-        # Test different link status possibilities
-        self.checkNodeLinks() 
 
     def test_monitorNodeUpdates(self):
         self.setup_monitorNodeUpdates()

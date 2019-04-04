@@ -1,29 +1,17 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>Software &#8212; Mesh Network Communication System 2.0 documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '2.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Configuration" href="config.html" />
@@ -34,13 +22,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="software">
@@ -56,6 +45,18 @@
 <p>The software was designed to be flexible for many applications and communication interface types.  To do this, an object-oriented design approach was used.  Base classes are defined that can then be derived from to create new classes with specific platform implementation details.</p>
 <p>The software is divided into two main parts which also run as separate processes, NodeControl and Comm.  The NodeControl process handles logic and communication pertaining to interfacing with the main platform flight software, such as a flight computer on an aircraft or spacecraft.  The Comm process handles all Mesh Network logic.  The two processes communicate to pass commands and data from the Mesh Network to the flight computer and vice versa.</p>
 <p>Although the goal is to keep the API as common as possible across the different language implementations, because of different features or capabilities of a given language, the functionality of a given class, or sometimes the classes themselves, may differ between the Python and C++ versions.  The Python API documentation can be used to give a general overview of the software structure, but please refer to the individual language APIs for specific implementation details.</p>
+</div>
+<div class="section" id="interface-between-host-platform-and-mesh-network">
+<h2>Interface Between Host Platform and Mesh Network<a class="headerlink" href="#interface-between-host-platform-and-mesh-network" title="Permalink to this headline">¶</a></h2>
+<p>The Mesh Network logic/software is designed to operate as independently as possible from the host platform.  The interface between the host and the mesh network logic is intentionally designed to be simple and concise, so that the host is not required to monitor or control any of the internal mesh network logic.  The host provides the raw data for transmission over the network to the mesh logic which then handles everything downstream from that point to determine when and how to transmit the data over the network.  Incoming data received by the mesh network is likewise parsed and passed back to the host platform as appropriate.  This section documents how the host to mesh network interface operates.</p>
+<div class="section" id="host-to-mesh-network-interface">
+<h3>Host To Mesh Network Interface<a class="headerlink" href="#host-to-mesh-network-interface" title="Permalink to this headline">¶</a></h3>
+<p>The Mesh Network receives data from the host platform and transmits it unchanged to the desired destination.  The host passes the data to mesh network using the <em>queueMeshMsg</em> method of the <strong>TDMAComm</strong> class.  Along with the raw data, the ID number of the desired destination node is provided to the method.  This method takes the provided data and stores it in the outgoing message queue, <em>meshQueueIn</em>.  MeshQueueIn is an array with an entry for broadcast messages, to be sent to all nodes in the network, and an entry for each individual node in the mesh network. During the transmission period for the host platform node, the mesh network logic will trasnmit a mesh packet for each non-empty entry in meshQueueIn.  These outgoing packets are then received by the other mesh network nodes and transmitted across the network to their proper destinations appropriately.</p>
+</div>
+<div class="section" id="mesh-network-to-host-interface">
+<h3>Mesh Network to Host Interface<a class="headerlink" href="#mesh-network-to-host-interface" title="Permalink to this headline">¶</a></h3>
+<p>Mesh packets received by the host mesh node are received and parsed and then placed in the <em>hostBuffer</em> of <strong>TDMAComm</strong> for the host platform to process.  TDMAComm strips the mesh network packet structure from the data prior to placing it in the hostBuffer.  The hostBuffer contents are the raw data bytes sent by other mesh network node host platforms.  The mesh network packet structure is stripped prior to placing the data into the hostBuffer for host platform consumption.</p>
+</div>
 </div>
 <div class="section" id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
@@ -80,20 +81,23 @@
 </li>
 </ul>
 </div>
+</div>
 <div class="section" id="tests">
-<h3>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h3>
+<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="unittests.html">Unit Testing</a></li>
 </ul>
 </div>
 </div>
-</div>
 <div class="section" id="c">
 <h2>C++<a class="headerlink" href="#c" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#c-api">C++ API</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -112,25 +116,37 @@
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Software</a><ul>
-<li><a class="reference internal" href="#description">Description</a></li>
-<li><a class="reference internal" href="#common-application-programming-interface-api">Common Application Programming Interface (API)</a></li>
-<li><a class="reference internal" href="#configuration">Configuration</a></li>
-<li><a class="reference internal" href="#python">Python</a><ul>
-<li><a class="reference internal" href="#tests">Tests</a></li>
+<h1 class="logo"><a href="index.html">Mesh Network Communication System</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="design.html">Network Design</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Software</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-application-programming-interface-api">Common Application Programming Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#interface-between-host-platform-and-mesh-network">Interface Between Host Platform and Mesh Network</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vhdl">VHDL</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#c">C++</a></li>
-<li><a class="reference internal" href="#vhdl">VHDL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hardware.html">Hardware Implementations</a></li>
 </ul>
-</li>
-</ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -140,23 +156,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/software.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -165,8 +182,8 @@
       &copy;2017, Chris Becker, Garrick Merrill.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/software.rst.txt"

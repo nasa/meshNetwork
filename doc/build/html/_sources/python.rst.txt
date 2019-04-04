@@ -10,6 +10,8 @@ An example execution script (execute.py) is provided to run the Python implement
 
 The node control interface is provided in the nodeControlProcess.py.  By replacing the generic Node type class instances with specific subclasses, the script can be modified for a specific use case.  Likewise the commProcess.py script controls the process that communicates over the Mesh Network.  This script should not require modification for a specific application.  Network configuration should be handled via the JSON configuration file. 
 
+Mesh network communication functions and node control functions are run in separate threads.  Priority is given to mesh network communication because it has strict timing requirements.  This priority is only a major concern when the mesh network communication is controlled via software, as opposed to on an FPGA.  Therefore when mesh communication control is software-based, the mesh communication thread controls when the node control processing thread is allowed to execute via a run flag that is checked by the node control thread before executing.  When the mesh comm is controlled on an FPGA, the separate threads are allowed to run independently as needed because the major comm functions are offloaded and the mesh comm thread is just receiving and transmitting data to the FPGA which manages the strict comm timing.  
+
 Python API
 ^^^^^^^^^^
 

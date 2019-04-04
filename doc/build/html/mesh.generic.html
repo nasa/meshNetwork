@@ -1,29 +1,17 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>mesh.generic package &#8212; Mesh Network Communication System 2.0 documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '2.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="mesh.interface package" href="mesh.interface.html" />
@@ -34,13 +22,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="mesh-generic-package">
@@ -54,9 +43,9 @@
 <dt id="mesh.generic.checksum.calc8bitFletcherChecksum">
 <code class="descclassname">mesh.generic.checksum.</code><code class="descname">calc8bitFletcherChecksum</code><span class="sig-paren">(</span><em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.checksum.calc8bitFletcherChecksum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate 8-bit Fletcher checksum for Li-1 radio packets.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>msgBytes: Raw message bytes to calculate checksum of.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>msgBytes: Raw message bytes to calculate checksum of.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -64,12 +53,12 @@
 <dt id="mesh.generic.checksum.compareChecksum">
 <code class="descclassname">mesh.generic.checksum.</code><code class="descname">compareChecksum</code><span class="sig-paren">(</span><em>msgBytes</em>, <em>checksumBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.checksum.compareChecksum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute and compare Li-1 message checksum.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>msgBytes: Raw message bytes.
-checksumBytes: Checksum to compare against.</dd>
-<dt>Returns:</dt>
-<dd>A boolean of whether checksum matched or not.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>msgBytes: Raw message bytes.
+checksumBytes: Checksum to compare against.</p>
+</dd>
+<dt>Returns:</dt><dd><p>A boolean of whether checksum matched or not.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -104,13 +93,18 @@ checksumBytes: Checksum to compare against.</dd>
 </dd></dl>
 
 <dl class="function">
+<dt id="mesh.generic.cmdProcessor.processHeader">
+<code class="descclassname">mesh.generic.cmdProcessor.</code><code class="descname">processHeader</code><span class="sig-paren">(</span><em>self</em>, <em>header</em>, <em>msg</em>, <em>nodeStatus</em>, <em>clock</em>, <em>comm</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.cmdProcessor.processHeader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="mesh.generic.cmdProcessor.updateNodeMsgRcvdStatus">
 <code class="descclassname">mesh.generic.cmdProcessor.</code><code class="descname">updateNodeMsgRcvdStatus</code><span class="sig-paren">(</span><em>nodeStatus</em>, <em>header</em>, <em>clock</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.cmdProcessor.updateNodeMsgRcvdStatus" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates the time of the last message received directly from a given node. Also sets presence flag to true if this is the first message from a node.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>nodeStatus: NodeStatus instance.
-clock: Formation clock.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>nodeStatus: NodeStatus instance.
+clock: Formation clock.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -120,7 +114,7 @@ clock: Formation clock.</dd>
 <dl class="class">
 <dt id="mesh.generic.cmdStatus.CmdStatus">
 <em class="property">class </em><code class="descclassname">mesh.generic.cmdStatus.</code><code class="descname">CmdStatus</code><a class="headerlink" href="#mesh.generic.cmdStatus.CmdStatus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.IntEnum</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.IntEnum</span></code></p>
 <p>An enumeration.</p>
 <dl class="attribute">
 <dt id="mesh.generic.cmdStatus.CmdStatus.accepted">
@@ -161,42 +155,25 @@ clock: Formation clock.</dd>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="module-mesh.generic.commProcessor">
-<span id="mesh-generic-commprocessor-module"></span><h2>mesh.generic.commProcessor module<a class="headerlink" href="#module-mesh.generic.commProcessor" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mesh.generic.commProcessor.CommProcessor">
-<em class="property">class </em><code class="descclassname">mesh.generic.commProcessor.</code><code class="descname">CommProcessor</code><span class="sig-paren">(</span><em>msgProcessors</em>, <em>nodeParams</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.commProcessor.CommProcessor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>The comm processor creates messages for serial transmission and parses received messages.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>crc16: 16-bit CRC calculator to generate CRC and attach to messages prior to transmission.
-cmdQueue: Ordered dictionary for storing received and parsed commands prior to processing by node.
-msgProcessors: An array of message processors for processing of received commands.  Each processor has a list of command IDs that it is to be used to process.
-nodeParams: Node parameters for this node.</dd>
-</dl>
-<dl class="method">
-<dt id="mesh.generic.commProcessor.CommProcessor.processMsg">
-<code class="descname">processMsg</code><span class="sig-paren">(</span><em>msg</em>, <em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.commProcessor.CommProcessor.processMsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Processes parsed serial messages.
-Args:</p>
-<blockquote>
-<div>msg: Serial message to be processed.
-args: Other arguments needed for processing serial message.</div></blockquote>
-</dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="module-mesh.generic.command">
 <span id="mesh-generic-command-module"></span><h2>mesh.generic.command module<a class="headerlink" href="#module-mesh.generic.command" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.command.Command">
 <em class="property">class </em><code class="descclassname">mesh.generic.command.</code><code class="descname">Command</code><span class="sig-paren">(</span><em>cmdId</em>, <em>cmdData</em>, <em>header=[]</em>, <em>txInterval=[]</em>, <em>lastTxTime=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.command.Command" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mesh.generic.command.Command.packBody">
+<code class="descname">packBody</code><span class="sig-paren">(</span><em>timestamp=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.command.Command.packBody" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.command.Command.packHeader">
+<code class="descname">packHeader</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.command.Command.packHeader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="mesh.generic.command.Command.serialize">
-<code class="descname">serialize</code><span class="sig-paren">(</span><em>timestamp</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.command.Command.serialize" title="Permalink to this definition">¶</a></dt>
+<code class="descname">serialize</code><span class="sig-paren">(</span><em>timestamp=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.command.Command.serialize" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -206,14 +183,14 @@ args: Other arguments needed for processing serial message.</div></blockquote>
 <span id="mesh-generic-commandmsg-module"></span><h2>mesh.generic.commandMsg module<a class="headerlink" href="#module-mesh.generic.commandMsg" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.commandMsg.CommandMsg">
-<em class="property">class </em><code class="descclassname">mesh.generic.commandMsg.</code><code class="descname">CommandMsg</code><span class="sig-paren">(</span><em>cmdId=[]</em>, <em>cmdData=[]</em>, <em>time=1498830810.6171763</em>, <em>destId=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.commandMsg.CommandMsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">mesh.generic.commandMsg.</code><code class="descname">CommandMsg</code><span class="sig-paren">(</span><em>cmdId=[]</em>, <em>cmdData=[]</em>, <em>time=1554386158.8738325</em>, <em>destId=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.commandMsg.CommandMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Command message class for storing command parameters.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>destId: Node ID of command destination.
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>destId: Node ID of command destination.
 cmdData: Command data payload.
-timestamp: Creation time of command.</dd>
+timestamp: Creation time of command.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.commandMsg.CommandMsg.parseCommand">
@@ -229,7 +206,7 @@ timestamp: Creation time of command.</dd>
 <dl class="class">
 <dt id="mesh.generic.commandType.CommandType">
 <em class="property">class </em><code class="descclassname">mesh.generic.commandType.</code><code class="descname">CommandType</code><span class="sig-paren">(</span><em>packFormat</em>, <em>serialize</em>, <em>messageFormat</em>, <em>header</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.commandType.CommandType" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <dl class="attribute">
 <dt id="mesh.generic.commandType.CommandType.header">
 <code class="descname">header</code><a class="headerlink" href="#mesh.generic.commandType.CommandType.header" title="Permalink to this definition">¶</a></dt>
@@ -263,45 +240,80 @@ timestamp: Creation time of command.</dd>
 <div class="section" id="module-mesh.generic.customExceptions">
 <span id="mesh-generic-customexceptions-module"></span><h2>mesh.generic.customExceptions module<a class="headerlink" href="#module-mesh.generic.customExceptions" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">
+<dt id="mesh.generic.customExceptions.CommandIdNotFound">
+<em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">CommandIdNotFound</code><a class="headerlink" href="#mesh.generic.customExceptions.CommandIdNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception to raise if command ID not defined.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="mesh.generic.customExceptions.InsufficientMsgBytes">
+<em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">InsufficientMsgBytes</code><a class="headerlink" href="#mesh.generic.customExceptions.InsufficientMsgBytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception to raise if attempting to process raw message bytes of insufficient length.</p>
+</dd></dl>
+
+<dl class="exception">
 <dt id="mesh.generic.customExceptions.InvalidCmdCounter">
 <em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">InvalidCmdCounter</code><a class="headerlink" href="#mesh.generic.customExceptions.InvalidCmdCounter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>Exception to raise if attempt made to set command counter outside of allowable range.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="mesh.generic.customExceptions.InvalidRadio">
+<em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">InvalidRadio</code><a class="headerlink" href="#mesh.generic.customExceptions.InvalidRadio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception to raise if no valid Radio provided.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="mesh.generic.customExceptions.InvalidTDMASlotNumber">
 <em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">InvalidTDMASlotNumber</code><a class="headerlink" href="#mesh.generic.customExceptions.InvalidTDMASlotNumber" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>Exception to raise if TDMA slot number is invalid.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="mesh.generic.customExceptions.NoCommandHeader">
 <em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">NoCommandHeader</code><a class="headerlink" href="#mesh.generic.customExceptions.NoCommandHeader" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>Exception to raise if required commmand header missing.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="mesh.generic.customExceptions.NoCommandHeaderDefined">
 <em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">NoCommandHeaderDefined</code><a class="headerlink" href="#mesh.generic.customExceptions.NoCommandHeaderDefined" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>Exception to raise if command does not define a header.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="mesh.generic.customExceptions.NoSerialConnection">
 <em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">NoSerialConnection</code><a class="headerlink" href="#mesh.generic.customExceptions.NoSerialConnection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">serial.serialutil.SerialException</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">serial.serialutil.SerialException</span></code></p>
 <p>Exception to raise if trying to read/write to invalid serial connection.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="mesh.generic.customExceptions.NoSocket">
 <em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">NoSocket</code><a class="headerlink" href="#mesh.generic.customExceptions.NoSocket" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">serial.serialutil.SerialException</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">serial.serialutil.SerialException</span></code></p>
 <p>Exception to raise if trying to read/write to invalid socket connection.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="mesh.generic.customExceptions.NodeConfigFileError">
+<em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">NodeConfigFileError</code><a class="headerlink" href="#mesh.generic.customExceptions.NodeConfigFileError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception to raise if error loading node configuration files.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="mesh.generic.customExceptions.TDMAConfigError">
+<em class="property">exception </em><code class="descclassname">mesh.generic.customExceptions.</code><code class="descname">TDMAConfigError</code><a class="headerlink" href="#mesh.generic.customExceptions.TDMAConfigError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception to raise if error with TDMA comm configuration.</p>
 </dd></dl>
 
 </div>
@@ -309,7 +321,7 @@ timestamp: Creation time of command.</dd>
 <span id="mesh-generic-deserialize-module"></span><h2>mesh.generic.deserialize module<a class="headerlink" href="#module-mesh.generic.deserialize" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="mesh.generic.deserialize.deserialize">
-<code class="descclassname">mesh.generic.deserialize.</code><code class="descname">deserialize</code><span class="sig-paren">(</span><em>msg</em>, <em>cmdId</em>, <em>element=’entire’</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.deserialize.deserialize" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mesh.generic.deserialize.</code><code class="descname">deserialize</code><span class="sig-paren">(</span><em>msg</em>, <em>cmdId</em>, <em>element='entire'</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.deserialize.deserialize" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -322,18 +334,28 @@ timestamp: Creation time of command.</dd>
 <code class="descclassname">mesh.generic.deserialize.</code><code class="descname">parseHeader</code><span class="sig-paren">(</span><em>rawHeader</em>, <em>cmdId</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.deserialize.parseHeader" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="mesh.generic.deserialize.unpackBytes">
+<code class="descclassname">mesh.generic.deserialize.</code><code class="descname">unpackBytes</code><span class="sig-paren">(</span><em>fmt</em>, <em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.deserialize.unpackBytes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mesh.generic.deserialize.unpackBytes2">
+<code class="descclassname">mesh.generic.deserialize.</code><code class="descname">unpackBytes2</code><span class="sig-paren">(</span><em>fmt</em>, <em>msgBytes</em>, <em>returnExcess=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.deserialize.unpackBytes2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-mesh.generic.formationClock">
 <span id="mesh-generic-formationclock-module"></span><h2>mesh.generic.formationClock module<a class="headerlink" href="#module-mesh.generic.formationClock" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.formationClock.FormationClock">
-<em class="property">class </em><code class="descclassname">mesh.generic.formationClock.</code><code class="descname">FormationClock</code><span class="sig-paren">(</span><em>referenceTime=[]</em>, <em>ppsPin=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.formationClock.FormationClock" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">mesh.generic.formationClock.</code><code class="descname">FormationClock</code><span class="sig-paren">(</span><em>referenceTime=[]</em>, <em>timeSource=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.formationClock.FormationClock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The formation clock is used to provide a command time reference among the formation nodes.  The clock provides the time with respect to a reference time established upon initialization.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>time: Current clock time with respect to reference time.
-referenceTime: Reference time used by clock to compute clock time upon request.</dd>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>time: Current clock time with respect to reference time.
+referenceTime: Reference time used by clock to compute clock time upon request.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.formationClock.FormationClock.getOffset">
@@ -341,18 +363,8 @@ referenceTime: Reference time used by clock to compute clock time upon request.<
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="mesh.generic.formationClock.FormationClock.getTDMATimer">
-<code class="descname">getTDMATimer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.formationClock.FormationClock.getTDMATimer" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="mesh.generic.formationClock.FormationClock.getTime">
 <code class="descname">getTime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.formationClock.FormationClock.getTime" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.formationClock.FormationClock.resetTDMATimer">
-<code class="descname">resetTDMATimer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.formationClock.FormationClock.resetTDMATimer" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -363,7 +375,7 @@ referenceTime: Reference time used by clock to compute clock time upon request.<
 <dl class="class">
 <dt id="mesh.generic.fpgaRadio.FPGARadio">
 <em class="property">class </em><code class="descclassname">mesh.generic.fpgaRadio.</code><code class="descname">FPGARadio</code><span class="sig-paren">(</span><em>serial</em>, <em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.fpgaRadio.FPGARadio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal notranslate"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
 <dl class="method">
 <dt id="mesh.generic.fpgaRadio.FPGARadio.sendMsg">
 <code class="descname">sendMsg</code><span class="sig-paren">(</span><em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.fpgaRadio.FPGARadio.sendMsg" title="Permalink to this definition">¶</a></dt>
@@ -401,7 +413,7 @@ referenceTime: Reference time used by clock to compute clock time upon request.<
 <dl class="class">
 <dt id="mesh.generic.li1Radio.Li1Radio">
 <em class="property">class </em><code class="descclassname">mesh.generic.li1Radio.</code><code class="descname">Li1Radio</code><span class="sig-paren">(</span><em>serial</em>, <em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.li1Radio.Li1Radio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal notranslate"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
 <dl class="method">
 <dt id="mesh.generic.li1Radio.Li1Radio.createCommand">
 <code class="descname">createCommand</code><span class="sig-paren">(</span><em>cmd</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.li1Radio.Li1Radio.createCommand" title="Permalink to this definition">¶</a></dt>
@@ -451,7 +463,8 @@ referenceTime: Reference time used by clock to compute clock time upon request.<
 <dl class="method">
 <dt id="mesh.generic.li1Radio.Li1Radio.processRxBytes">
 <code class="descname">processRxBytes</code><span class="sig-paren">(</span><em>serBytes</em>, <em>bufferFlag</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.li1Radio.Li1Radio.processRxBytes" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Default behavior just adds directly to rxBuffer.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.li1Radio.Li1Radio.sendCommand">
@@ -475,19 +488,18 @@ referenceTime: Reference time used by clock to compute clock time upon request.<
 <span id="mesh-generic-msgparser-module"></span><h2>mesh.generic.msgParser module<a class="headerlink" href="#module-mesh.generic.msgParser" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.msgParser.MsgParser">
-<em class="property">class </em><code class="descclassname">mesh.generic.msgParser.</code><code class="descname">MsgParser</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.msgParser.MsgParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">mesh.generic.msgParser.</code><code class="descname">MsgParser</code><span class="sig-paren">(</span><em>config</em>, <em>msg=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.msgParser.MsgParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This class is responsible for taking raw serial bytes and searching them for valid SLIP messages.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>slipMsg: Parsed SLIP message with SLIP bytes extracted.
-parsedMsg: Valid serial message stored in this variable upon confirmation of valid CRC.</dd>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>parsedMsgs: Valid serial messages stored in this variable upon confirmation of valid CRC.
+parseMsgMax: Maximum attempts at parsing messages from the raw receive buffer.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.msgParser.MsgParser.encodeMsg">
 <code class="descname">encodeMsg</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.msgParser.MsgParser.encodeMsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Default encoding is none.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.msgParser.MsgParser.parseMsgs">
@@ -498,7 +510,7 @@ parsedMsg: Valid serial message stored in this variable upon confirmation of val
 <dl class="method">
 <dt id="mesh.generic.msgParser.MsgParser.parseSerialMsg">
 <code class="descname">parseSerialMsg</code><span class="sig-paren">(</span><em>msgBytes</em>, <em>msgStart</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.msgParser.MsgParser.parseSerialMsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Default parsing just stores all bytes received.</p>
+<dd><p>Searches raw serial data for messages and then parses them using the specified message format. Valid parsed messages are then stored for processing.</p>
 </dd></dl>
 
 </dd></dl>
@@ -524,14 +536,14 @@ parsedMsg: Valid serial message stored in this variable upon confirmation of val
 <dl class="class">
 <dt id="mesh.generic.navigation.Navigation">
 <em class="property">class </em><code class="descclassname">mesh.generic.navigation.</code><code class="descname">Navigation</code><a class="headerlink" href="#mesh.generic.navigation.Navigation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Maintains current state data for the formation node.</p>
 <p>This is the generic class for maintaining the current state data for a formation node.
 A derived class should be implemented for data and behavior for specific node types.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>state: The current state vector for this vehicle.
-timestamp: The timestamp for the stored state vector.</dd>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>state: The current state vector for this vehicle.
+timestamp: The timestamp for the stored state vector.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.navigation.Navigation.update">
@@ -543,36 +555,8 @@ timestamp: The timestamp for the stored state vector.</dd>
 
 <dl class="function">
 <dt id="mesh.generic.navigation.convertLatLonAlt">
-<code class="descclassname">mesh.generic.navigation.</code><code class="descname">convertLatLonAlt</code><span class="sig-paren">(</span><em>inputData, conversion=’int’, precision=[10000000, 100]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.navigation.convertLatLonAlt" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mesh.generic.navigation.</code><code class="descname">convertLatLonAlt</code><span class="sig-paren">(</span><em>inputData, conversion='int', precision=[10000000, 100]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.navigation.convertLatLonAlt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts latitude, longitude, and altitude for transmission over serial and back.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-mesh.generic.nodeComm">
-<span id="mesh-generic-nodecomm-module"></span><h2>mesh.generic.nodeComm module<a class="headerlink" href="#module-mesh.generic.nodeComm" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mesh.generic.nodeComm.NodeComm">
-<em class="property">class </em><code class="descclassname">mesh.generic.nodeComm.</code><code class="descname">NodeComm</code><span class="sig-paren">(</span><em>commProcessor</em>, <em>radio</em>, <em>msgParser</em>, <em>nodeParams=[]</em>, <em>config={‘parseMsgMax’: 50</em>, <em>’rxBufferSize’: 2000</em>, <em>’uartNumBytesToRead’: 50}</em>, <em>node_id=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeComm.NodeComm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.serialComm.SerialComm" title="mesh.generic.serialComm.SerialComm"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.serialComm.SerialComm</span></code></a></p>
-<p>Generic implementation of SerialComm for all node types.</p>
-<p>This class provides the basic structure for all formation node communication.  A specific implementation should be created for each specific node type.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>nodeId: Id number for this formation node.
-timestamp: Timestamp from received messages.</dd>
-</dl>
-<dl class="method">
-<dt id="mesh.generic.nodeComm.NodeComm.execute">
-<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeComm.NodeComm.execute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute node communication cycle.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.nodeComm.NodeComm.processMsgs">
-<code class="descname">processMsgs</code><span class="sig-paren">(</span><em>args=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeComm.NodeComm.processMsgs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read and process any received messages.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -581,7 +565,7 @@ timestamp: Timestamp from received messages.</dd>
 <dl class="class">
 <dt id="mesh.generic.nodeConfig.NodeConfig">
 <em class="property">class </em><code class="descclassname">mesh.generic.nodeConfig.</code><code class="descname">NodeConfig</code><span class="sig-paren">(</span><em>configFile=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeConfig.NodeConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">dict</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
 <p>Node configuration parameters for formation.</p>
 <p>Attributes:</p>
 <blockquote>
@@ -614,11 +598,17 @@ logInterval (float): Interval in seconds between logging attempts.</p>
 <dt id="mesh.generic.nodeConfig.NodeConfig.hashElem">
 <code class="descname">hashElem</code><span class="sig-paren">(</span><em>m_hash</em>, <em>elem</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeConfig.NodeConfig.hashElem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update inputted SHA1 hash with value.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>m_hash: SHA1 hash.
-elem: Value to append to hash.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>m_hash: SHA1 hash.
+elem: Value to append to hash.</p>
+</dd>
 </dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.nodeConfig.NodeConfig.hashPlatformConfig">
+<code class="descname">hashPlatformConfig</code><span class="sig-paren">(</span><em>configHash</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeConfig.NodeConfig.hashPlatformConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hash platform specific configuration parameters.  This method should be overriden by derived classes.</p>
 </dd></dl>
 
 <dl class="method">
@@ -630,9 +620,9 @@ elem: Value to append to hash.</dd>
 <dt id="mesh.generic.nodeConfig.NodeConfig.loadConfigFile">
 <code class="descname">loadConfigFile</code><span class="sig-paren">(</span><em>configFile</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeConfig.NodeConfig.loadConfigFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function loads configuration data from the provided config file.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>configFile: File path of configuration file.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>configFile: File path of configuration file.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -655,21 +645,31 @@ elem: Value to append to hash.</dd>
 <dl class="method">
 <dt id="mesh.generic.nodeConfig.NodeConfig.readNodeId">
 <code class="descname">readNodeId</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeConfig.NodeConfig.readNodeId" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determines node ID of this node by reading the GPIO input values wired to the DIP switches on the node formation cape.</p>
+<dd><p>Determines node ID of this node in a platform specific way.  This method should be overriden by derived classes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.nodeConfig.NodeConfig.updateParameter">
+<code class="descname">updateParameter</code><span class="sig-paren">(</span><em>paramId</em>, <em>paramValue</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeConfig.NodeConfig.updateParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method is used to update configuration values received via the ParamUpdate command.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="mesh.generic.nodeConfig.ParamMap">
-<em class="property">class </em><code class="descclassname">mesh.generic.nodeConfig.</code><code class="descname">ParamMap</code><a class="headerlink" href="#mesh.generic.nodeConfig.ParamMap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">dict</span></code></p>
-<p>Class is a dictionary of config parameter names that facilitates sending parameter update values over serial links.</p>
-<dl class="method">
-<dt id="mesh.generic.nodeConfig.ParamMap.findName">
-<code class="descname">findName</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeConfig.ParamMap.findName" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds the name of a parameter by searching the dictionary using a unique ID number.</p>
-</dd></dl>
+<dt id="mesh.generic.nodeConfig.ParamId">
+<em class="property">class </em><code class="descclassname">mesh.generic.nodeConfig.</code><code class="descname">ParamId</code><a class="headerlink" href="#mesh.generic.nodeConfig.ParamId" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.IntEnum</span></code></p>
+<p>Enumeration of configuration parameter ID numbers.</p>
+<dl class="attribute">
+<dt id="mesh.generic.nodeConfig.ParamId.nodeId">
+<code class="descname">nodeId</code><em class="property"> = 1</em><a class="headerlink" href="#mesh.generic.nodeConfig.ParamId.nodeId" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mesh.generic.nodeConfig.ParamId.parseMsgMax">
+<code class="descname">parseMsgMax</code><em class="property"> = 2</em><a class="headerlink" href="#mesh.generic.nodeConfig.ParamId.parseMsgMax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -679,20 +679,14 @@ elem: Value to append to hash.</dd>
 <dl class="class">
 <dt id="mesh.generic.nodeController.NodeController">
 <em class="property">class </em><code class="descclassname">mesh.generic.nodeController.</code><code class="descname">NodeController</code><span class="sig-paren">(</span><em>nodeParams</em>, <em>logFile=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Generic node controller to subtype for specific vehicle types.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>logFile: File object for logging node data.
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>logFile: File object for logging node data.
 logTime: Time of last write to log file.
-nodeConfig: NodeConfig instance that stores configuration data for this node.</dd>
+nodeConfig: NodeConfig instance that stores configuration data for this node.</p>
+</dd>
 </dl>
-<dl class="method">
-<dt id="mesh.generic.nodeController.NodeController.checkNodeLinks">
-<code class="descname">checkNodeLinks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.checkNodeLinks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks status of links to other nodes.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="mesh.generic.nodeController.NodeController.controlNode">
 <code class="descname">controlNode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.controlNode" title="Permalink to this definition">¶</a></dt>
@@ -703,8 +697,7 @@ logic in the proper order for node execution.</p>
 <dl class="method">
 <dt id="mesh.generic.nodeController.NodeController.executeNode">
 <code class="descname">executeNode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.executeNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Executes primary formation node processing logic that determines where this node
-should be in the particular formation and how to get it into the desired state.</p>
+<dd><p>Executes any processing logic required by this node.</p>
 </dd></dl>
 
 <dl class="method">
@@ -714,34 +707,34 @@ should be in the particular formation and how to get it into the desired state.<
 </dd></dl>
 
 <dl class="method">
-<dt id="mesh.generic.nodeController.NodeController.monitorFormationStatus">
-<code class="descname">monitorFormationStatus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.monitorFormationStatus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Monitors status of other formation nodes to determine their current status.</p>
+<dt id="mesh.generic.nodeController.NodeController.monitorNetworkStatus">
+<code class="descname">monitorNetworkStatus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.monitorNetworkStatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monitors status of other nodes to determine their current status.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.nodeController.NodeController.monitorNodeUpdates">
 <code class="descname">monitorNodeUpdates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.monitorNodeUpdates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Monitors times since last state update from other nodes.</p>
+<dd><p>Monitors time since last state update from other nodes.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.nodeController.NodeController.processCommands">
 <code class="descname">processCommands</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.processCommands" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs more specific processing and implementation of commands received over the 
-formation mesh network.</p>
+mesh network.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.nodeController.NodeController.processFCCommands">
 <code class="descname">processFCCommands</code><span class="sig-paren">(</span><em>FCComm</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.processFCCommands" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs initial processing of incoming commands and messages from the vehicle’s flight computer.</p>
+<dd><p>Performs initial processing of incoming commands and messages from the platform’s flight computer.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.nodeController.NodeController.processNodeCommands">
 <code class="descname">processNodeCommands</code><span class="sig-paren">(</span><em>comm</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeController.NodeController.processNodeCommands" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs initial processing of incoming commands and messages from formation mesh network.</p>
+<dd><p>Performs initial processing of incoming commands and messages from the mesh network.</p>
 </dd></dl>
 
 </dd></dl>
@@ -752,16 +745,16 @@ formation mesh network.</p>
 <dl class="class">
 <dt id="mesh.generic.nodeExecutive.NodeExecutive">
 <em class="property">class </em><code class="descclassname">mesh.generic.nodeExecutive.</code><code class="descname">NodeExecutive</code><span class="sig-paren">(</span><em>nodeParams</em>, <em>nodeController</em>, <em>nodeComm</em>, <em>FCComm</em>, <em>fcLogFile</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeExecutive.NodeExecutive" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Generic node executive controller to subtype for specific vehicle types.</p>
-<p>The node executive is responsible for communicating over all serial links (flight computer and mesh networks), processing messages received over those links, and running the node control logic to perform the desired formation behavior.  This class has the generic framework for the node executive, but each specific platform type should derive their own executive type from this class.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>nodeConfig: Node configuration information.
+<p>The node executive is responsible for communicating over all serial links (flight computer and mesh networks), processing messages received over those links, and running the node control logic to interface with the node’s host platform.  This class has the generic framework for the node executive, but each specific platform type should derive their own executive type from this class.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>nodeConfig: Node configuration information.
 nodeController: Node controller instance for this node.
 nodeComm: Array of node communication instances for each mesh network.
 FCComm: Node communication instance for serial link to flight computer.
-FCLogFile: File for logging flight computer data.</dd>
+FCLogFile: File for logging flight computer data.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.nodeExecutive.NodeExecutive.executeNodeSoftware">
@@ -790,7 +783,7 @@ FCLogFile: File for logging flight computer data.</dd>
 <dl class="method">
 <dt id="mesh.generic.nodeExecutive.NodeExecutive.sendNodeCmds">
 <code class="descname">sendNodeCmds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeExecutive.NodeExecutive.sendNodeCmds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sends messages and commands to the other formation nodes.</p>
+<dd><p>Sends messages and commands to the other nodes.</p>
 </dd></dl>
 
 </dd></dl>
@@ -814,11 +807,12 @@ FCLogFile: File for logging flight computer data.</dd>
 <dl class="class">
 <dt id="mesh.generic.nodeParams.NodeParams">
 <em class="property">class </em><code class="descclassname">mesh.generic.nodeParams.</code><code class="descname">NodeParams</code><span class="sig-paren">(</span><em>configFile=[]</em>, <em>config=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeParams.NodeParams" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
-<dt id="mesh.generic.nodeParams.NodeParams.checkTimeOffset">
-<code class="descname">checkTimeOffset</code><span class="sig-paren">(</span><em>offset=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeParams.NodeParams.checkTimeOffset" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="mesh.generic.nodeParams.NodeParams.checkNodeLinks">
+<code class="descname">checkNodeLinks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeParams.NodeParams.checkNodeLinks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks status of links to other nodes.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.nodeParams.NodeParams.get_cmdCounter">
@@ -830,6 +824,12 @@ FCLogFile: File for logging flight computer data.</dd>
 <code class="descname">setupParams</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeParams.NodeParams.setupParams" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="mesh.generic.nodeParams.NodeParams.updateStatus">
+<code class="descname">updateStatus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeParams.NodeParams.updateStatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update status information.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -838,14 +838,14 @@ FCLogFile: File for logging flight computer data.</dd>
 <dl class="class">
 <dt id="mesh.generic.nodeState.LinkStatus">
 <em class="property">class </em><code class="descclassname">mesh.generic.nodeState.</code><code class="descname">LinkStatus</code><a class="headerlink" href="#mesh.generic.nodeState.LinkStatus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.IntEnum</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.IntEnum</span></code></p>
 <p>Enumeration of mesh link status.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>NoLink: No direct communication with this node ever.
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>NoLink: No direct communication with this node ever.
 Present: Previous direct communication with this node.
 GoodLink: Currently good link to this node.
-BadLink: Currently no link to this node.</dd>
+BadLink: Currently no link to this node.</p>
+</dd>
 </dl>
 <dl class="attribute">
 <dt id="mesh.generic.nodeState.LinkStatus.BadLink">
@@ -872,11 +872,10 @@ BadLink: Currently no link to this node.</dd>
 <dl class="class">
 <dt id="mesh.generic.nodeState.NodeState">
 <em class="property">class </em><code class="descclassname">mesh.generic.nodeState.</code><code class="descname">NodeState</code><span class="sig-paren">(</span><em>nodeId</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.nodeState.NodeState" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The NodeState is a container class for storing the state and status data from other nodes in the formation.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>id: Node id of the node whose status is stored in this instance
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>id: Node id of the node whose status is stored in this instance
 present: Boolean flag showing whether this node is currently present in the formation.  Defaults to false and is set true upon first communication received from the node.
 updating: Boolean flag showing whether this node is currently reporting current state data.
 flightMode: Current flight computer mode of this node.
@@ -886,7 +885,8 @@ timestamp: Timestamp of the current state data.
 numMsgsReceived: Cumulative total number of messages received from this node.
 lastStateUpdateTime: Time that last state update was received.
 lastMsgRcvdTime: Time that last message was received.
-status: Status byte for storing status information about the node.</dd>
+status: Status byte for storing status information about the node.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -904,7 +904,7 @@ status: Status byte for storing status information about the node.</dd>
 <dl class="class">
 <dt id="mesh.generic.pipeConn.PipeConn">
 <em class="property">class </em><code class="descclassname">mesh.generic.pipeConn.</code><code class="descname">PipeConn</code><span class="sig-paren">(</span><em>conn</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.pipeConn.PipeConn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Wrapper class to make pipe connection act like serial link.</p>
 <dl class="method">
 <dt id="mesh.generic.pipeConn.PipeConn.read">
@@ -926,7 +926,7 @@ status: Status byte for storing status information about the node.</dd>
 <dl class="class">
 <dt id="mesh.generic.radio.Radio">
 <em class="property">class </em><code class="descclassname">mesh.generic.radio.</code><code class="descname">Radio</code><span class="sig-paren">(</span><em>serial</em>, <em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.radio.Radio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mesh.generic.radio.Radio.bufferRxMsg">
 <code class="descname">bufferRxMsg</code><span class="sig-paren">(</span><em>newBytes</em>, <em>bufferFlag</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.radio.Radio.bufferRxMsg" title="Permalink to this definition">¶</a></dt>
@@ -968,7 +968,7 @@ status: Status byte for storing status information about the node.</dd>
 
 <dl class="method">
 <dt id="mesh.generic.radio.Radio.sendBuffer">
-<code class="descname">sendBuffer</code><span class="sig-paren">(</span><em>maxBytesToSend=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.radio.Radio.sendBuffer" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sendBuffer</code><span class="sig-paren">(</span><em>maxBytesToSend=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.radio.Radio.sendBuffer" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1020,7 +1020,7 @@ status: Status byte for storing status information about the node.</dd>
 <dl class="class">
 <dt id="mesh.generic.radio.RadioMode">
 <em class="property">class </em><code class="descclassname">mesh.generic.radio.</code><code class="descname">RadioMode</code><a class="headerlink" href="#mesh.generic.radio.RadioMode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.IntEnum</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.IntEnum</span></code></p>
 <p>An enumeration.</p>
 <dl class="attribute">
 <dt id="mesh.generic.radio.RadioMode.off">
@@ -1049,20 +1049,20 @@ status: Status byte for storing status information about the node.</dd>
 <span id="mesh-generic-serialcomm-module"></span><h2>mesh.generic.serialComm module<a class="headerlink" href="#module-mesh.generic.serialComm" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.serialComm.SerialComm">
-<em class="property">class </em><code class="descclassname">mesh.generic.serialComm.</code><code class="descname">SerialComm</code><span class="sig-paren">(</span><em>commProcessor</em>, <em>radio</em>, <em>parser</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">mesh.generic.serialComm.</code><code class="descname">SerialComm</code><span class="sig-paren">(</span><em>msgProcessors</em>, <em>nodeParams</em>, <em>radio</em>, <em>parser=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Serial communication wrapper class that provides for serializing data to send over serial data links.</p>
 <p>This class is the base class for serial communication and provides reading and writing functionality over the provided serial connection.  Messages being sent and received are relayed using a SLIP message format which provides a CRC for data quality checking.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>uartNumBytesToRead: Maximum number of bytes to attempt to read from the serial connection.
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>uartNumBytesToRead: Maximum number of bytes to attempt to read from the serial connection.
 serialConn: Serial connection instance used by this class for communication.
 serMsgParser: Serial message parser that parses raw serial data and looks for valid SLIP messages.
 lastMsgSentTime: Time that the last serial message was sent over this connection.
 msgCounter: Counter of the number of messages sent over this serial connection. 
 msgOut: SLIPmsg instance used for storing messages prior to sending over serial line.
 rxBuffer: Raw serial data read from this connection.
-msgEnd: Array location of end of raw serial message decoded from read serial bytes stored in rxBuffer.</dd>
+msgEnd: Array location of end of raw serial message decoded from read serial bytes stored in rxBuffer.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.serialComm.SerialComm.bufferTxMsg">
@@ -1071,13 +1071,41 @@ msgEnd: Array location of end of raw serial message decoded from read serial byt
 </dd></dl>
 
 <dl class="method">
+<dt id="mesh.generic.serialComm.SerialComm.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute communication cycle.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mesh.generic.serialComm.SerialComm.parseMsgs">
 <code class="descname">parseMsgs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm.parseMsgs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="mesh.generic.serialComm.SerialComm.processBuffers">
+<code class="descname">processBuffers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm.processBuffers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mesh.generic.serialComm.SerialComm.processMsg">
 <code class="descname">processMsg</code><span class="sig-paren">(</span><em>msg</em>, <em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm.processMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes parsed serial messages.
+Args:</p>
+<blockquote>
+<div><p>msg: Serial message to be processed.
+args: Other arguments needed for processing serial message.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.serialComm.SerialComm.processMsgs">
+<code class="descname">processMsgs</code><span class="sig-paren">(</span><em>args=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm.processMsgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read and process any received messages.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mesh.generic.serialComm.SerialComm.radio">
+<code class="descname">radio</code><a class="headerlink" href="#mesh.generic.serialComm.SerialComm.radio" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1108,11 +1136,11 @@ msgEnd: Array location of end of raw serial message decoded from read serial byt
 <dt id="mesh.generic.serialComm.SerialComm.sendMsg">
 <code class="descname">sendMsg</code><span class="sig-paren">(</span><em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.serialComm.SerialComm.sendMsg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wraps provided data into a SLIPmsg and then sends the message over the serial link</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>timestamp: Time of message.
+<dl class="simple">
+<dt>Args:</dt><dd><p>timestamp: Time of message.
 cmdId: Command message type identifier.
-msgBytes: Data bytes to be sent in serial message.</dd>
+msgBytes: Data bytes to be sent in serial message.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1122,99 +1150,75 @@ msgBytes: Data bytes to be sent in serial message.</dd>
 <div class="section" id="module-mesh.generic.slipMsg">
 <span id="mesh-generic-slipmsg-module"></span><h2>mesh.generic.slipMsg module<a class="headerlink" href="#module-mesh.generic.slipMsg" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="mesh.generic.slipMsg.SLIPmsg">
-<em class="property">class </em><code class="descclassname">mesh.generic.slipMsg.</code><code class="descname">SLIPmsg</code><span class="sig-paren">(</span><em>maxLength</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPmsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dt id="mesh.generic.slipMsg.SLIPMsg">
+<em class="property">class </em><code class="descclassname">mesh.generic.slipMsg.</code><code class="descname">SLIPMsg</code><span class="sig-paren">(</span><em>maxLength</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>An implementation of the Serial Line Internet Protocol (SLIP).</p>
 <p>SLIP messages provide a structure for serial messages with special byte values that define the beginning and end of serial messages.  These values allow for easily parsing individual serial messages from raw serial bytes.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>msg: Decoded SLIP message with SLIP characters removed.
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>msg: Decoded SLIP message with SLIP characters removed.
 msgFound: Boolean flag to indicate whether a SLIP message has been found in the provided raw serial byte data.
 msgMaxLength: Maximum length of valid SLIP messages.
 msgEnd: Location of end of SLIP message found in provided raw serial data array. 
 msgLength: Length of SLIP message.
-slip: Encoded SLIP message for transmission.</dd>
+encoded: Encoded SLIP message for transmission.</p>
+</dd>
 </dl>
 <dl class="method">
-<dt id="mesh.generic.slipMsg.SLIPmsg.decodeSLIPmsg">
-<code class="descname">decodeSLIPmsg</code><span class="sig-paren">(</span><em>byteList</em>, <em>msgStart</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPmsg.decodeSLIPmsg" title="Permalink to this definition">¶</a></dt>
+<dt id="mesh.generic.slipMsg.SLIPMsg.decodeMsg">
+<code class="descname">decodeMsg</code><span class="sig-paren">(</span><em>byteList</em>, <em>msgStart=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPMsg.decodeMsg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Searches provided raw serial bytes to locate any SLIP messages.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>byteList: Raw serial byte array.
-msgStart: Array location to begin searching for SLIP messages in raw serial data.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>byteList: Raw serial byte array.
+msgStart: Array location to begin searching for SLIP messages in raw serial data.</p>
+</dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="mesh.generic.slipMsg.SLIPmsg.decodeSLIPmsgContents">
-<code class="descname">decodeSLIPmsgContents</code><span class="sig-paren">(</span><em>byteList</em>, <em>pos</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPmsg.decodeSLIPmsgContents" title="Permalink to this definition">¶</a></dt>
+<dt id="mesh.generic.slipMsg.SLIPMsg.decodeMsgContents">
+<code class="descname">decodeMsgContents</code><span class="sig-paren">(</span><em>byteList</em>, <em>pos</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPMsg.decodeMsgContents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function to strip special SLIP bytes from identified SLIP message.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>byteList: Raw serial data array.
-pos: Array position of start of SLIP message in raw serial data.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>byteList: Raw serial data array.
+pos: Array position of start of SLIP message in raw serial data.</p>
+</dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="mesh.generic.slipMsg.SLIPmsg.encodeSLIPmsg">
-<code class="descname">encodeSLIPmsg</code><span class="sig-paren">(</span><em>byteList</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPmsg.encodeSLIPmsg" title="Permalink to this definition">¶</a></dt>
+<dt id="mesh.generic.slipMsg.SLIPMsg.encodeMsg">
+<code class="descname">encodeMsg</code><span class="sig-paren">(</span><em>byteList</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPMsg.encodeMsg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Encodes provided serial data into a SLIP message.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>byteList: Serial bytes to be encoded into SLIP message.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>byteList: Serial bytes to be encoded into SLIP message.</p>
+</dd>
 </dl>
 </dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.slipMsg.SLIPMsg.parseMsg">
+<code class="descname">parseMsg</code><span class="sig-paren">(</span><em>msgBytes</em>, <em>msgStart</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg.SLIPMsg.parseMsg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 </div>
-<div class="section" id="module-mesh.generic.slipMsgParser">
-<span id="mesh-generic-slipmsgparser-module"></span><h2>mesh.generic.slipMsgParser module<a class="headerlink" href="#module-mesh.generic.slipMsgParser" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mesh.generic.slipMsgParser.SLIPMsgParser">
-<em class="property">class </em><code class="descclassname">mesh.generic.slipMsgParser.</code><code class="descname">SLIPMsgParser</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsgParser.SLIPMsgParser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.msgParser.MsgParser" title="mesh.generic.msgParser.MsgParser"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.msgParser.MsgParser</span></code></a></p>
-<p>This class is responsible for taking raw serial bytes and searching them for valid SLIP messages.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>crc16: 16-bit CRC calculator.
-slipMsg: Parsed SLIP message with SLIP bytes extracted.
-parsedMsg: Valid serial message stored in this variable upon confirmation of valid CRC.</dd>
-</dl>
-<dl class="method">
-<dt id="mesh.generic.slipMsgParser.SLIPMsgParser.encodeMsg">
-<code class="descname">encodeMsg</code><span class="sig-paren">(</span><em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsgParser.SLIPMsgParser.encodeMsg" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.slipMsgParser.SLIPMsgParser.parseSerialMsg">
-<code class="descname">parseSerialMsg</code><span class="sig-paren">(</span><em>msgBytes</em>, <em>msgStart</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsgParser.SLIPMsgParser.parseSerialMsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Searches raw serial data for SLIP messages and then validates message integrity by comparing a computed CRC to the CRC found in the message.  Valid messages are then stored for processing.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>msgBytes: Raw serial data to be parsed.
-msgStart: Start location to begin looking for serial message in msgBytes data array.</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mesh-generic-slipmsgparser-module">
+<h2>mesh.generic.slipMsgParser module<a class="headerlink" href="#mesh-generic-slipmsgparser-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-mesh.generic.slipMsgParser_li1">
 <span id="mesh-generic-slipmsgparser-li1-module"></span><h2>mesh.generic.slipMsgParser_li1 module<a class="headerlink" href="#module-mesh.generic.slipMsgParser_li1" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.slipMsgParser_li1.SLIPMsgParser_Li1">
 <em class="property">class </em><code class="descclassname">mesh.generic.slipMsgParser_li1.</code><code class="descname">SLIPMsgParser_Li1</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsgParser_li1.SLIPMsgParser_Li1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.msgParser.MsgParser" title="mesh.generic.msgParser.MsgParser"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.msgParser.MsgParser</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#mesh.generic.msgParser.MsgParser" title="mesh.generic.msgParser.MsgParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">mesh.generic.msgParser.MsgParser</span></code></a></p>
 <p>This class is responsible for taking raw serial bytes and searching them for valid SLIP messages.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>crc16: 16-bit CRC calculator.
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>crc16: 16-bit CRC calculator.
 slipMsg: Parsed SLIP message with SLIP bytes extracted.
-parsedMsg: Valid serial message stored in this variable upon confirmation of valid CRC.</dd>
+parsedMsg: Valid serial message stored in this variable upon confirmation of valid CRC.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.slipMsgParser_li1.SLIPMsgParser_Li1.encodeMsg">
@@ -1225,10 +1229,10 @@ parsedMsg: Valid serial message stored in this variable upon confirmation of val
 <dt id="mesh.generic.slipMsgParser_li1.SLIPMsgParser_Li1.parseSerialMsg">
 <code class="descname">parseSerialMsg</code><span class="sig-paren">(</span><em>msgBytes</em>, <em>msgStart</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsgParser_li1.SLIPMsgParser_Li1.parseSerialMsg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Searches raw serial data for SLIP messages and then validates message integrity by comparing a computed CRC to the CRC found in the message.  Valid messages are then stored for processing.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>msgBytes: Raw serial data to be parsed.
-msgStart: Start location to begin looking for serial message in msgBytes data array.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>msgBytes: Raw serial data to be parsed.
+msgStart: Start location to begin looking for serial message in msgBytes data array.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1240,26 +1244,26 @@ msgStart: Start location to begin looking for serial message in msgBytes data ar
 <dl class="class">
 <dt id="mesh.generic.slipMsg_li1.SLIPmsg_Li1">
 <em class="property">class </em><code class="descclassname">mesh.generic.slipMsg_li1.</code><code class="descname">SLIPmsg_Li1</code><span class="sig-paren">(</span><em>maxLength</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg_li1.SLIPmsg_Li1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>An implementation of the Serial Line Internet Protocol (SLIP).</p>
 <p>SLIP messages provide a structure for serial messages with special byte values that define the beginning and end of serial messages.  These values allow for easily parsing individual serial messages from raw serial bytes.</p>
-<dl class="docutils">
-<dt>Attributes:</dt>
-<dd>msg: Decoded SLIP message with SLIP characters removed.
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>msg: Decoded SLIP message with SLIP characters removed.
 msgFound: Boolean flag to indicate whether a SLIP message has been found in the provided raw serial byte data.
 msgMaxLength: Maximum length of valid SLIP messages.
 msgEnd: Location of end of SLIP message found in provided raw serial data array. 
 msgLength: Length of SLIP message.
-slip: Encoded SLIP message for transmission.</dd>
+slip: Encoded SLIP message for transmission.</p>
+</dd>
 </dl>
 <dl class="method">
 <dt id="mesh.generic.slipMsg_li1.SLIPmsg_Li1.decodeSLIPmsg">
 <code class="descname">decodeSLIPmsg</code><span class="sig-paren">(</span><em>byteList</em>, <em>msgStart</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg_li1.SLIPmsg_Li1.decodeSLIPmsg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Searches provided raw serial bytes to locate any SLIP messages.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>byteList: Raw serial byte array.
-msgStart: Array location to begin searching for SLIP messages in raw serial data.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>byteList: Raw serial byte array.
+msgStart: Array location to begin searching for SLIP messages in raw serial data.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1267,10 +1271,10 @@ msgStart: Array location to begin searching for SLIP messages in raw serial data
 <dt id="mesh.generic.slipMsg_li1.SLIPmsg_Li1.decodeSLIPmsgContents">
 <code class="descname">decodeSLIPmsgContents</code><span class="sig-paren">(</span><em>byteList</em>, <em>pos</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg_li1.SLIPmsg_Li1.decodeSLIPmsgContents" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function to strip special SLIP bytes from identified SLIP message.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>byteList: Raw serial data array.
-pos: Array position of start of SLIP message in raw serial data.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>byteList: Raw serial data array.
+pos: Array position of start of SLIP message in raw serial data.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1278,9 +1282,9 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <dt id="mesh.generic.slipMsg_li1.SLIPmsg_Li1.encodeSLIPmsg">
 <code class="descname">encodeSLIPmsg</code><span class="sig-paren">(</span><em>byteList</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.slipMsg_li1.SLIPmsg_Li1.encodeSLIPmsg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Encodes provided serial data into a SLIP message.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd>byteList: Serial bytes to be encoded into SLIP message.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><p>byteList: Serial bytes to be encoded into SLIP message.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1358,11 +1362,27 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <span id="mesh-generic-tdmacomm-module"></span><h2>mesh.generic.tdmaComm module<a class="headerlink" href="#module-mesh.generic.tdmaComm" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.tdmaComm.TDMAComm">
-<em class="property">class </em><code class="descclassname">mesh.generic.tdmaComm.</code><code class="descname">TDMAComm</code><span class="sig-paren">(</span><em>commProcessor</em>, <em>radio</em>, <em>msgParser</em>, <em>nodeParams</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.nodeComm.NodeComm" title="mesh.generic.nodeComm.NodeComm"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.nodeComm.NodeComm</span></code></a></p>
+<em class="property">class </em><code class="descclassname">mesh.generic.tdmaComm.</code><code class="descname">TDMAComm</code><span class="sig-paren">(</span><em>msgProcessors</em>, <em>radio</em>, <em>msgParser</em>, <em>nodeParams</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mesh.generic.serialComm.SerialComm" title="mesh.generic.serialComm.SerialComm"><code class="xref py py-class docutils literal notranslate"><span class="pre">mesh.generic.serialComm.SerialComm</span></code></a></p>
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.checkBlockResponse">
 <code class="descname">checkBlockResponse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.checkBlockResponse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.checkForInit">
+<code class="descname">checkForInit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.checkForInit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.checkForRelay">
+<code class="descname">checkForRelay</code><span class="sig-paren">(</span><em>currentNode</em>, <em>destId</em>, <em>sourceId</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.checkForRelay" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method checks if a message should be relayed based on the current mesh graph.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.checkTimeOffset">
+<code class="descname">checkTimeOffset</code><span class="sig-paren">(</span><em>offset=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.checkTimeOffset" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1372,14 +1392,19 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 </dd></dl>
 
 <dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.createMeshPacket">
+<code class="descname">createMeshPacket</code><span class="sig-paren">(</span><em>destId</em>, <em>msgBytes</em>, <em>adminBytes</em>, <em>sourceId</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.createMeshPacket" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.execute">
-<code class="descname">execute</code><span class="sig-paren">(</span><em>currentTime=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.execute" title="Permalink to this definition">¶</a></dt>
+<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute communication functions.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.executeTDMAComm">
-<code class="descname">executeTDMAComm</code><span class="sig-paren">(</span><em>frameTime</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.executeTDMAComm" title="Permalink to this definition">¶</a></dt>
+<code class="descname">executeTDMAComm</code><span class="sig-paren">(</span><em>currentTime</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.executeTDMAComm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute TDMA communication scheme.</p>
 </dd></dl>
 
@@ -1390,12 +1415,12 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.initComm">
-<code class="descname">initComm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.initComm" title="Permalink to this definition">¶</a></dt>
+<code class="descname">initComm</code><span class="sig-paren">(</span><em>currentTime</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.initComm" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.initMesh">
-<code class="descname">initMesh</code><span class="sig-paren">(</span><em>currentTime=1498830811.1541965</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.initMesh" title="Permalink to this definition">¶</a></dt>
+<code class="descname">initMesh</code><span class="sig-paren">(</span><em>currentTime=1554386159.5437272</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.initMesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize node mesh networks.</p>
 </dd></dl>
 
@@ -1406,15 +1431,44 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 </dd></dl>
 
 <dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.packageMeshPacket">
+<code class="descname">packageMeshPacket</code><span class="sig-paren">(</span><em>destId</em>, <em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.packageMeshPacket" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.populateBlockResponseList">
 <code class="descname">populateBlockResponseList</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.populateBlockResponseList" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add currently present nodes to block request response list.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mesh.generic.tdmaComm.TDMAComm.readMsg">
-<code class="descname">readMsg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.readMsg" title="Permalink to this definition">¶</a></dt>
+<dt id="mesh.generic.tdmaComm.TDMAComm.processMeshMsgs">
+<code class="descname">processMeshMsgs</code><span class="sig-paren">(</span><em>meshMsgs</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.processMeshMsgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes mesh network administration commands and messages received.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.processMsgs">
+<code class="descname">processMsgs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.processMsgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes parsed mesh network messages. Raw data bytes are then stored for forwarding to the node host for processing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.queueMeshMsg">
+<code class="descname">queueMeshMsg</code><span class="sig-paren">(</span><em>destId</em>, <em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.queueMeshMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>This functions receives messages to be sent over the mesh network and queues them for transmission.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.readMsgs">
+<code class="descname">readMsgs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.readMsgs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read from serial connection and look for end of message value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.relayMsg">
+<code class="descname">relayMsg</code><span class="sig-paren">(</span><em>msgBytes</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.relayMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relay received message. Existing mesh header is maintained with only the source updated.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1425,7 +1479,7 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.resetTDMASlot">
-<code class="descname">resetTDMASlot</code><span class="sig-paren">(</span><em>frameTime</em>, <em>slotNum=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.resetTDMASlot" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resetTDMASlot</code><span class="sig-paren">(</span><em>frameTime</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.resetTDMASlot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1442,7 +1496,14 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.sendMsg">
 <code class="descname">sendMsg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.sendMsg" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Wraps provided data into a SLIPmsg and then sends the message over the serial link</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>timestamp: Time of message.
+cmdId: Command message type identifier.
+msgBytes: Data bytes to be sent in serial message.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.sendTDMACmds">
@@ -1462,76 +1523,37 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.syncTDMAFrame">
-<code class="descname">syncTDMAFrame</code><span class="sig-paren">(</span><em>currentTime=1498830811.154197</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.syncTDMAFrame" title="Permalink to this definition">¶</a></dt>
+<code class="descname">syncTDMAFrame</code><span class="sig-paren">(</span><em>currentTime=1554386159.5437279</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.syncTDMAFrame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determine where in frame mesh network currently is to ensure time sync.</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.updateFrameTime">
+<code class="descname">updateFrameTime</code><span class="sig-paren">(</span><em>currentTime</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.updateFrameTime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mesh.generic.tdmaComm.TDMAComm.updateMode">
 <code class="descname">updateMode</code><span class="sig-paren">(</span><em>frameTime</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.updateMode" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="mesh.generic.tdmaComm.TDMAComm.updateShortestPaths">
+<code class="descname">updateShortestPaths</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm.TDMAComm.updateShortestPaths" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>
-<div class="section" id="module-mesh.generic.tdmaComm_fpga">
-<span id="mesh-generic-tdmacomm-fpga-module"></span><h2>mesh.generic.tdmaComm_fpga module<a class="headerlink" href="#module-mesh.generic.tdmaComm_fpga" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm">
-<em class="property">class </em><code class="descclassname">mesh.generic.tdmaComm_fpga.</code><code class="descname">TDMAComm</code><span class="sig-paren">(</span><em>commProcessor</em>, <em>radio</em>, <em>msgParser</em>, <em>nodeParams</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.nodeComm.NodeComm" title="mesh.generic.nodeComm.NodeComm"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.nodeComm.NodeComm</span></code></a></p>
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.execute">
-<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.execute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute communication functions.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.executeTDMAComm">
-<code class="descname">executeTDMAComm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.executeTDMAComm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute TDMA communication scheme.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.init">
-<code class="descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.init" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.initComm">
-<code class="descname">initComm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.initComm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.initMesh">
-<code class="descname">initMesh</code><span class="sig-paren">(</span><em>currentTime=1498830811.2342062</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.initMesh" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize node mesh networks.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.readMsg">
-<code class="descname">readMsg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.readMsg" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.sendMsg">
-<code class="descname">sendMsg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.sendMsg" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mesh.generic.tdmaComm_fpga.TDMAComm.sendTDMACmds">
-<code class="descname">sendTDMACmds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaComm_fpga.TDMAComm.sendTDMACmds" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mesh-generic-tdmacomm-fpga-module">
+<h2>mesh.generic.tdmaComm_fpga module<a class="headerlink" href="#mesh-generic-tdmacomm-fpga-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-mesh.generic.tdmaState">
 <span id="mesh-generic-tdmastate-module"></span><h2>mesh.generic.tdmaState module<a class="headerlink" href="#module-mesh.generic.tdmaState" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mesh.generic.tdmaState.TDMABlockTxStatus">
 <em class="property">class </em><code class="descclassname">mesh.generic.tdmaState.</code><code class="descname">TDMABlockTxStatus</code><a class="headerlink" href="#mesh.generic.tdmaState.TDMABlockTxStatus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.Enum</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
 <p>An enumeration.</p>
 <dl class="attribute">
 <dt id="mesh.generic.tdmaState.TDMABlockTxStatus.active">
@@ -1558,7 +1580,7 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <dl class="class">
 <dt id="mesh.generic.tdmaState.TDMAMode">
 <em class="property">class </em><code class="descclassname">mesh.generic.tdmaState.</code><code class="descname">TDMAMode</code><a class="headerlink" href="#mesh.generic.tdmaState.TDMAMode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.IntEnum</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.IntEnum</span></code></p>
 <p>An enumeration.</p>
 <dl class="attribute">
 <dt id="mesh.generic.tdmaState.TDMAMode.blockRx">
@@ -1600,7 +1622,7 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <dl class="class">
 <dt id="mesh.generic.tdmaState.TDMAStatus">
 <em class="property">class </em><code class="descclassname">mesh.generic.tdmaState.</code><code class="descname">TDMAStatus</code><a class="headerlink" href="#mesh.generic.tdmaState.TDMAStatus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.IntEnum</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.IntEnum</span></code></p>
 <p>An enumeration.</p>
 <dl class="attribute">
 <dt id="mesh.generic.tdmaState.TDMAStatus.blockTx">
@@ -1620,7 +1642,7 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <dl class="class">
 <dt id="mesh.generic.tdmaTime.OffsetChecker">
 <em class="property">class </em><code class="descclassname">mesh.generic.tdmaTime.</code><code class="descname">OffsetChecker</code><span class="sig-paren">(</span><em>initBound</em>, <em>useLEDs=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaTime.OffsetChecker" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mesh.generic.tdmaTime.OffsetChecker.checkOffset">
 <code class="descname">checkOffset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaTime.OffsetChecker.checkOffset" title="Permalink to this definition">¶</a></dt>
@@ -1631,17 +1653,22 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <dl class="class">
 <dt id="mesh.generic.tdmaTime.SyncPulseMonitorThread">
 <em class="property">class </em><code class="descclassname">mesh.generic.tdmaTime.</code><code class="descname">SyncPulseMonitorThread</code><span class="sig-paren">(</span><em>ppsPin</em>, <em>timerUpdate</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaTime.SyncPulseMonitorThread" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Thread</span></code></p>
 <dl class="method">
 <dt id="mesh.generic.tdmaTime.SyncPulseMonitorThread.run">
 <code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaTime.SyncPulseMonitorThread.run" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Method representing the thread’s activity.</p>
+<p>You may override this method in a subclass. The standard run() method
+invokes the callable object passed to the object’s constructor as the
+target argument, if any, with sequential and keyword arguments taken
+from the args and kwargs arguments, respectively.</p>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="function">
 <dt id="mesh.generic.tdmaTime.getTimeOffset">
-<code class="descclassname">mesh.generic.tdmaTime.</code><code class="descname">getTimeOffset</code><span class="sig-paren">(</span><em>offsetType=’standard’</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaTime.getTimeOffset" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mesh.generic.tdmaTime.</code><code class="descname">getTimeOffset</code><span class="sig-paren">(</span><em>offsetType='standard'</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.tdmaTime.getTimeOffset" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -1665,36 +1692,9 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <div class="section" id="module-mesh.generic.udpRadio">
 <span id="mesh-generic-udpradio-module"></span><h2>mesh.generic.udpRadio module<a class="headerlink" href="#module-mesh.generic.udpRadio" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="mesh.generic.udpRadio.RadioMode">
-<em class="property">class </em><code class="descclassname">mesh.generic.udpRadio.</code><code class="descname">RadioMode</code><a class="headerlink" href="#mesh.generic.udpRadio.RadioMode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.IntEnum</span></code></p>
-<p>An enumeration.</p>
-<dl class="attribute">
-<dt id="mesh.generic.udpRadio.RadioMode.off">
-<code class="descname">off</code><em class="property"> = 0</em><a class="headerlink" href="#mesh.generic.udpRadio.RadioMode.off" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mesh.generic.udpRadio.RadioMode.receive">
-<code class="descname">receive</code><em class="property"> = 2</em><a class="headerlink" href="#mesh.generic.udpRadio.RadioMode.receive" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mesh.generic.udpRadio.RadioMode.sleep">
-<code class="descname">sleep</code><em class="property"> = 1</em><a class="headerlink" href="#mesh.generic.udpRadio.RadioMode.sleep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mesh.generic.udpRadio.RadioMode.transmit">
-<code class="descname">transmit</code><em class="property"> = 3</em><a class="headerlink" href="#mesh.generic.udpRadio.RadioMode.transmit" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="mesh.generic.udpRadio.UDPRadio">
 <em class="property">class </em><code class="descclassname">mesh.generic.udpRadio.</code><code class="descname">UDPRadio</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.udpRadio.UDPRadio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal notranslate"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
 <dl class="method">
 <dt id="mesh.generic.udpRadio.UDPRadio.readBytes">
 <code class="descname">readBytes</code><span class="sig-paren">(</span><em>bufferFlag</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.udpRadio.UDPRadio.readBytes" title="Permalink to this definition">¶</a></dt>
@@ -1715,7 +1715,7 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 <dl class="class">
 <dt id="mesh.generic.xbeeRadio.XbeeRadio">
 <em class="property">class </em><code class="descclassname">mesh.generic.xbeeRadio.</code><code class="descname">XbeeRadio</code><span class="sig-paren">(</span><em>serial</em>, <em>config</em>, <em>sleepPin=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.xbeeRadio.XbeeRadio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#mesh.generic.radio.Radio" title="mesh.generic.radio.Radio"><code class="xref py py-class docutils literal notranslate"><span class="pre">mesh.generic.radio.Radio</span></code></a></p>
 <dl class="method">
 <dt id="mesh.generic.xbeeRadio.XbeeRadio.setOff">
 <code class="descname">setOff</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mesh.generic.xbeeRadio.XbeeRadio.setOff" title="Permalink to this definition">¶</a></dt>
@@ -1751,64 +1751,37 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">mesh.generic package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.checksum">mesh.generic.checksum module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.cmdDict">mesh.generic.cmdDict module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.cmdProcessor">mesh.generic.cmdProcessor module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.cmdStatus">mesh.generic.cmdStatus module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.cmds">mesh.generic.cmds module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.commPorts">mesh.generic.commPorts module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.commProcessor">mesh.generic.commProcessor module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.command">mesh.generic.command module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.commandMsg">mesh.generic.commandMsg module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.commandType">mesh.generic.commandType module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.constants">mesh.generic.constants module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.customExceptions">mesh.generic.customExceptions module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.deserialize">mesh.generic.deserialize module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.formationClock">mesh.generic.formationClock module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.fpgaRadio">mesh.generic.fpgaRadio module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.gpio">mesh.generic.gpio module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.li1Radio">mesh.generic.li1Radio module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.li1RadioCmds">mesh.generic.li1RadioCmds module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.msgParser">mesh.generic.msgParser module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.multiProcess">mesh.generic.multiProcess module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.navigation">mesh.generic.navigation module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeComm">mesh.generic.nodeComm module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeConfig">mesh.generic.nodeConfig module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeController">mesh.generic.nodeController module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeExecutive">mesh.generic.nodeExecutive module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeHeader">mesh.generic.nodeHeader module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeParams">mesh.generic.nodeParams module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeState">mesh.generic.nodeState module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.nodeTools">mesh.generic.nodeTools module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.pipeConn">mesh.generic.pipeConn module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.radio">mesh.generic.radio module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.serialComm">mesh.generic.serialComm module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.slipMsg">mesh.generic.slipMsg module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.slipMsgParser">mesh.generic.slipMsgParser module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.slipMsgParser_li1">mesh.generic.slipMsgParser_li1 module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.slipMsg_li1">mesh.generic.slipMsg_li1 module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.tdmaCmdDict">mesh.generic.tdmaCmdDict module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.tdmaCmdProcessor">mesh.generic.tdmaCmdProcessor module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.tdmaComm">mesh.generic.tdmaComm module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.tdmaComm_fpga">mesh.generic.tdmaComm_fpga module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.tdmaState">mesh.generic.tdmaState module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.tdmaTime">mesh.generic.tdmaTime module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.testCmdDict">mesh.generic.testCmdDict module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.testCmdProcessor">mesh.generic.testCmdProcessor module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.udpRadio">mesh.generic.udpRadio module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic.xbeeRadio">mesh.generic.xbeeRadio module</a></li>
-<li><a class="reference internal" href="#module-mesh.generic">Module contents</a></li>
+<h1 class="logo"><a href="index.html">Mesh Network Communication System</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="design.html">Network Design</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="software.html">Software</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="software.html#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#common-application-programming-interface-api">Common Application Programming Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#interface-between-host-platform-and-mesh-network">Interface Between Host Platform and Mesh Network</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#configuration">Configuration</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="software.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#tests">Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#vhdl">VHDL</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="hardware.html">Hardware Implementations</a></li>
 </ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -1824,23 +1797,24 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/mesh.generic.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -1849,8 +1823,8 @@ pos: Array position of start of SLIP message in raw serial data.</dd>
       &copy;2017, Chris Becker, Garrick Merrill.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/mesh.generic.rst.txt"

@@ -437,7 +437,7 @@ class TDMAComm(SerialComm):
         return False # end of transmission not found
    
     def relayMsg(self, msgBytes):
-        """Relay received message."""
+        """Relay received message. Existing mesh header is maintained with only the source updated."""
         # Update packet sourceId
         msgBytes[0:1] = struct.pack('<B', self.nodeParams.config.nodeId)        
 
@@ -488,11 +488,11 @@ class TDMAComm(SerialComm):
        
                     # Check for relay
                     if (destId == 0): # broadcast message
-                        # Send message out with unchanged command counter
+                        # All broadcast messages are relayed
                         self.relayMsg(bytearray(msg))
 
                     elif (destId != self.nodeParams.config.nodeId): # message for another node
-                        # Check if should be relayed
+                        # Only relay if on the shortest path
                         if (self.checkForRelay(self.nodeParams.config.nodeId, destId, sourceId) == True): # message should be relayed
                             self.relayMsg(bytearray(msg))
                 else:
@@ -535,6 +535,10 @@ class TDMAComm(SerialComm):
         timestamp = self.nodeParams.clock.getTime()
         for cmdId in list(self.tdmaCmds.keys()):
             cmd = self.tdmaCmds[cmdId]
+
+            # Update command counter
+            if ('cmdCounter' in cmd.header):
+                cmd.header['cmdCounter'] = self.nodeParams.get_cmdCounter()
 
             # Send periodic commands at prescribed interval
             if cmd.txInterval:

@@ -1,29 +1,17 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>Configuration &#8212; Mesh Network Communication System 2.0 documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '2.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Python" href="python.html" />
@@ -34,13 +22,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="configuration">
@@ -55,62 +44,62 @@ Some parameters are specific to a particular vehicle type while others are requi
 <h3>Node Parameters<a class="headerlink" href="#node-parameters" title="Permalink to this headline">¶</a></h3>
 <p>These values are stored in the “node” array and are required in all mesh network configuration files.</p>
 <ul class="simple">
-<li>maxNumNodes (int)</li>
-<li>platform (string)</li>
-<li>nodeUpdateTimeout (double)</li>
-<li>commType (string)</li>
-<li>parseMsgMax (int)</li>
-<li>rxBufferSize (int)</li>
-<li>nodeUpdateTimeout (float)</li>
-<li>FCCommWriteInterval (float)</li>
-<li>FCCommDevice (string)</li>
-<li>FCBaudrate (int)</li>
-<li>numMeshNetworks (int)</li>
-<li>meshDevices (array of strings)</li>
-<li>radios (array of strings)</li>
-<li>msgParsers (array of strings)</li>
-<li>meshBaudrate (int)</li>
-<li>cmdInterval (float)</li>
-<li>logInterval (float)</li>
-<li>gcsPresent (bool)</li>
+<li><p>maxNumNodes (int)</p></li>
+<li><p>platform (string)</p></li>
+<li><p>nodeUpdateTimeout (double)</p></li>
+<li><p>commType (string)</p></li>
+<li><p>parseMsgMax (int)</p></li>
+<li><p>rxBufferSize (int)</p></li>
+<li><p>nodeUpdateTimeout (float)</p></li>
+<li><p>FCCommWriteInterval (float)</p></li>
+<li><p>FCCommDevice (string)</p></li>
+<li><p>FCBaudrate (int)</p></li>
+<li><p>numMeshNetworks (int)</p></li>
+<li><p>meshDevices (array of strings)</p></li>
+<li><p>radios (array of strings)</p></li>
+<li><p>msgParsers (array of strings)</p></li>
+<li><p>meshBaudrate (int)</p></li>
+<li><p>cmdInterval (float)</p></li>
+<li><p>logInterval (float)</p></li>
+<li><p>gcsPresent (bool)</p></li>
 </ul>
 </div>
 <div class="section" id="interface">
 <h3>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h3>
 <p>These values are stored in the “interface” array, provide configuration information for communicating between the comm and node control processes, and are required in all mesh network configuration files.</p>
 <ul class="simple">
-<li>nodeCommIntIP (string): IP address of network interface between processes.</li>
-<li>commRdPort (int): UDP port for incoming messages to comm process.</li>
-<li>commWrPort (int): UDP port for outgoing messages from comm process.</li>
+<li><p>nodeCommIntIP (string): IP address of network interface between processes.</p></li>
+<li><p>commRdPort (int): UDP port for incoming messages to comm process.</p></li>
+<li><p>commWrPort (int): UDP port for outgoing messages from comm process.</p></li>
 </ul>
 </div>
 <div class="section" id="tdma-configuration-parameters">
 <h3>TDMA Configuration Parameters<a class="headerlink" href="#tdma-configuration-parameters" title="Permalink to this headline">¶</a></h3>
 <p>These parameters are stored in the “tdmaConfig” array.  They are required for configuration of the TDMA comm protocol.</p>
 <ul class="simple">
-<li>txBaudrate (int): Radio transmission baudrate.  This value is used to compute other configuration parameters.</li>
-<li>enableLength (double): Length of time in seconds of enable period for starting transmit or receive slot.</li>
-<li>slotGuardLength (double): Length in seconds of guard at the end of slot prior to start of new slot.</li>
-<li>preTxGuardLength (double): Length in seconds of guard prior to beginning of transmit period.  During this period, both the transmitting and receiving radios are on, and the receiving radios begin listening even though transmission should not begin until this guard period is over.</li>
-<li>postTxGuardLength (double): Length in seconds of guard after transmit period.  During this period, the transmitting radio should have stopped transmitting and been turned off, but the receiving radios will continue listening until this guard period is over.</li>
-<li>txLength (double): Length in seconds of the transmission period.  All messages must be sent by the transmitter before the end of this period.</li>
-<li>rxDelay (percentage): Percentage (in decimal format) of transmit time that should be delayed prior to a receiving node attempting a serial read.</li>
-<li>initTimeToWait (double): Time in seconds that a new node should wait and listen for messages from an existing mesh network.  If this period elapses without a message being received, the new node assumes it is the first node and establishes the mesh network.</li>
-<li>maxNumSlots (int): The maximum number of slots available in the TDMA cycle, i.e. the number of nodes that can join the mesh network.</li>
-<li>desiredDataRate (double): The desired frame rate in Hz.  For example, if it is desired for each node to have a transmission period twice per second, this value would be 2.</li>
-<li>initSyncBound (double): The initial maximum allowable time offset in seconds.  The node software will not begin execution until the absolute value of the time offset is below this value.</li>
-<li>operateSyncBound (double):  The maximum allowable time offset value in seconds during node operation.  If the absolute value of the time offset exceeds this value while the node software is executing, the node will take corrective action.</li>
-<li>offsetTimeout (double): Maximum time in seconds between valid offset measurements.  If the time between offset updates is greater than this value, a node will take corrective action.</li>
-<li>offsetTxInterval (double): Time in seconds between time offset messages.</li>
-<li>statusTxInterval (double): Time in seconds between mesh status messages.</li>
-<li>linksTxInterval (double): Time in seconds between link status messages.</li>
-<li>blockTxRequestTimeout (int): The length of time in frames that a node will wait for responses from other nodes after it has requested a block transfer.  If this period expires, the request is invalidated.</li>
-<li>minBlockTxDelay (int): The minimum number of frames between when a block transfer is requested and when it can begin.</li>
-<li>maxTxBlockSize (int): Maximum number of data blocks for a block transmit request.</li>
-<li>fpga (bool): Flag indicating whether an FPGA is being used.</li>
-<li>OPTIONAL fpgaFailsafePin (string): GPIO pin for issuing failsafe to FPGA.</li>
-<li>OPTIONAL fpgaFifoSize (int): Size of FPGA outgoing message buffer.</li>
-<li>OPTIONAL: sleepPin (string): GPIO pin for sleeping the radio.</li>
+<li><p>txBaudrate (int): Radio transmission baudrate.  This value is used to compute other configuration parameters.</p></li>
+<li><p>enableLength (double): Length of time in seconds of enable period for starting transmit or receive slot.</p></li>
+<li><p>slotGuardLength (double): Length in seconds of guard at the end of slot prior to start of new slot.</p></li>
+<li><p>preTxGuardLength (double): Length in seconds of guard prior to beginning of transmit period.  During this period, both the transmitting and receiving radios are on, and the receiving radios begin listening even though transmission should not begin until this guard period is over.</p></li>
+<li><p>postTxGuardLength (double): Length in seconds of guard after transmit period.  During this period, the transmitting radio should have stopped transmitting and been turned off, but the receiving radios will continue listening until this guard period is over.</p></li>
+<li><p>txLength (double): Length in seconds of the transmission period.  All messages must be sent by the transmitter before the end of this period.</p></li>
+<li><p>rxDelay (percentage): Percentage (in decimal format) of transmit time that should be delayed prior to a receiving node attempting a serial read.</p></li>
+<li><p>initTimeToWait (double): Time in seconds that a new node should wait and listen for messages from an existing mesh network.  If this period elapses without a message being received, the new node assumes it is the first node and establishes the mesh network.</p></li>
+<li><p>maxNumSlots (int): The maximum number of slots available in the TDMA cycle, i.e. the number of nodes that can join the mesh network.</p></li>
+<li><p>desiredDataRate (double): The desired frame rate in Hz.  For example, if it is desired for each node to have a transmission period twice per second, this value would be 2.</p></li>
+<li><p>initSyncBound (double): The initial maximum allowable time offset in seconds.  The node software will not begin execution until the absolute value of the time offset is below this value.</p></li>
+<li><p>operateSyncBound (double):  The maximum allowable time offset value in seconds during node operation.  If the absolute value of the time offset exceeds this value while the node software is executing, the node will take corrective action.</p></li>
+<li><p>offsetTimeout (double): Maximum time in seconds between valid offset measurements.  If the time between offset updates is greater than this value, a node will take corrective action.</p></li>
+<li><p>offsetTxInterval (double): Time in seconds between time offset messages.</p></li>
+<li><p>statusTxInterval (double): Time in seconds between mesh status messages.</p></li>
+<li><p>linksTxInterval (double): Time in seconds between link status messages.</p></li>
+<li><p>blockTxRequestTimeout (int): The length of time in frames that a node will wait for responses from other nodes after it has requested a block transfer.  If this period expires, the request is invalidated.</p></li>
+<li><p>minBlockTxDelay (int): The minimum number of frames between when a block transfer is requested and when it can begin.</p></li>
+<li><p>maxTxBlockSize (int): Maximum number of data blocks for a block transmit request.</p></li>
+<li><p>fpga (bool): Flag indicating whether an FPGA is being used.</p></li>
+<li><p>OPTIONAL fpgaFailsafePin (string): GPIO pin for issuing failsafe to FPGA.</p></li>
+<li><p>OPTIONAL fpgaFifoSize (int): Size of FPGA outgoing message buffer.</p></li>
+<li><p>OPTIONAL: sleepPin (string): GPIO pin for sleeping the radio.</p></li>
 </ul>
 </div>
 </div>
@@ -118,22 +107,37 @@ Some parameters are specific to a particular vehicle type while others are requi
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Configuration</a><ul>
-<li><a class="reference internal" href="#configuration-file">Configuration File</a><ul>
-<li><a class="reference internal" href="#node-parameters">Node Parameters</a></li>
-<li><a class="reference internal" href="#interface">Interface</a></li>
-<li><a class="reference internal" href="#tdma-configuration-parameters">TDMA Configuration Parameters</a></li>
+<h1 class="logo"><a href="index.html">Mesh Network Communication System</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="design.html">Network Design</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="software.html">Software</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="software.html#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#common-application-programming-interface-api">Common Application Programming Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#interface-between-host-platform-and-mesh-network">Interface Between Host Platform and Mesh Network</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="software.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#tests">Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="software.html#vhdl">VHDL</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="hardware.html">Hardware Implementations</a></li>
 </ul>
-</li>
-</ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -145,23 +149,24 @@ Some parameters are specific to a particular vehicle type while others are requi
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/config.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -170,8 +175,8 @@ Some parameters are specific to a particular vehicle type while others are requi
       &copy;2017, Chris Becker, Garrick Merrill.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/config.rst.txt"

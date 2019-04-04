@@ -52,14 +52,6 @@ mesh\.generic\.commPorts module
     :undoc-members:
     :show-inheritance:
 
-mesh\.generic\.commProcessor module
------------------------------------
-
-.. automodule:: mesh.generic.commProcessor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 mesh\.generic\.command module
 -----------------------------
 
@@ -168,14 +160,6 @@ mesh\.generic\.navigation module
 --------------------------------
 
 .. automodule:: mesh.generic.navigation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mesh\.generic\.nodeComm module
-------------------------------
-
-.. automodule:: mesh.generic.nodeComm
     :members:
     :undoc-members:
     :show-inheritance:

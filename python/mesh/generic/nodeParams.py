@@ -46,20 +46,13 @@ class NodeParams():
         """Checks status of links to other nodes."""
         thisNode = self.config.nodeId - 1
         for i in range(self.config.maxNumNodes):
-            #if (i == thisNode): # this node
-            #    self.nodeParams.linkStatus[thisNode][i] = LinkStatus.GoodLink
-            #else: # other nodes
-                # Check for direct link
-                if (self.nodeStatus[i].present and (self.clock.getTime() - self.nodeStatus[i].lastMsgRcvdTime) < 60*self.config.commConfig['frameLength']):
-                    #if ((self.nodeParams.clock.getTime() - self.nodeParams.nodeStatus[i].lastMsgRcvdTime) < 1.5*self.nodeParams.config.commConfig['frameLength']):
-                    self.linkStatus[thisNode][i] = LinkStatus.GoodLink
+            # Check for direct link
+            if (self.nodeStatus[i].present and (self.clock.getTime() - self.nodeStatus[i].lastMsgRcvdTime) < self.config.commConfig['linkTimeout']):
+                self.linkStatus[thisNode][i] = LinkStatus.GoodLink
                 
-                # Check for indirect link
-                elif (self.nodeStatus[i].updating == True): # state data is updating, so at least an indirect link
-                    self.linkStatus[thisNode][i] = LinkStatus.IndirectLink
+            # Check for indirect link
+            elif (self.nodeStatus[i].updating == True): # state data is updating, so at least an indirect link
+                self.linkStatus[thisNode][i] = LinkStatus.IndirectLink
                 
-                else: # no link
-                    if (self.linkStatus[thisNode][i] != LinkStatus.NoLink): # lost link
-                        self.linkStatus[thisNode][i] = LinkStatus.BadLink
-                #else: # no link ever with this node
-                #    self.nodeParams.linkStatus[thisNode][i] = LinkStatus.NoLink
+            else: # no link
+                    self.linkStatus[thisNode][i] = LinkStatus.NoLink

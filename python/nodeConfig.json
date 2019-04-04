@@ -44,6 +44,7 @@
         "statusTxInterval": 0.0,
         "linksTxInterval": 30.0,
 		"maxTxBlockSize": 5,
+		"linkTimeout": 60.0,
 		"blockTxRequestTimeout": 3,
 		"minBlockTxDelay": 6,
         "fpga": false,
