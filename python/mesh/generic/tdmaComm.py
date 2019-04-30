@@ -349,7 +349,7 @@ class TDMAComm(SerialComm):
                 #print str(time.time()) + ": " + str(frameTime) + " - Node " + str(self.nodeId) + " - Transmitting"
     
     def queueMeshMsg(self, destId, msgBytes):
-        """This functions receives messages to be sent over the mesh network and queues them for transmission."""
+        """This function receives messages to be sent over the mesh network and queues them for transmission."""
         
         # Place message in appropriate position in outgoing queue (broadcast messages are stored in the zero position) 
         self.meshQueueIn[destId] += msgBytes

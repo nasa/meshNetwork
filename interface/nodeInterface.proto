@@ -5,6 +5,7 @@ message Command {
     float txInterval = 1;
     bytes msgBytes = 2;
     uint32 cmdId = 3;
+    uint32 destId = 4;
 }
 
 message NodeThreadMsg {

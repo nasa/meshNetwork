@@ -1,3 +1,5 @@
+import time
+from mesh.interface.nodeInterface_pb2 import NodeThreadMsg
 
 class NodeExecutive(object):
     """Generic node executive controller to subtype for specific vehicle types.
@@ -54,12 +56,30 @@ class NodeExecutive(object):
     def sendFCCmds(self): # Send required commands to flight computer
         """Sends messages and commands to the vehicle's flight computer."""
         # Send any buffered data
-        self.FCComm.sendBuffer()
+        if (self.FCComm):
+            self.FCComm.sendBuffer()
 
     def sendNodeCmds(self): # Send command/data messages to other nodes
         """Sends messages and commands to the other nodes."""
         # Send any buffered data
         for comm in self.nodeComm:
-            comm.sendBuffer()
+            nodeThreadMsg = NodeThreadMsg()
+            nodeThreadMsg.timestamp = time.time()
 
+            for dest in range(len(self.nodeController.queueOut)):
+                if (self.nodeController.queueOut[dest]):
+                    msg = self.nodeController.queueOut[dest]
+
+                    # Add command to outgoing message
+                    cmd = nodeThreadMsg.cmds.add()
+                    cmd.destId = dest + 1
+                    cmd.msgBytes = msg
+
+                    # Clear outgoing message
+                    self.nodeController.queueOut[dest] = b''
+
+            if (len(nodeThreadMsg.cmds) > 0): # Transmit message
+                comm.sendMsg(nodeThreadMsg.SerializeToString())
+
+            
 

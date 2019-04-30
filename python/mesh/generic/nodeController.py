@@ -17,7 +17,10 @@ class NodeController(object):
     
         # Node configuration
         self.nodeParams = nodeParams
-    
+   
+        # Outgoing node messages
+        self.queueOut = [b''] * self.nodeParams.config.commConfig['maxNumSlots']
+
     def controlNode(self):
         """Function that controls node logic execution.  This functions calls the other node
         logic in the proper order for node execution."""

@@ -3,7 +3,8 @@ import serial, time, random
 from mesh.generic.nodeParams import NodeParams
 from mesh.generic.radio import Radio
 from mesh.generic.udpRadio import UDPRadio
-from mesh.generic.slipMsgParser import SLIPMsgParser
+#from mesh.generic.slipMsgParser import SLIPMsgParser
+from mesh.generic.slipMsg import SLIPMsg
 from mesh.generic.msgParser import MsgParser
 from switch import switch
 
@@ -17,25 +18,21 @@ class NodeControlProcess(Process):
         # Configuration
         nodeParams = NodeParams(configFile=configFile)
     
-        # Flight computer serial port
-        FCSer = serial.Serial(port = nodeParams.config.FCCommDevice, baudrate=nodeParams.config.FCBaudrate, timeout=0)
 
         # Create radios
         radios = []
         radioConfig = {'uartNumBytesToRead': nodeParams.config.uartNumBytesToRead, 'rxBufferSize': nodeParams.config.rxBufferSize, 'ipAddr': nodeParams.config.interface['nodeCommIntIP'], 'readPort': nodeParams.config.interface['commWrPort'], 'writePort': nodeParams.config.interface['commRdPort']}
         for i in range(nodeParams.config.numMeshNetworks):
             radios.append(UDPRadio(radioConfig)) # connection to communication processes
-        FCRadio = Radio(FCSer, radioConfig)
 
         # Create message parsers
         msgParsers = []
         parserConfig = {'parseMsgMax': nodeParams.config.parseMsgMax}
         for i in range(nodeParams.config.numMeshNetworks):
-            if nodeParams.config.msgParsers[i] == "SLIP":
-                msgParsers.append(SLIPMsgParser(parserConfig))
-            elif nodeParams.config.msgParsers[i] == "standard":
-                msgParsers.append(MsgParser(parserConfig))
-        FCMsgParser = SLIPMsgParser(parserConfig)
+            #if nodeParams.config.msgParsers[i] == "SLIP":
+                msgParsers.append(MsgParser(parserConfig, SLIPMsg(256)))
+            #elif nodeParams.config.msgParsers[i] == "standard":
+            #    msgParsers.append(MsgParser(parserConfig))
     
         # Open logfiles
         currentTime = str(time.time())
@@ -60,19 +57,27 @@ class NodeControlProcess(Process):
             if case("SpecificNode"):
                 pass
             else: # generic node
-                from mesh.generic.nodeComm import NodeComm  
-                from mesh.generic.nodeController import NodeController  
+                from mesh.generic.serialComm import SerialComm  
+                from demoController import DemoController  
                 from mesh.generic.nodeExecutive import NodeExecutive
                 
                 print("Initializing generic node")
 
                 # Initialize communication variables
                 for i in range(nodeParams.config.numMeshNetworks):
-                    nodeComm[i] = NodeComm([], radios[i], msgParsers[i], nodeParams)
-                FCComm = NodeComm([], FCRadio, FCMsgParser, nodeParams)
+                    nodeComm[i] = SerialComm([], nodeParams, radios[i], msgParsers[i])
+        
+                # Flight computer comm
+                if (nodeParams.config.FCCommDevice):
+                    FCSer = serial.Serial(port = nodeParams.config.FCCommDevice, baudrate=nodeParams.config.FCBaudrate, timeout=0)
+                    FCRadio = Radio(FCSer, radioConfig)
+                    FCMsgParser = MsgParser(parserConfig, SLIPMsg(256))
+                    FCComm = SerialComm([], FCRadio, FCMsgParser, nodeParams)
+                else:
+                    FCComm = None
     
                 # Node controller
-                self.nodeController = NodeController(nodeParams, self.nodeCommLogFile)
+                self.nodeController = DemoController(nodeParams, self.nodeCommLogFile)
 
                 # Node executive
                 self.nodeExecutive = NodeExecutive(nodeParams, self.nodeController, nodeComm, FCComm, self.FCLogFile)

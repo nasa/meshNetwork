@@ -4,7 +4,9 @@ from mesh.generic.nodeParams import NodeParams
 from mesh.generic.xbeeRadio import XbeeRadio
 from mesh.generic.li1Radio import Li1Radio
 from mesh.generic.udpRadio import UDPRadio
-from mesh.generic.slipMsgParser import SLIPMsgParser
+#from mesh.generic.slipMsgParser import SLIPMsgParser
+from mesh.generic.hdlcMsg import HDLCMsg
+from mesh.generic.slipMsg import SLIPMsg
 from mesh.generic.msgParser import MsgParser
 from mesh.generic.serialComm import SerialComm    
 from mesh.generic.multiProcess import getNewMsgs
@@ -22,9 +24,10 @@ class CommProcess(Process):
 
         # Node/Comm interface
         interfaceConfig = {'uartNumBytesToRead': self.nodeParams.config.uartNumBytesToRead, 'rxBufferSize': self.nodeParams.config.rxBufferSize, 'ipAddr': self.nodeParams.config.interface['nodeCommIntIP'], 'readPort': self.nodeParams.config.interface['commRdPort'], 'writePort': self.nodeParams.config.interface['commWrPort']}
-        self.interface = SerialComm([], UDPRadio(interfaceConfig), SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax}))
+        #self.interface = SerialComm([], UDPRadio(interfaceConfig), SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax}))
+        self.interface = SerialComm([], self.nodeParams, UDPRadio(interfaceConfig), MsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax}, SLIPMsg(256))) # UDP connection to node control process
 
-        # Interprocess data package
+        # Interprocess data package (Google protocol buffer interface to node control process)
         self.dataPackage = NodeThreadMsg()
         self.cmdTxLog = {}
         self.lastNodeCmdTime = []
@@ -46,8 +49,8 @@ class CommProcess(Process):
     
         # Message parser
         parserConfig = {'parseMsgMax': self.nodeParams.config.parseMsgMax}
-        if self.nodeParams.config.msgParsers[meshNum] == "SLIP":
-            msgParser = SLIPMsgParser(parserConfig)
+        if self.nodeParams.config.msgParsers[meshNum] == "HDLC":
+            msgParser = MsgParser(parserConfig, HDLCMsg(256))
         elif self.nodeParams.config.msgParsers[meshNum] == "standard":
             msgParser = MsgParser(parserConfig)
 
@@ -61,7 +64,7 @@ class CommProcess(Process):
         self.comm = TDMAComm([], radio, msgParser, self.nodeParams)
 
         # Node control run time bounds
-        if (self.nodeParams.config.commConfig['fpga'] == False):
+        if (self.nodeParams.config.commConfig['fpga'] == False): # only needed for software-controlled comm
             if self.comm.transmitSlot == 1: # For first node, run any time after transmit slot
                 self.maxNodeControlTime = self.comm.frameLength - self.comm.slotLength
                 self.minNodeControlTime = self.comm.slotLength
@@ -69,6 +72,7 @@ class CommProcess(Process):
                 self.minNodeControlTime = (self.comm.transmitSlot-2) * self.comm.slotLength # don't run within 1 slot of transmit 
                 self.maxNodeControlTime = self.comm.transmitSlot * self.comm.slotLength
             #self.minNodeControlTime = 0.8*((self.comm.transmitSlot-1) * self.comm.slotLength)
+
     def run(self):
         while 1:
             try:
@@ -86,27 +90,18 @@ class CommProcess(Process):
                 for msg in self.interface.msgParser.parsedMsgs: # Process received messages
                     nodeMsg = NodeThreadMsg()
                     nodeMsg.ParseFromString(msg)
+                    
                     # Check if new message
                     if (nodeMsg.timestamp > 0.0 and nodeMsg.timestamp > self.dataPackage.timestamp):
                         self.lastNodeCmdTime = time.time()
                         self.dataPackage = nodeMsg
                    
-                        # Update link status
-                        if (self.nodeParams.config.nodeId == self.nodeParams.config.gcsNodeId): # ground node
-                            entry = self.nodeParams.config.maxNumNodes - 1
-                        else:
-                            entry = self.nodeParams.config.nodeId - 1
-                        self.nodeParams.linkStatus[entry] = nodeMsg.linkStatus
      
-                        if (nodeMsg.cmdRelay): # command relay data                    
-                            #for cmd in nodeMsg.cmdRelay:
-                                self.comm.cmdRelayBuffer.append(nodeMsg.cmdRelay)
-                                #print("Cmds to relay:",self.comm.cmdRelayBuffer)
+                        # Parse messages for transmission
                         if (nodeMsg.cmds): # commands received
-                            #self.comm.cmdBuffer = [] # clear existing buffer
                             for cmd in nodeMsg.cmds:
-                                self.comm.cmdBuffer[cmd.cmdId] = {'bytes': cmd.msgBytes, 'txInterval': cmd.txInterval}
-                                #self.comm.cmdBuffer.append({'bytes': cmd.msgBytes, 'txInterval': cmd.txInterval})
+                                self.comm.queueMeshMsg(cmd.destId, cmd.msgBytes)
+                
                 self.interface.msgParser.parsedMsgs = [] # clear out processed parsed messages
                 
                 # Execute comm  
@@ -122,11 +117,11 @@ class CommProcess(Process):
                         self.nodeControlRunFlag.value = 0
                 
                 # Send any received bytes to node control process
-                if (self.nodeParams.config.commConfig['fpga'] == False or self.comm.frameTime > self.comm.cycleLength):
-                    if (self.comm.radio.bytesInRxBuffer > 0):
-                        rcvdBytes = self.comm.radio.getRxBytes()
-                        self.comm.radio.clearRxBuffer()
-                        self.interface.send_bytes(rcvdBytes) 
+                #if (self.nodeParams.config.commConfig['fpga'] == False or self.comm.frameTime > self.comm.cycleLength):
+                if (self.comm.hostBuffer):
+                    rcvdBytes = self.comm.hostBuffer
+                    self.comm.hostBuffer = bytearray()
+                    self.interface.sendBytes(rcvdBytes) 
                 
             except KeyboardInterrupt:
                 print("\nTerminating Comm Process.")

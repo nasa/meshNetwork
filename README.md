@@ -10,3 +10,7 @@ The full documentation is in the doc/build/html directory.
 
 The Mesh Network software is released under the NASA Open Source Agreement Version 1.3 [license](LICENSE).
 
+
+### Python dependencies
+pyserial
+crcmod
