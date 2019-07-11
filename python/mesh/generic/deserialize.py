@@ -63,11 +63,12 @@ def unpackBytes2(fmt, msgBytes, returnExcess=False):
 def unpackBytes(fmt, msgBytes):
     dataSize = calcsize(fmt)
     if (len(msgBytes) >= dataSize):
-        return unpack(fmt, msgBytes[0:dataSize])
+        return [unpack(fmt, msgBytes[0:dataSize]), msgBytes[dataSize:]]
     else: # insufficient bytes
         raise InsufficientMsgBytes("Message format exceeds raw message byte length.")
 
-def parseHeader(rawHeader, cmdId):
+def parseHeader(headerInput, cmdId):
+    rawHeader = headerInput[0]
     header = dict()
     if cmdId not in CmdDict:
         return rawHeader
@@ -76,10 +77,15 @@ def parseHeader(rawHeader, cmdId):
         header[headers[CmdDict[cmdId].header]['entries'][i]] = rawHeader[i]             
     return header
     
-def parseBody(rawBody, cmdId):
+def parseBody(bodyInput, cmdId):
+    rawBody = bodyInput[0]
+    unparsedBody = bodyInput[1]
+
     body = dict()
+
     if cmdId not in CmdDict:
-        return rawBody
+        body['raw'] = rawBody
+        return body
     
     # Parse message contents and create dictionary
     #if (CmdDict[cmdId].packFormat[0] == '='):
@@ -89,4 +95,7 @@ def parseBody(rawBody, cmdId):
     for i in range(len(CmdDict[cmdId].messageFormat)):
         body[CmdDict[cmdId].messageFormat[i]] = rawBody[i]
     
+    if (unparsedBody): # remaining raw body bytes
+        body['raw'] = unparsedBody
+   
     return body 

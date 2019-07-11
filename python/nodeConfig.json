@@ -34,15 +34,15 @@
 		"postTxGuardLength": 0.005,
 		"txLength": 0.100,
 		"rxDelay": 0.0,
-        "initTimeToWait": 5.0,
+        "initTimeToWait": 60.0,
 		"maxNumSlots": 6,
 		"desiredDataRate": 1.0,
-		"initSyncBound": 1.0,
-		"operateSyncBound": 2.0,
+		"initSyncBound": 1,
+		"operateSyncBound": 2,
 		"offsetTimeout": 60.0,
         "offsetTxInterval": 10.0,
-        "statusTxInterval": 0.0,
-        "linksTxInterval": 30.0,
+        "statusTxInterval": 10.0,
+        "linksTxInterval": 5.0,
 		"maxTxBlockSize": 5,
 		"linkTimeout": 60.0,
 		"blockTxRequestTimeout": 3,
@@ -52,7 +52,8 @@
         "fpgaFifoSize": 512,
         "enablePin": "P8_15", 
         "statusPin": "P8_18",
-        "recvAllMsgs": true
+        "recvAllMsgs": true,
+        "restartDelay": 3
 	}
 
 }

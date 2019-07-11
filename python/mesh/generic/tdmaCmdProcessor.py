@@ -9,21 +9,16 @@ from mesh.generic.tdmaState import TDMABlockTxStatus
 from mesh.generic.command import Command
 
 # Processor method
-def processMsg(self, cmdId, msg, args):
-        nodeStatus = args['nodeStatus'] 
-        comm = args['comm']
-        clock = args['clock']
+def processMsg(self, cmdId, header, msg, args):
+            nodeStatus = args['nodeStatus'] 
+            comm = args['comm']
+            clock = args['clock']
 
-        cmdStatus = False
+            cmdStatus = False
  
-        if len(msg) > 0:
-            # Parse command header
-            header = deserialize(msg, cmdId, 'header')
-            if (processHeader(self, header, msg, nodeStatus, clock, comm) == False): # stale command
-                return False
-
             # Parse message contents
-            if cmdId not in [TDMACmds['BlockData'], TDMACmds['LinkStatus']]:
+            #if cmdId not in [TDMACmds['BlockData'], TDMACmds['LinkStatus']]:
+            if cmdId not in [TDMACmds['BlockData']]:
                 try: 
                     msgContents = deserialize(msg, cmdId, 'body')       
                     if msgContents == None:
@@ -41,8 +36,9 @@ def processMsg(self, cmdId, msg, args):
                     break
                     
                 if case(TDMACmds['MeshStatus']):
-                    if not comm.commStartTime: # accept value if one not already present
+                    if not comm.networkConfigConfirmed: # accept value if configuration not yet confirmed
                         comm.commStartTime = msgContents['commStartTimeSec'] # store comm start time
+                        comm.networkConfigConfirmed = self.nodeParams.config.calculateHash() == msgContents['configHash'] # compare configurations
                     cmdStatus = True
 
                     break
@@ -51,7 +47,6 @@ def processMsg(self, cmdId, msg, args):
                     msgSize = self.nodeParams.config.maxNumNodes
                     headerSize = calcsize(headers[CmdDict[cmdId].header]['format'])
                     linkData = unpack('=' + msgSize*CmdDict['LinkStatusContents'].packFormat, msg[headerSize:])
-       
                     # Determine sending node array index
                     node =  header['sourceId'] - 1
 
@@ -60,6 +55,51 @@ def processMsg(self, cmdId, msg, args):
                        self.nodeParams.linkStatus[node][i] = linkData[i]
                     cmdStatus = True
                     break
+
+                if case(TDMACmds['CurrentConfig']): # Current mesh network configuration
+                    if ((msgContents['configLength'] + msgContents['hashLength']) == len(msgContents['raw']) and comm.networkConfigConfirmed == False):
+                        config = msgContents['raw'][0:msgContents['configLength']]
+                        hashValue = msgContents['raw'][msgContents['configLength']:msgContents['configLength'] + msgContents['hashLength']]
+                        [cmdStatus, newConfig] = self.nodeParams.loadConfig(config, hashValue)
+                        if (cmdStatus == True):
+                            self.nodeParams.newConfig = newConfig # stage config for update 
+                        print(str(self.nodeParams.config.nodeId) + " - CurrentConfig message received.")
+                        
+                        comm.networkConfigRcvd = True                    
+
+                    else: # insufficient message bytes
+                        break
+
+                    break
+                if case(TDMACmds['ConfigUpdate']):
+                    #if (msgContents['destId'] in [self.nodeParams.config.nodeId, 0]): # command for this node or global
+                        if ((msgContents['configLength'] + msgContents['hashLength']) == len(msgContents['raw'])):
+                            config = msgContents['raw'][0:msgContents['configLength']]
+                            hashValue = msgContents['raw'][msgContents['configLength']:msgContents['configLength'] + msgContents['hashLength']]
+
+                            # Validate configuration
+                            [cmdStatus, config] = self.nodeParams.loadConfig(config, hashValue)
+
+                            # Store command response for transmission
+                            #self.nodeParams.cmdResponse.append({'cmdId': NodeCmds['ConfigUpdate'], 'cmdResponse': int(cmdStatus), 'sourceId': header['sourceId']}) 
+
+                            # Add to network message queue for polling
+                            print(str(self.nodeParams.config.nodeId) + " - ConfigUpdate message received.")
+                            comm.networkMsgQueue.append({"header": header, "msgContents": {'config': config, 'destId': msgContents['destId'], 'valid': cmdStatus}})
+                        else: # insufficient message bytes
+                            pass
+                        break
+
+                if case(TDMACmds['NetworkRestart']): # Network restart command
+                    #if (msgContents['destId'] == 0 or msgContents['destId'] == self.nodeParams.config.nodeId): # 
+                        if (msgContents['restartTime'] > self.nodeParams.clock.getTime()): # restart time is in the future
+                            # Add to network message queue
+                            comm.networkMsgQueue.append({"header": header, "msgContents": msgContents})
+                            cmdStatus = True
+                            
+                        #self.nodeParams.cmdResponse.append({'cmdId': TDMACmds['NetworkRestart'], 'cmdCounter': header['cmdCounter'], 'cmdResponse': int(cmdStatus), 'sourceId': header['sourceId']}) 
+
+                        break
 
                 if case(TDMACmds['BlockTxRequest']): # Request for a block of transmit time
                     blockTxResponse = False
@@ -121,7 +161,7 @@ def processMsg(self, cmdId, msg, args):
                     blockData = msg[headerSize:]
                     print("Block data received:", blockData)
                     
-        return cmdStatus                    
+            return cmdStatus                    
 
 def validateBlockTxRequest(msgContents, header, nodeParams):
     """Check for valid block transmit request."""

@@ -1,6 +1,6 @@
 from struct import pack
 
-headers = {'NodeHeader': {'format': '=BBI', 'entries': ['cmdId', 'sourceId', 'cmdCounter']}, \
+headers = {'NodeHeader': {'format': '=BBH', 'entries': ['cmdId', 'sourceId', 'cmdCounter']}, \
     'MinimalHeader': {'format': '=B', 'entries': ['cmdId']}, \
     'SourceHeader': {'format': '=BB', 'entries': ['cmdId', 'sourceId']}}
 

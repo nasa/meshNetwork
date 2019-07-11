@@ -43,7 +43,7 @@ class MsgParser:
                 self.msg.encodeMsg(msg)
                 return self.msg.encoded
             else: # default to returning input bytes
-                return msgBytes 
+                return msg 
         else: # no message
             return []
 

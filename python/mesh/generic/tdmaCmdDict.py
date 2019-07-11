@@ -2,11 +2,12 @@ from mesh.generic.cmds import TDMACmds
 from mesh.generic.commandType import CommandType
 from struct import pack
 from mesh.generic.nodeHeader import headers
+from mesh.generic.nodeConfig import configHashSize
 
 # Serialize methods
     
 def serialize_TDMACmds_MeshStatus(cmdData, timestamp):
-    return pack(TDMACmdDict[TDMACmds['MeshStatus']].packFormat, cmdData['commStartTimeSec'], cmdData['status'])
+    return pack(TDMACmdDict[TDMACmds['MeshStatus']].packFormat, cmdData['commStartTimeSec'], cmdData['status'], cmdData['configHash'])
 
 def serialize_TDMACmds_TimeOffset(cmdData, timestamp):
     return pack(TDMACmdDict[TDMACmds['TimeOffset']].packFormat, int(cmdData['nodeStatus'].timeOffset*100))
@@ -43,6 +44,19 @@ def serialize_TDMACmds_LinkStatusSummary(cmdData, timestamp):
 
     return msg  
 
+def serialize_TDMACmds_CurrentConfig(cmdData, timestamp):
+    msgBytes = pack(TDMACmdDict[TDMACmds['CurrentConfig']].packFormat, cmdData['configLength'], cmdData['hashLength'])
+    return msgBytes + cmdData['config'] + cmdData['configHash']
+
+def serialize_TDMACmds_ConfigUpdate(cmdData, timestamp):
+    """Method for serializing NodeCmds['ConfigUpdate'] command for serial transmission."""
+    msgBytes = pack(TDMACmdDict[TDMACmds['ConfigUpdate']].packFormat, cmdData['destId'], cmdData['configLength'], cmdData['hashLength'])
+    return msgBytes + cmdData['config'] + cmdData['configHash']
+       
+def serialize_TDMACmds_NetworkRestart(cmdData, timestamp):
+    msgBytes = pack(TDMACmdDict[TDMACmds['NetworkRestart']].packFormat, cmdData['destId'], cmdData['restartTime'])
+    return msgBytes
+
 def serialize_TDMACmds_BlockTxRequest(cmdData, timestamp):
     return pack(TDMACmdDict[TDMACmds['BlockTxRequest']].packFormat, cmdData['blockReqID'], cmdData['startTime'], cmdData['length'])
 
@@ -59,7 +73,7 @@ def serialize_TDMACmds_BlockData(cmdData, timestamp):
     return cmdData['data']
 
 #TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=iB', serialize_TDMACmds_MeshStatus, ['commStartTime', 'cmdCounter'], header='MinimalHeader'), \
-TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=IB', serialize_TDMACmds_MeshStatus, ['commStartTimeSec', 'status'], header='SourceHeader'), \
+TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=IB' + str(configHashSize) + 's', serialize_TDMACmds_MeshStatus, ['commStartTimeSec', 'status', 'configHash'], header='SourceHeader'), \
        TDMACmds['TimeOffset']: CommandType('=H', serialize_TDMACmds_TimeOffset, ['timeOffset'], header='SourceHeader'), \
        TDMACmds['TimeOffsetSummary']: CommandType('', serialize_TDMACmds_TimeOffsetSummary, ['numNodes'], header='MinimalHeader'), \
        'TimeOffsetSummaryContents': CommandType('=H', [], ['offset'], None), \
@@ -67,6 +81,9 @@ TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=IB', serialize_TDMACmds_Mes
        'LinkStatusContents': CommandType('B', [], ['linkStatus'], None), \
        TDMACmds['LinkStatusSummary']: CommandType('', serialize_TDMACmds_LinkStatusSummary, [], header='MinimalHeader'), \
        'LinkStatusSummaryContents': CommandType('=B', [], ['linkStatus'], None), \
+       TDMACmds['CurrentConfig']: CommandType('<BB', serialize_TDMACmds_CurrentConfig, ['configLength', 'hashLength'], header='SourceHeader'), \
+       TDMACmds['ConfigUpdate']: CommandType('=BHB', serialize_TDMACmds_ConfigUpdate, ['destId', 'configLength', 'hashLength'], header='NodeHeader'), \
+       TDMACmds['NetworkRestart']: CommandType('<BI', serialize_TDMACmds_NetworkRestart, ['destId', 'restartTime'], header='NodeHeader'), \
        TDMACmds['BlockTxStatus']: CommandType('=BiB', serialize_TDMACmds_BlockTxStatus, ['blockReqID', 'startTime', 'length'],  header='NodeHeader'), \
        TDMACmds['BlockTxRequest']: CommandType('=BiB', serialize_TDMACmds_BlockTxRequest, ['blockReqID', 'startTime', 'length'],  header='NodeHeader'), \
        TDMACmds['BlockTxConfirmed']: CommandType('=B', serialize_TDMACmds_BlockTxConfirmed, ['blockReqID'], header='NodeHeader'), \

@@ -8,21 +8,15 @@ from mesh.generic.nodeHeader import headers
 from mesh.generic.nodeConfig import ParamId
 
 # Processor method
-def processMsg(self, cmdId, msg, args):
-    nodeStatus = args['nodeStatus']
-    comm = args['comm']
-    clock = args['clock']
+def processMsg(self, cmdId, header, msg, args):
+        nodeStatus = args['nodeStatus']
+        comm = args['comm']
+        clock = args['clock']
     
-    cmdStatus = False
+        cmdStatus = False
     
-    if len(msg) > 0:
-        # Parse command header
-        header = deserialize(msg, cmdId, 'header')
-        if (processHeader(self, header, msg, nodeStatus, clock, comm) == False): # stale command
-            return False
-
         # Deserialize message contents
-        try: 
+        try:
             msgContents = deserialize(msg, cmdId, 'body')
                         
             if msgContents == None:
@@ -42,7 +36,14 @@ def processMsg(self, cmdId, msg, args):
                 self.cmdQueue[cmdId] = msgContents
                 cmdStatus = True
                 break
-        
+       
+            if case(NodeCmds['CmdResponse']): # Add command response to buffer
+
+                # Add command response to queue
+                self.nodeParams.addCmdResponse(msgContents['cmdCounter'], msgContents['cmdResponse'], header['sourceId'])
+                cmdStatus = True
+                break
+ 
             if case(NodeCmds['ParamUpdate']): 
                 if (msgContents['destId'] == self.nodeParams.config.nodeId):
                     # Unpack and update new parameter value
@@ -52,32 +53,37 @@ def processMsg(self, cmdId, msg, args):
                 break
 
             if case(NodeCmds['ConfigRequest']):
-                if (len(msgContents) != self.nodeParams.config.hashSize): # invalid config hash
-                    print("Config hash in request is invalid length:", str(len(msgContents)))
+                if (len(msgContents['configHash']) != self.nodeParams.config.hashSize): # invalid config hash
+                    print("Config hash in request is invalid length:", str(len(msgContents['configHash'])))
                     break
                     
                 #configHash = msg[calcsize(headers[CmdDict[cmdId].header]['format']):]
-                self.cmdQueue[NodeCmds['ConfigRequest']] = msgContents
+                configHash = self.nodeParams.config.calculateHash()
+                if configHash == msgContents['configHash']:
+                    self.nodeParams.configConfirmed = True
+                else:
+                    self.nodeParams.configConfirmed = False    
+                
+                #self.cmdQueue[NodeCmds['ConfigRequest']] = msgContents
                 cmdStatus = True
                 break   
 
-    return cmdStatus
+        return cmdStatus
             
 def unpackParameter(paramId, dataLength, msg, nodeParams):
     for case in switch(paramId):
         if case(ParamId.nodeId):
             if (dataLength == 1):
-                value = unpackBytes('=B', msg)[0]
+                value = unpackBytes('=B', msg)[0][0]
                 return nodeParams.config.updateParameter(paramId, value)
             break
         if case(ParamId.parseMsgMax):
             if (dataLength == 2):
-                value = unpackBytes('=H', msg)[0]
+                value = unpackBytes('=H', msg)[0][0]
                 return nodeParams.config.updateParameter(paramId, value)
             break
         else:
             return False
-            print("oops")
         
 # Node command processor
 NodeCmdProcessor = {'cmdList': NodeCmds, 'msgProcessor': processMsg}

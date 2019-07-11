@@ -6,21 +6,27 @@ from mesh.generic.msgParser import MsgParser
 from mesh.generic.slipMsg import SLIPMsg
 from mesh.generic.hdlcMsg import HDLC_END_TDMA
 from mesh.generic.radio import RadioMode
-from mesh.generic.cmds import TDMACmds
+from mesh.generic.cmds import TDMACmds, NodeCmds
 from mesh.generic.tdmaState import TDMAStatus, TDMAMode, TDMABlockTxStatus
 from mesh.generic.cmdDict import CmdDict
 from mesh.generic.command import Command
 from mesh.generic.customExceptions import InvalidTDMASlotNumber
 from mesh.generic.tdmaCmdProcessor import TDMACmdProcessor
+from mesh.generic.nodeCmdProcessor import NodeCmdProcessor
 from mesh.generic.dijkstra import findShortestPaths
+from mesh.generic.nodeConfig import NodeConfig
 import struct
 
 class TDMAComm(SerialComm):
     def __init__(self, msgProcessors, radio, msgParser, nodeParams):
         if not msgProcessors:
-            msgProcessors = [TDMACmdProcessor]
+            msgProcessors = [NodeCmdProcessor, TDMACmdProcessor]
 
         super().__init__(msgProcessors, nodeParams, radio, parser=msgParser)
+
+        self.reinit(nodeParams)
+    
+    def reinit(self, nodeParams, initDelay=None):
 
         self.nodeParams = nodeParams
 
@@ -28,12 +34,15 @@ class TDMAComm(SerialComm):
         self.tdmaMode = TDMAMode.sleep
         self.frameStartTime = []
         self.commStartTime = None # time that TDMA comm was started - initialized manually by first node or parsed from messages received for nodes joining existing mesh
+        self.networkConfigConfirmed = None
+        self.networkConfigRcvd = False
         self.maxNumSlots = nodeParams.config.commConfig['maxNumSlots'] # Maximum number of slots
         self.enableLength = nodeParams.config.commConfig['enableLength']
         self.slotTime = 0.0
         self.slotNum = 1        
         self.slotStartTime = 0.0
-    
+        self.networkMsgQueue = []   
+ 
         # TDMA Frame variables
         self.frameTime = 0.0
         self.frameLength = nodeParams.config.commConfig['frameLength']
@@ -52,7 +61,7 @@ class TDMAComm(SerialComm):
         
         # Mesh network commands
         self.tdmaCmds = dict()
-        self.tdmaCmdParser = MsgParser({'parseMsgMax': nodeParams.config.parseMsgMax}, SLIPMsg(256))
+        self.tdmaCmdParser = MsgParser({'parseMsgMax': nodeParams.config.parseMsgMax}, SLIPMsg(2560))
         
         # Transmit period variables
         self.transmitSlot = nodeParams.config.commConfig['transmitSlot'] # Slot in cycle that this node is schedule to transmit
@@ -87,6 +96,10 @@ class TDMAComm(SerialComm):
         self.lastGraphUpdate = 0.0
         self.meshPaths = [[]*self.maxNumSlots] * self.maxNumSlots
 
+        # Delay init (for full network restart)
+        if (initDelay):
+            time.sleep(initDelay)
+
     def execute(self):
         """Execute communication functions."""
         currentTime = time.time()
@@ -102,7 +115,7 @@ class TDMAComm(SerialComm):
         self.frameTime = currentTime - self.frameStartTime
         
         if self.frameTime >= self.frameLength: # Start new frame
-            #print(str(currentTime) + ": Node " + str(self.nodeParams.config.nodeId) + " - New frame started")
+            print(str(currentTime) + ": Node " + str(self.nodeParams.config.nodeId) + " - New frame started")
             self.syncTDMAFrame(currentTime)
         
         if self.frameTime < self.cycleLength: 
@@ -116,7 +129,7 @@ class TDMAComm(SerialComm):
         """Execute TDMA communication scheme."""
         # Check for block transfers
         #self.monitorBlockTx()
-        
+ 
         # Update frame time
         frameStatus = self.updateFrameTime(currentTime)
         if (frameStatus == 1):
@@ -149,7 +162,8 @@ class TDMAComm(SerialComm):
                     #remainingRxTime = self.rxLength - (self.slotTime - self.enableLength)
                     #time.sleep(remainingRxTime*0.2)                        
                     self.receiveComplete = self.readMsgs()
-                    if self.receiveComplete == True: 
+                    if self.receiveComplete == True:
+                        #print("Node " + str(self.nodeParams.config.nodeId) + " - End of receive slot " + str(self.slotNum)) 
                         # Set radio to sleep
                         self.radio.setMode(RadioMode.sleep)
                 break
@@ -157,7 +171,7 @@ class TDMAComm(SerialComm):
                 # Send data
                 if self.transmitComplete == False:
                     self.radio.setMode(RadioMode.transmit) # set radio mode
-                    self.sendMsg()
+                    self.sendMsgs()
                 else: # Set radio to sleep
                     self.radio.setMode(RadioMode.sleep)
                 break
@@ -176,7 +190,7 @@ class TDMAComm(SerialComm):
                 break
     
     def init(self, currentTime):
-        if not self.commStartTime: # Mesh not initialized
+        if not self.commStartTime or not self.networkConfigConfirmed: # Mesh not initialized
             self.initComm(currentTime)
             return
         else: # Join existing mesh
@@ -186,13 +200,20 @@ class TDMAComm(SerialComm):
         """Initialize node mesh networks."""
         # Create tdma comm messages
         flooredStartTime = math.floor(self.commStartTime)
-        self.tdmaCmds[TDMACmds['MeshStatus']] = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': int(flooredStartTime), 'status': self.tdmaStatus}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['statusTxInterval'])
+        self.tdmaCmds[TDMACmds['MeshStatus']] = Command(TDMACmds['MeshStatus'], {'commStartTimeSec': int(flooredStartTime), 'status': self.tdmaStatus, 'configHash': self.nodeParams.config.calculateHash()}, [TDMACmds['MeshStatus'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['statusTxInterval'])
 
         self.tdmaCmds[TDMACmds['LinkStatus']] = Command(TDMACmds['LinkStatus'], {'linkStatus': self.nodeParams.linkStatus, 'nodeId': self.nodeParams.config.nodeId}, [TDMACmds['LinkStatus'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['linksTxInterval'])
         
         if self.nodeParams.config.nodeId != 0: # stop ground node from broadcasting time offset
             self.tdmaCmds[TDMACmds['TimeOffset']] = Command(TDMACmds['TimeOffset'], {'nodeStatus': self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1]}, [TDMACmds['TimeOffset'], self.nodeParams.config.nodeId], self.nodeParams.config.commConfig['offsetTxInterval'])
-            
+        
+        # Current network configuration message
+        self.initialConfigTxTime = self.commStartTime + self.nodeParams.config.nodeId * self.nodeParams.config.commConfig['configTxInterval']
+        configHash = self.nodeParams.config.calculateHash()
+        config_pb = NodeConfig.toProtoBuf(self.nodeParams.config.rawConfig).SerializeToString()
+        self.tdmaCmds[TDMACmds['CurrentConfig']] = Command(TDMACmds['CurrentConfig'], {'config': config_pb, 'configLength': len(config_pb), 'configHash': configHash, 'hashLength': self.nodeParams.config.hashSize}, [TDMACmds['CurrentConfig'], self.nodeParams.config.nodeId], self.maxNumSlots * self.nodeParams.config.commConfig['configTxInterval'])
+        print(self.maxNumSlots * self.nodeParams.config.commConfig['configTxInterval'])
+
         # Determine where in frame mesh network currently is
         self.syncTDMAFrame(currentTime)
 
@@ -205,14 +226,16 @@ class TDMAComm(SerialComm):
             self.initStartTime = currentTime
             print("Node " + str(self.nodeParams.config.nodeId) + " - Starting initialization timer")
             return
-        elif (currentTime - self.initStartTime) >= self.initTimeToWait:
+        elif (currentTime - self.initStartTime) >= self.initTimeToWait and not self.commStartTime:
             # Assume no existing mesh and initialize network
             self.commStartTime = math.ceil(currentTime)
-            print("Initializing new mesh network")
+            print("Node " + str(self.nodeParams.config.nodeId) + " - Initializing new mesh network")
             self.initMesh()
         else: # Wait for initialization timer to lapse
             # Turn on radios and check for comm messages
             self.checkForInit()
+
+        # TODO - Add branch to read correct configuration from network
 
     def checkForInit(self):
         # Look for tdma status message
@@ -231,11 +254,12 @@ class TDMAComm(SerialComm):
         """Determine where in frame mesh network currently is to ensure time sync."""
         self.frameTime = (currentTime - self.commStartTime)%self.frameLength
         self.frameStartTime = currentTime - self.frameTime
-        print(str(self.frameStartTime),"- Frame start") 
+        #print("Node " + str(self.nodeParams.config.nodeId) + " " + str(self.frameStartTime),"- Frame start") 
         
         # Update periodic mesh messages
         if (TDMACmds['MeshStatus'] in self.tdmaCmds):
             self.tdmaCmds[TDMACmds['MeshStatus']].cmdData['status'] = self.tdmaStatus
+            self.tdmaCmds[TDMACmds['MeshStatus']].cmdData['configHash'] = self.nodeParams.config.calculateHash()
         if (TDMACmds['LinkStatus'] in self.tdmaCmds):
             self.tdmaCmds[TDMACmds['LinkStatus']].cmdData['linkStatus'] = self.nodeParams.linkStatus
                 
@@ -247,6 +271,8 @@ class TDMAComm(SerialComm):
     
     def sleep(self):
         """Sleep until end of frame."""
+        #print("Node " + str(self.nodeParams.config.nodeId) + " - In sleep method.")
+    
         # Update mesh paths
         if ((self.nodeParams.clock.getTime() - self.lastGraphUpdate) > self.nodeParams.config.commConfig['linksTxInterval']):
             self.updateShortestPaths()
@@ -348,13 +374,7 @@ class TDMAComm(SerialComm):
                 self.transmitComplete = False 
                 #print str(time.time()) + ": " + str(frameTime) + " - Node " + str(self.nodeId) + " - Transmitting"
     
-    def queueMeshMsg(self, destId, msgBytes):
-        """This function receives messages to be sent over the mesh network and queues them for transmission."""
-        
-        # Place message in appropriate position in outgoing queue (broadcast messages are stored in the zero position) 
-        self.meshQueueIn[destId] += msgBytes
- 
-    def sendMsg(self):
+    def sendMsgs(self):
         if (self.enabled == False): # Don't send anything if disabled
             return    
     
@@ -378,6 +398,8 @@ class TDMAComm(SerialComm):
                 self.meshQueueIn[destId] = b'' # clear message after transmission
 
             self.radio.bufferTxMsg(HDLC_END_TDMA) # append end of message byte
+        
+            #print("Node " + str(self.nodeParams.config.nodeId) + " - Number of bytes sent: " + str(len(self.radio.txBuffer)))
             self.sendBuffer() 
 
             # End transmit period
@@ -389,8 +411,9 @@ class TDMAComm(SerialComm):
 
     def packageMeshPacket(self, destId, msgBytes):
         adminBytes = b''
-        if (destId == 0): # package periodic TDMA commands into broadcast message
-            adminBytes = self.sendTDMACmds()
+        if (destId == 0): # package network admin messages into broadcast message
+            adminBytes = self.packageAdminData()
+            #adminBytes = self.sendTDMACmds()
 
         return self.createMeshPacket(destId, msgBytes, adminBytes, self.nodeParams.config.nodeId)
 
@@ -438,6 +461,16 @@ class TDMAComm(SerialComm):
    
     def relayMsg(self, msgBytes):
         """Relay received message. Existing mesh header is maintained with only the source updated."""
+        packetHeaderFormat = '<BBHHH'
+        meshHeaderLen = struct.calcsize(packetHeaderFormat)
+        packetHeader = struct.unpack(packetHeaderFormat, msgBytes[0:meshHeaderLen])
+        sourceId = packetHeader[0]
+        destId = packetHeader[1]
+        adminLength = packetHeader[2]    
+        payloadLength = packetHeader[3]
+        cmdCounter = packetHeader[4]
+        #print("Node " + str(self.nodeParams.config.nodeId) + " relaying message from " + str(sourceId) + " - " + str(cmdCounter))
+
         # Update packet sourceId
         msgBytes[0:1] = struct.pack('<B', self.nodeParams.config.nodeId)        
 
@@ -468,7 +501,7 @@ class TDMAComm(SerialComm):
                 # Ignore stale commands
                 if (cmdCounter in self.nodeParams.cmdHistory):
                     continue
-                else: 
+                else:
                     self.nodeParams.cmdHistory.append(cmdCounter) # update command history
 
                 # Validate message
@@ -480,17 +513,20 @@ class TDMAComm(SerialComm):
                     # Extract any mesh messages and process
                     if (adminLength > 0):
                         self.processMeshMsgs(msg[meshHeaderLen:meshHeaderLen + adminLength])
-    
+   
                     # Place raw message bytes in buffer to send to host
                     if (payloadLength > 0):
                         if (destId == self.nodeParams.config.nodeId or self.nodeParams.config.commConfig['recvAllMsgs']):
+                            print("Placing in hostBuffer: " + str(msg[meshHeaderLen + adminLength:]))
                             self.hostBuffer += msg[meshHeaderLen + adminLength:]
        
                     # Check for relay
+                    if (self.inited == False): # don't process for relaying if mesh not inited
+                        return
+ 
                     if (destId == 0): # broadcast message
                         # All broadcast messages are relayed
                         self.relayMsg(bytearray(msg))
-
                     elif (destId != self.nodeParams.config.nodeId): # message for another node
                         # Only relay if on the shortest path
                         if (self.checkForRelay(self.nodeParams.config.nodeId, destId, sourceId) == True): # message should be relayed
@@ -528,6 +564,19 @@ class TDMAComm(SerialComm):
             for i in range(len(self.tdmaCmdParser.parsedMsgs)):
                 self.processMsg(self.tdmaCmdParser.parsedMsgs.pop(0), {'nodeStatus': self.nodeParams.nodeStatus, 'comm': self, 'clock': self.nodeParams.clock})  
 
+    def packageAdminData(self):
+        adminBytes = b''
+        
+        # Send command responses
+        #for resp in self.nodeParams.cmdResponse:
+        #    cmd = Command(NodeCmds['CmdResponse'], resp, [NodeCmds['CmdResponse'], self.nodeParams.config.nodeId])
+        #    adminBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(self.nodeParams.clock.getTime()))
+            
+        # Send TDMA commands
+        adminBytes += self.sendTDMACmds()
+
+        return adminBytes
+
     def sendTDMACmds(self):
         tdmaCmdBytes = b''    
     
@@ -536,6 +585,17 @@ class TDMAComm(SerialComm):
         for cmdId in list(self.tdmaCmds.keys()):
             cmd = self.tdmaCmds[cmdId]
 
+            # Delay initial config transmission
+            if (cmdId == TDMACmds['CurrentConfig'] and timestamp < self.initialConfigTxTime):
+                continue
+   
+            # Check for polling commands (need to be processed by sender)
+            if (cmdId in [TDMACmds['NetworkRestart'], TDMACmds['ConfigUpdate']]):
+                TDMACmdProcessor['msgProcessor'](self, cmdId, {'cmdId': cmd.cmdId, 'sourceId': self.nodeParams.config.nodeId, 'cmdCounter': cmd.header['header']['cmdCounter']}, cmd.serialize(timestamp), {'nodeStatus': self.nodeParams.nodeStatus, 'clock': self.nodeParams.clock, 'comm': self})
+                #self.networkMsgQueue.append({"header": {"cmdId": cmd.cmdId, "sourceId": self.nodeParams.config.nodeId, "cmdCounter": cmd.cmdCounter}, "msgContents": cmd.cmdData})
+            #elif (cmdId == TDMACmds['ConfigUpdate']):
+            #    self.networkMsgQueue.append({"header": {"cmdId": cmd.cmdId, "sourceId": self.nodeParams.config.nodeId, "cmdCounter": cmd.cmdCounter}, "msgContents": {"valid": True, "destId": cmd.cmdData['destId']}})
+ 
             # Update command counter
             if ('cmdCounter' in cmd.header):
                 cmd.header['cmdCounter'] = self.nodeParams.get_cmdCounter()
@@ -545,6 +605,8 @@ class TDMAComm(SerialComm):
                 if ceil(timestamp*100)/100.0 >= ceil((cmd.lastTxTime + cmd.txInterval)*100)/100.0: # only compare down to milliseconds
                     #self.bufferTxMsg(cmd.serialize(timestamp))
                     tdmaCmdBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))
+                    if (cmdId == TDMACmds['CurrentConfig']):
+                        print("Node " + str(self.nodeParams.config.nodeId) + " Sending CurrentConfig message.")
             else: # non-periodic command
                 #self.bufferTxMsg(cmd.serialize(timestamp))
                 tdmaCmdBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))

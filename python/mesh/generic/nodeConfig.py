@@ -2,8 +2,12 @@ import json
 import os
 import hashlib
 from enum import IntEnum
+from copy import deepcopy
 from switch import switch
 from mesh.generic.customExceptions import NodeConfigFileError, TDMAConfigError
+from nodeConfig_pb2 import NodeConfig_proto
+
+configHashSize = 20 # length of configuration hash (SHA1)
 
 class ParamId(IntEnum):
     """Enumeration of configuration parameter ID numbers."""
@@ -39,53 +43,55 @@ class NodeConfig(dict):
 
     """
     
-    def __init__(self,configFile=[]):
+    def __init__(self, configFile=None, configData=None):
         self.__dict__ = self
 
         self.loadSuccess = False
-        self.hashSize = 20 # length of configuration hash (SHA1)
+        self.hashSize = configHashSize # length of configuration hash
 
-        if configFile:
-            self.loadConfigFile(configFile)
-        else:
+        if configData: # configuration data provided
+            self.loadConfig(configData)
+        elif configFile: # configuration file provided
+            if os.path.isfile(configFile):
+                print('\nConfig file found. Loading configuration.')
+                with open(configFile, 'r') as jsonFile:
+                    configData = json.load(jsonFile)
+            else:
+                raise NodeConfigFileError("Configuration file not found.")
+               
+            self.loadConfig(configData)
+        else: # no configuration data provided
             self.nodeId = -1
             self.maxNumNodes = -1
             self.uartNumBytesToRead = 100 
             self.numMeshNetworks = 1        
 
-    def loadConfigFile(self, configFile):
-        '''This function loads configuration data from the provided config file.
+    def loadConfig(self, configData=None):
+        '''This function loads configuration data from JSON input.
         
         Args:
-            configFile: File path of configuration file.
+            configData: JSON-formated configuration data.
         '''
-
-        # Read config file
-        if os.path.isfile(configFile):
-            print('\nConfig file found. Loading configuration.')
         
-            with open(configFile, 'r') as jsonFile:
-                configData = json.load(jsonFile)
+        # Load configuration
+        try:
+            # Store raw configuration data
+            self.rawConfig = deepcopy(configData)
 
-                try:
+            # General node configuration
+            self.loadNodeConfig(configData)
 
-                    # General node configuration
-                    self.loadNodeConfig(configData)
+            # Load software interface configuration
+            self.loadInterfaceConfig(configData)
 
-                    # Load software interface configuration
-                    self.loadInterfaceConfig(configData)
-
-                    # Mesh network configuration
-                    self.loadCommConfig(configData)
+            # Mesh network configuration
+            self.loadCommConfig(configData)
         
-                    self.loadSuccess = True
+            self.loadSuccess = True
 
-                except KeyError as e:
-                    raise e
-                    #print('\nConfiguration parameter \'' + e.args[0] + '\' missing. Exiting script.')
-        else:
-            raise NodeConfigFileError("Configuration file not found.")
-            
+        except KeyError as e:
+            raise e
+            #print('\nConfiguration parameter \'' + e.args[0] + '\' missing. Exiting script.')
 
     def loadNodeConfig(self, config):
         configData = config['node']
@@ -135,10 +141,13 @@ class NodeConfig(dict):
         self.commConfig = {}
         if self.commType == "TDMA":
             self.commConfig = config['tdmaConfig']
+            self.commConfig['initSyncBound'] = float(self.commConfig['initSyncBound'])
+            self.commConfig['operateSyncBound'] = float(self.commConfig['operateSyncBound'])
             self.commConfig['rxLength'] = self.commConfig['preTxGuardLength'] + self.commConfig['txLength'] + self.commConfig['postTxGuardLength'] # receive length
             self.commConfig['slotLength'] = self.commConfig['enableLength'] + self.commConfig['rxLength'] + self.commConfig['slotGuardLength'] # total length of slot
             self.commConfig['frameLength'] = 1.0/self.commConfig['desiredDataRate'] # frame length
             self.commConfig['cycleLength'] = self.commConfig['slotLength'] * self.commConfig['maxNumSlots'] # cycle length
+            self.commConfig['configTxInterval'] = self.commConfig['initTimeToWait'] * 0.5 # transmit config at half init period frequency
            
             if 'fpga' not in self.commConfig.keys():
                 self.commConfig['fpga'] = False
@@ -245,6 +254,157 @@ class NodeConfig(dict):
         else:   
             #print(str(elem).encode('utf-8'))
             m_hash.update(str(elem).encode('utf-8'))
+    
+    @staticmethod    
+    def toProtoBuf(config):
+        '''Convert node configuration into protocol buffer format.'''
+         
+        nodeConfig_p = NodeConfig_proto()
         
+        # Convert node configuration
+        node = config['node']
+        nodeConfig_p.node.nodeId = node['nodeId']
+        nodeConfig_p.node.maxNumNodes = node['maxNumNodes']
+        nodeConfig_p.node.platform = node['platform']
+        nodeConfig_p.node.nodeUpdateTimeout = node['nodeUpdateTimeout']
+        nodeConfig_p.node.FCCommWriteInterval = node['FCCommWriteInterval']
+        nodeConfig_p.node.FCCommDevice = node['FCCommDevice']
+        nodeConfig_p.node.FCBaudrate = node['FCBaudrate']
+        nodeConfig_p.node.cmdInterval = node['cmdInterval']
+        nodeConfig_p.node.logInterval = node['logInterval']
+        nodeConfig_p.node.commType = node['commType']
+        nodeConfig_p.node.numMeshNetworks = node['numMeshNetworks']
+        for device in node['meshDevices']:
+            nodeConfig_p.node.meshDevices.append(device)
+        for radio in node['radios']:
+            nodeConfig_p.node.radios.append(radio)
+        for parser in node['msgParsers']:
+            nodeConfig_p.node.msgParsers.append(parser)
+        nodeConfig_p.node.meshBaudrate = node['meshBaudrate']
+        nodeConfig_p.node.parseMsgMax = node['parseMsgMax']
+        nodeConfig_p.node.rxBufferSize = node['rxBufferSize']
+        nodeConfig_p.node.gcsPresent = node['gcsPresent']
+
+        # Convert interface configuration
+        interface = config['interface']
+        nodeConfig_p.interface.nodeCommIntIP = interface['nodeCommIntIP']
+        nodeConfig_p.interface.commRdPort = interface['commRdPort']
+        nodeConfig_p.interface.commWrPort = interface['commWrPort']
         
+        # Convert comm configuration 
+        tdma = config['tdmaConfig']
+        nodeConfig_p.tdma.sleepPin = tdma['sleepPin']
+        nodeConfig_p.tdma.enableLength = tdma['enableLength']
+        nodeConfig_p.tdma.slotGuardLength = tdma['slotGuardLength']
+        nodeConfig_p.tdma.preTxGuardLength = tdma['preTxGuardLength']
+        nodeConfig_p.tdma.postTxGuardLength = tdma['postTxGuardLength']
+        nodeConfig_p.tdma.txLength = tdma['txLength']
+        nodeConfig_p.tdma.rxDelay = tdma['rxDelay']
+        nodeConfig_p.tdma.initTimeToWait = tdma['initTimeToWait']
+        nodeConfig_p.tdma.maxNumSlots = tdma['maxNumSlots']
+        nodeConfig_p.tdma.desiredDataRate = tdma['desiredDataRate']
+        nodeConfig_p.tdma.initSyncBound = tdma['initSyncBound']
+        nodeConfig_p.tdma.operateSyncBound = tdma['operateSyncBound']
+        nodeConfig_p.tdma.offsetTimeout = tdma['offsetTimeout']
+        nodeConfig_p.tdma.offsetTxInterval = tdma['offsetTxInterval']
+        nodeConfig_p.tdma.statusTxInterval = tdma['statusTxInterval']
+        nodeConfig_p.tdma.linksTxInterval = tdma['linksTxInterval']
+        nodeConfig_p.tdma.maxTxBlockSize = tdma['maxTxBlockSize']
+        nodeConfig_p.tdma.linkTimeout = tdma['linkTimeout']
+        nodeConfig_p.tdma.blockTxRequestTimeout = tdma['blockTxRequestTimeout']
+        nodeConfig_p.tdma.minBlockTxDelay = tdma['minBlockTxDelay']
+        nodeConfig_p.tdma.fpga = tdma['fpga']
+        nodeConfig_p.tdma.fpgaFailsafePin = tdma['fpgaFailsafePin']
+        nodeConfig_p.tdma.fpgaFifoSize = tdma['fpgaFifoSize']
+        nodeConfig_p.tdma.enablePin = tdma['enablePin']
+        nodeConfig_p.tdma.statusPin = tdma['statusPin']
+        nodeConfig_p.tdma.recvAllMsgs = tdma['recvAllMsgs']
+        nodeConfig_p.tdma.restartDelay = tdma['restartDelay']
         
+        #print(nodeConfig_p)
+        #print(len(nodeConfig_p.SerializeToString()))
+
+        return nodeConfig_p
+
+    def truncateFloat(self, floatIn, numDigits):
+        formatStr = '%.' + str(numDigits) + 'f'
+        return float(formatStr%(floatIn))
+
+    @staticmethod
+    def fromProtoBuf(nodeConfig_protobuf):
+
+        # Parse raw protobuf to string
+        nodeConfig_p = NodeConfig_proto()
+        nodeConfig_p.ParseFromString(nodeConfig_protobuf)
+
+        nodeConfig = dict()
+
+        # Convert node configuration
+        node = dict()
+        node['nodeId'] = nodeConfig_p.node.nodeId
+        node['maxNumNodes'] = nodeConfig_p.node.maxNumNodes
+        node['platform'] = nodeConfig_p.node.platform
+        node['nodeUpdateTimeout'] = nodeConfig_p.node.nodeUpdateTimeout
+        node['FCCommWriteInterval'] = nodeConfig_p.node.FCCommWriteInterval
+        node['FCCommDevice'] = nodeConfig_p.node.FCCommDevice
+        node['FCBaudrate'] = nodeConfig_p.node.FCBaudrate
+        node['cmdInterval'] = nodeConfig_p.node.cmdInterval
+        node['logInterval'] = nodeConfig_p.node.logInterval
+        node['commType'] = nodeConfig_p.node.commType
+        node['numMeshNetworks'] = nodeConfig_p.node.numMeshNetworks
+        node['meshDevices'] = []
+        for device in nodeConfig_p.node.meshDevices:
+            node['meshDevices'].append(device)
+        node['radios'] = []
+        for radio in nodeConfig_p.node.radios:
+            node['radios'].append(radio)
+        node['msgParsers'] = []
+        for parser in nodeConfig_p.node.msgParsers:
+            node['msgParsers'].append(parser)
+        node['meshBaudrate'] = nodeConfig_p.node.meshBaudrate
+        node['parseMsgMax'] = nodeConfig_p.node.parseMsgMax
+        node['rxBufferSize'] = nodeConfig_p.node.rxBufferSize
+        node['gcsPresent'] = nodeConfig_p.node.gcsPresent
+        nodeConfig['node'] = node
+
+        # Convert interface configuration
+        interface = dict()
+        interface['nodeCommIntIP'] = nodeConfig_p.interface.nodeCommIntIP
+        interface['commRdPort'] = nodeConfig_p.interface.commRdPort
+        interface['commWrPort'] = nodeConfig_p.interface.commWrPort
+        nodeConfig['interface'] = interface
+        
+        # Convert comm configuration 
+        tdma = dict()
+        tdma['sleepPin'] = nodeConfig_p.tdma.sleepPin
+        tdma['enableLength'] = nodeConfig_p.tdma.enableLength
+        tdma['slotGuardLength'] = nodeConfig_p.tdma.slotGuardLength
+        tdma['preTxGuardLength'] = nodeConfig_p.tdma.preTxGuardLength
+        tdma['postTxGuardLength'] = nodeConfig_p.tdma.postTxGuardLength
+        tdma['txLength'] = nodeConfig_p.tdma.txLength
+        tdma['rxDelay'] = nodeConfig_p.tdma.rxDelay
+        tdma['initTimeToWait'] = nodeConfig_p.tdma.initTimeToWait
+        tdma['maxNumSlots'] = nodeConfig_p.tdma.maxNumSlots
+        tdma['desiredDataRate'] = nodeConfig_p.tdma.desiredDataRate
+        tdma['initSyncBound'] = nodeConfig_p.tdma.initSyncBound
+        tdma['operateSyncBound'] = nodeConfig_p.tdma.operateSyncBound
+        tdma['offsetTimeout'] = nodeConfig_p.tdma.offsetTimeout
+        tdma['offsetTxInterval'] = nodeConfig_p.tdma.offsetTxInterval
+        tdma['statusTxInterval'] = nodeConfig_p.tdma.statusTxInterval
+        tdma['linksTxInterval'] = nodeConfig_p.tdma.linksTxInterval
+        tdma['maxTxBlockSize'] = nodeConfig_p.tdma.maxTxBlockSize
+        tdma['linkTimeout'] = nodeConfig_p.tdma.linkTimeout
+        tdma['blockTxRequestTimeout'] = nodeConfig_p.tdma.blockTxRequestTimeout
+        tdma['minBlockTxDelay'] = nodeConfig_p.tdma.minBlockTxDelay
+        tdma['fpga'] = nodeConfig_p.tdma.fpga
+        tdma['fpgaFailsafePin'] = nodeConfig_p.tdma.fpgaFailsafePin
+        tdma['fpgaFifoSize'] = nodeConfig_p.tdma.fpgaFifoSize
+        tdma['enablePin'] = nodeConfig_p.tdma.enablePin
+        tdma['statusPin'] = nodeConfig_p.tdma.statusPin
+        tdma['recvAllMsgs'] = nodeConfig_p.tdma.recvAllMsgs
+        tdma['restartDelay'] = nodeConfig_p.tdma.restartDelay
+        nodeConfig['tdmaConfig'] = tdma
+        
+        #print(nodeConfig)
+
+        return nodeConfig

@@ -102,6 +102,8 @@ class Radio(object):
             if (self.bytesInRxBuffer + numNewBytes) <= len(self.rxBuffer): # Prevent rx buffer overload  
                 self.rxBuffer[self.bytesInRxBuffer:self.bytesInRxBuffer+numNewBytes] = newBytes
                 self.bytesInRxBuffer += numNewBytes
+            else:
+                print("Warning: Radio buffer overflow.")
         else: # Replace buffer contents with new bytes
             self.rxBuffer[0:numNewBytes] = newBytes
             self.bytesInRxBuffer = numNewBytes

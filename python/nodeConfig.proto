@@ -1,0 +1,65 @@
+syntax ="proto3";
+package nodeConfig;
+
+message NodeConfiguration {
+    uint32 nodeId = 1;
+    uint32 maxNumNodes = 2;
+    string platform = 3;
+    float nodeUpdateTimeout = 4;
+    float FCCommWriteInterval = 5;
+    string FCCommDevice = 6;
+    uint64 FCBaudrate = 7;
+    float cmdInterval = 8;
+    float logInterval = 9;
+    string commType = 10;
+    uint32 numMeshNetworks = 11;
+    repeated string meshDevices = 12;
+    repeated string radios = 13;
+    repeated string msgParsers = 14;
+    uint64 meshBaudrate = 15;
+    uint32 parseMsgMax = 16;
+    uint32 rxBufferSize = 17;
+    bool gcsPresent = 18;
+}
+
+message InterfaceConfiguration {
+    string nodeCommIntIP = 1;
+    uint32 commRdPort = 2;
+    uint32 commWrPort = 3;
+}
+
+message TDMAConfiguration {
+    string sleepPin = 1;
+    float enableLength = 2;
+    float slotGuardLength = 3;
+    float preTxGuardLength = 4;
+    float postTxGuardLength = 5;
+    float txLength = 6;
+    float rxDelay = 7;
+    float initTimeToWait = 8;
+    uint32 maxNumSlots = 9;
+    float desiredDataRate = 10;
+    uint32 initSyncBound = 11;
+    uint32 operateSyncBound = 12;
+    float offsetTimeout = 13;
+    float offsetTxInterval = 14;
+    float statusTxInterval = 15;
+    float linksTxInterval = 16;
+    uint32 maxTxBlockSize = 17;
+    float linkTimeout = 18;
+    uint32 blockTxRequestTimeout = 19;
+    uint32 minBlockTxDelay = 20;
+    bool fpga = 21;
+    string fpgaFailsafePin = 22;
+    uint32 fpgaFifoSize = 23;
+    string enablePin = 24;
+    string statusPin = 25;
+    bool recvAllMsgs = 26;
+    uint32 restartDelay = 27;
+}
+
+message NodeConfig_proto {
+    NodeConfiguration node = 1;
+    InterfaceConfiguration interface = 2;
+    TDMAConfiguration tdma = 3;
+}

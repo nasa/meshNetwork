@@ -9,7 +9,7 @@ def processHeader(self, header, msg, nodeStatus, clock, comm):
         
         # Check for command counter
         cmdStatus = checkCmdCounter(self, header, msg, comm)
-        
+    
     return cmdStatus
  
 

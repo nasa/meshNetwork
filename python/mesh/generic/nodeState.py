@@ -27,6 +27,7 @@ class NodeState(object):
         self.lastMsgRcvdTime = 0.0
         self.lastStateUpdateTime = 0.0
         self.status = 0
+        self.restartConfirmed = False
         
 class LinkStatus(IntEnum):
     """Enumeration of mesh link status.

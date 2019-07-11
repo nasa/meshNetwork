@@ -1,7 +1,7 @@
 #import crcmod.predefined # crc
 import crcmod
 from mesh.generic.msgParser import MsgParser
-from mesh.generic.slipMsg import SLIPmsg
+from mesh.generic.slipMsg import SLIPMsg
 from mesh.generic.utilities import packData
 
 class SLIPMsgParser(MsgParser):
@@ -18,7 +18,7 @@ class SLIPMsgParser(MsgParser):
 
         self.crc = crcmod.mkCrcFun(0x107, initCrc=0, xorOut=0, rev=False) # CRC-8
         self.crcLength = 1
-        self.msg = SLIPmsg(256)
+        self.msg = SLIPMsg(256)
 
     def parseSerialMsg(self, msgBytes, msgStart):
         """Searches raw serial data for SLIP messages and then validates message integrity by comparing a computed CRC to the CRC found in the message.  Valid messages are then stored for processing.

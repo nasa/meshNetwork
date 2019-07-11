@@ -1,6 +1,3 @@
-from mesh.generic.nodeState import LinkStatus
-from mesh.generic.cmds import NodeCmds
-from switch import switch
 
 class NodeController(object):   
     """Generic node controller to subtype for specific vehicle types.
@@ -54,15 +51,7 @@ class NodeController(object):
             
         for cmdId in list(comm.cmdQueue.keys()): # New commands to process
             cmdContents = comm.cmdQueue.pop(cmdId)
-            for case in switch(cmdId):
-                if case(NodeCmds['ConfigRequest']):
-                    configHash = self.nodeParams.config.calculateHash()
-                    if configHash == cmdContents:
-                        self.nodeParams.configConfirmed = True
-                    else:
-                        self.nodeParams.configConfirmed = False    
-                    break           
-            
+            pass
 
     def processCommands(self):
         """Performs more specific processing and implementation of commands received over the 
