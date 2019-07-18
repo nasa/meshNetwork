@@ -326,10 +326,6 @@ class NodeConfig(dict):
 
         return nodeConfig_p
 
-    def truncateFloat(self, floatIn, numDigits):
-        formatStr = '%.' + str(numDigits) + 'f'
-        return float(formatStr%(floatIn))
-
     @staticmethod
     def fromProtoBuf(nodeConfig_protobuf):
 

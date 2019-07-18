@@ -115,7 +115,7 @@ class TDMAComm(SerialComm):
         self.frameTime = currentTime - self.frameStartTime
         
         if self.frameTime >= self.frameLength: # Start new frame
-            print(str(currentTime) + ": Node " + str(self.nodeParams.config.nodeId) + " - New frame started")
+            #print(str(currentTime) + ": Node " + str(self.nodeParams.config.nodeId) + " - New frame started")
             self.syncTDMAFrame(currentTime)
         
         if self.frameTime < self.cycleLength: 
@@ -392,7 +392,7 @@ class TDMAComm(SerialComm):
                 elif (destId != 0 and self.meshQueueIn[destId]): # only send non-zero non-broadcast messages
                     packetBytes = self.packageMeshPacket(destId, self.meshQueueIn[destId])
                     
-                if (packetBytes):
+                if (packetBytes): # if packet is of non-zero length
                     self.bufferTxMsg(packetBytes)
                 
                 self.meshQueueIn[destId] = b'' # clear message after transmission

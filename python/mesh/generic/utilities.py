@@ -43,3 +43,8 @@ def unpackData(data, length, endianness='little'):
             return struct.unpack(packFormat + 'Q', data)[0] 
     except Exception as e:
         raise e
+    
+def truncateFloat(floatIn, numDigits):
+    formatStr = '%.' + str(numDigits) + 'f'
+    return float(formatStr%(floatIn))
+

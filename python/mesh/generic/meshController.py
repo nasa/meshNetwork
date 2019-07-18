@@ -16,12 +16,13 @@ class VoteDecision(IntEnum):
     No = 2
 
 class NetworkPoll(object):
-    def __init__(self, cmdId, cmdCounter, cmd, votes, exclusions):
+    def __init__(self, cmdId, cmdCounter, cmd, votes, exclusions, startTime):
         self.cmdId = cmdId
         self.cmdCounter = cmdCounter
         self.cmd = cmd
         self.votes = votes
         self.exclusions = exclusions
+        self.startTime = startTime # wait time before clearing uncompleted poll
         self.decision = VoteDecision.Undecided
         self.voteSent = False
 
@@ -133,10 +134,10 @@ class MeshController(object):
             
             # Create new poll to monitor command acceptance
             if ('destId' in msg['msgContents'] and msg['msgContents']['destId'] != 0): # populate exclusion list
-                exclusions = [msg['msgContents']['destId']]
+                exclusions = [msg['msgContents']['destId']] # destination node is excluded from polling
             else:
                 exclusions = []
-            newPoll = NetworkPoll(msg['header']['cmdId'], msg['header']['cmdCounter'], msg['msgContents'], [NetworkVote.NotReceived]*self.nodeParams.config.maxNumNodes, exclusions)
+            newPoll = NetworkPoll(msg['header']['cmdId'], msg['header']['cmdCounter'], msg['msgContents'], [NetworkVote.NotReceived]*self.nodeParams.config.maxNumNodes, exclusions, self.nodeParams.clock.getTime())
             newPoll.votes[msg['header']['sourceId']-1] = NetworkVote.Yes # source of command is automatic yes vote
             self.networkPolls.append(newPoll)
             #print("New poll created for " + str(msg['header']['cmdCounter']))
@@ -163,7 +164,9 @@ class MeshController(object):
                         poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
                         break
                     
-                # Send poll response        
+                # Send poll response
+                print("Node " + str(self.nodeParams.config.nodeId) + ": Sending command response")
+                        
                 self.comm.tdmaCmds[NodeCmds['CmdResponse']] = Command(NodeCmds['CmdResponse'], {'cmdId': poll.cmdId, 'cmdCounter': poll.cmdCounter, 'cmdResponse': True}, [NodeCmds['CmdResponse'], self.nodeParams.config.nodeId])
                 poll.voteSent = True            
 
@@ -192,12 +195,17 @@ class MeshController(object):
                 poll.decision = VoteDecision.Yes
                 print("Node " + str(self.nodeParams.config.nodeId) + ": Vote succeeded - ", poll.cmdId, poll.cmdCounter)
  
-        # Take action on completed polls and remove from list
+        # Update poll status
         updatedPolls = []
         for poll in self.networkPolls:
-            if (poll.decision == VoteDecision.Undecided):
-                updatedPolls.append(poll)
-            else: # take action on poll
+            if (poll.decision == VoteDecision.Undecided): 
+                # Check expiration on undecided polls
+                if (self.nodeParams.clock.getTime() <= (poll.startTime + self.nodeParams.config.commConfig['pollTimeout'])): # poll has not yet expired
+                    updatedPolls.append(poll)
+                else:
+                    print("Node " + str(self.nodeParams.config.nodeId) + ": Clearing poll")
+                    
+            else: # take action on completed poll
                 self.executeNetworkAction(poll)
         self.networkPolls = updatedPolls
 
