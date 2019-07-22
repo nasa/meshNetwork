@@ -29,4 +29,9 @@ Each node within the network maintains a network graph of all the links between 
 
 Because there is no master node, the network will continue to function regardless of what specific nodes are currently present in the network.  Any node present will transmit during its allotted Slot and receive data from other nodes during their Slots.  If a previously present node drops out of the network, the other nodes will notice the data dropout during the lost node’s Slot, but the network will remain intact for usage by the remaining nodes.  Since the network topology is point-to-point, any node that couldn’t communicate directly with other network nodes without going through the lost node will become isolated.  For example, if Node 1 dropped out of the network, Nodes 3 and 6 would also lose communication with the network.
 
+Network Administration
+----------------------
 
+Without a network master, decisions to be made by the network require unanimous approval before implementation.  Network decisions are executed using a polling mechanism implemented by the mesh network.  For commands requiring approval prior to implementation, each node will create a poll and compile poll responses received from the rest of the network.  Decision on the poll is not made until responses are received from all active nodes.  
+
+If a node is determined to be in error in some way, another node may command a change to fix the node in error, such as a configuration update or node restart for the node in error.  In this case, the vote of the potentially errant node is excluded from the polling.  The remaining nodes must then reach a unanimous decision on whether to implement the fix on the errant node.  Polling also acts as a guard against a single errant node attempting to fix other nodes that are already functioning correctly.  The correctly functioning nodes would detect the command from the errant node and reject the requested change.
