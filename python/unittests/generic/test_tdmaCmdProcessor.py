@@ -6,7 +6,8 @@ from mesh.generic.cmds import TDMACmds
 from mesh.generic.command import Command
 from mesh.generic.cmdDict import CmdDict
 from mesh.generic.nodeParams import NodeParams
-from mesh.generic.slipMsgParser import SLIPMsgParser
+from mesh.generic.msgParser import MsgParser
+from mesh.generic.slipMsg import SLIPMsg
 from mesh.generic.radio import Radio
 from mesh.generic.nodeState import NodeState
 from mesh.generic.tdmaComm import TDMAComm
@@ -14,14 +15,14 @@ from mesh.generic.nodeHeader import packHeader, headers
 from unittests.testCmds import testCmds
 from unittests.testConfig import configFilePath
 
-cmdsToTest = [TDMACmds['MeshStatus'], TDMACmds['TimeOffset'], TDMACmds['LinkStatus']]
+cmdsToTest = [TDMACmds['MeshStatus'], TDMACmds['TimeOffset'], TDMACmds['LinkStatus'], TDMACmds['ConfigUpdate'], TDMACmds['NetworkRestart']]
 
 class TestTDMACmdProcessor:
     
     def setup_method(self, method):
         self.nodeStatus = [NodeState(i+1) for i in range(5)]
         self.nodeParams = NodeParams(configFile=configFilePath)
-        msgParser = SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax})
+        msgParser = MsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax}, SLIPMsg(256))
         radio = Radio([], {'uartNumBytesToRead': self.nodeParams.config.uartNumBytesToRead, 'rxBufferSize': 2000})
         self.comm = TDMAComm([TDMACmdProcessor], radio, msgParser, self.nodeParams)
     
@@ -44,6 +45,7 @@ class TestTDMACmdProcessor:
     
         # Test processing of all TDMACmds
         for cmdId in cmdsToTest:    
+            self.comm.networkMsgQueue = [] # clear command queue to check for additions after command processing    
             assert(self.comm.processMsg(testCmds[cmdId].serialize(), args = {'nodeStatus': self.nodeStatus, 'comm': self.comm, 'clock': self.nodeParams.clock}) == True)
             if cmdId == TDMACmds['TimeOffset']:
                 sourceId = testCmds[cmdId].header['header']['sourceId']
@@ -54,7 +56,12 @@ class TestTDMACmdProcessor:
                 msgNodeId = testCmds[cmdId].cmdData['nodeId']
                 for i in range(0, self.nodeParams.config.maxNumNodes):
                     assert(self.nodeParams.linkStatus[msgNodeId-1][i] == testCmds[cmdId].cmdData['linkStatus'][msgNodeId-1][i])
-        
+            elif cmdId == TDMACmds['ConfigUpdate']:
+                assert(self.nodeParams.newConfig != None) # new config staged for updating
+                assert(len(self.comm.networkMsgQueue) > 0)
+            elif cmdId == TDMACmds['NetworkRestart']:
+                assert(len(self.comm.networkMsgQueue) > 0)
+ 
         # Resend and test that commStartTime is not updated once it has previously been set
         cmdId = TDMACmds['MeshStatus']
         self.comm.commStartTime = testCmds[cmdId].cmdData['commStartTimeSec'] - 1

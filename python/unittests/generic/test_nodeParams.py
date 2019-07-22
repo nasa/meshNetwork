@@ -1,7 +1,7 @@
 from mesh.generic.nodeConfig import NodeConfig
 from mesh.generic.nodeParams import NodeParams
 from mesh.generic.nodeState import LinkStatus
-import pytest, time
+import pytest, time, hashlib, json
 from unittests.testConfig import configFilePath
 
 class TestNodeParams:
@@ -75,3 +75,40 @@ class TestNodeParams:
         self.nodeParams.updateStatus()
         assert(self.nodeParams.nodeStatus[self.nodeParams.config.nodeId-1].status == 64)
 
+    def test_loadConfig(self):
+        """Test loadConfig method of NodeParams."""
+        
+        # Create new config for update
+        newConfig = NodeConfig(configFilePath)
+        newConfigHash = newConfig.calculateHash()
+        with open (configFilePath, "r") as jsonFile:
+            configData = json.load(jsonFile)
+        newConfig_pb = NodeConfig.toProtoBuf(configData).SerializeToString()
+
+        # Test update method
+        badHash = hashlib.sha1()
+        assert(self.nodeParams.loadConfig(newConfig_pb, badHash) == False) # test rejection with bad hash
+        assert(self.nodeParams.newConfig == None)
+        assert(self.nodeParams.loadConfig(newConfig_pb, newConfigHash) == True) # test acceptance
+        assert(self.nodeParams.newConfig != None)
+
+    def test_updateConfig(self):
+        """Test updateConfig method of NodeParams."""
+        
+        # Load valid new config
+        newConfig = NodeConfig(configFilePath)
+        newConfigHash = newConfig.calculateHash()
+        with open (configFilePath, "r") as jsonFile:
+            configData = json.load(jsonFile)
+        newConfig_pb = NodeConfig.toProtoBuf(configData).SerializeToString()
+        self.nodeParams.loadConfig(newConfig_pb, newConfigHash)
+       
+        # Test successful loading
+        self.nodeParams.config.FCBaudrate = newConfig.FCBaudrate / 2.0 # change a parameter to verify loading of new config
+        assert(self.nodeParams.config.FCBaudrate != newConfig.FCBaudrate)
+        assert(self.nodeParams.updateConfig() == True)
+        assert(self.nodeParams.config.FCBaudrate == newConfig.FCBaudrate)
+        assert(self.nodeParams.newConfig == None)
+
+        # Expect no load when config missing
+        assert(self.nodeParams.updateConfig() == False) 

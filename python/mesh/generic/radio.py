@@ -69,7 +69,7 @@ class Radio(object):
         try:
             newBytes = self.serial.read(self.uartNumBytesToRead)
         except serial.SerialException:
-            pass
+            return 0
 
         # Process rx bytes
         if newBytes:
@@ -81,10 +81,11 @@ class Radio(object):
         """Send bytes over serial connection."""
         if not self.serial:
             raise NoSerialConnection("No serial connection available")
-            return  
+            return 0  
         
         try:
-            self.serial.write(msgBytes)
+            return self.serial.write(msgBytes)
+            
         except serial.SerialException:
             pass
             
@@ -114,9 +115,13 @@ class Radio(object):
     # Send methods
     def sendMsg(self, msgBytes):
         """Send message to radio."""
+
+        bytesSent = 0
         if len(msgBytes) > 0:
             msg = self.createMsg(msgBytes)
-            self.sendBytes(msg)
+            bytesSent = self.sendBytes(msg)
+
+        return bytesSent
 
     def bufferTxMsg(self, msgBytes):
         self.txBuffer += msgBytes
@@ -126,15 +131,19 @@ class Radio(object):
         return msgBytes
 
     def sendBuffer(self, maxBytesToSend=0):
+        bytesSent = 0
+
         if self.txBuffer:
             if maxBytesToSend > 0 and len(self.txBuffer) > maxBytesToSend: # too much data to send
-                self.sendMsg(self.txBuffer[:maxBytesToSend])
+                bytesSent = self.sendMsg(self.txBuffer[:maxBytesToSend])
                 self.txBuffer = self.txBuffer[maxBytesToSend:] # remove sent bytes from buffer
             else: # send entire buffer
-                self.sendMsg(self.txBuffer)
+                bytesSent = self.sendMsg(self.txBuffer)
             
                 # Clear tx buffer
                 self.txBuffer = bytearray()
+
+        return bytesSent
 
     def sendCommand(self, cmd):
         """Issue command to radio."""

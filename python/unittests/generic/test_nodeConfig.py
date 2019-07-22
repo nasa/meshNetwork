@@ -126,6 +126,24 @@ class TestNodeConfig:
         hash2Value = testHash2.digest()
         assert(hash1Value != hash2Value) # Test float not truncated
 
+    def test_protobufConversion(self):
+        """Tests conversion between json and protobuf configuration representations."""
+
+        # Convert json data to protobuf format
+        with open (configFilePath, "r") as jsonFile:
+            configData = json.load(jsonFile)
+        #protobuf = self.nodeConfig.toProtoBuf(configData)
+        protobuf = NodeConfig.toProtoBuf(configData)
+
+        # Convert back to json representation
+        #fromProtobuf = self.nodeConfig.fromProtoBuf(protobuf.SerializeToString())
+        fromProtobuf = NodeConfig.fromProtoBuf(protobuf.SerializeToString())
+        
+        # Hash config instance from conversion and compare to initial configuration
+        nc_protobuf = NodeConfig(configData=fromProtobuf)
+
+        assert(self.nodeConfig.calculateHash() == nc_protobuf.calculateHash())
+
     def checkConfigEntries(self, testEntries, testCondition, configEntries=None):
         if configEntries == None:
             configEntries = list(self.nodeConfig.__dict__.keys())

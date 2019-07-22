@@ -98,7 +98,7 @@ class SerialComm(object):
 
     def sendBuffer(self):
         """Send data in transmission buffer over serial connection."""
-        self.radio.sendBuffer()
+        return self.radio.sendBuffer()
             
     def processBuffers(self):
         if self.cmdBuffer: # command buffer

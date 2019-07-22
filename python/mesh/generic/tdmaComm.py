@@ -100,6 +100,10 @@ class TDMAComm(SerialComm):
         if (initDelay):
             time.sleep(initDelay)
 
+        # Network metrics
+        self.bytesSent = 0
+        self.bytesRcvd = 0
+
     def execute(self):
         """Execute communication functions."""
         currentTime = time.time()
@@ -117,6 +121,9 @@ class TDMAComm(SerialComm):
         if self.frameTime >= self.frameLength: # Start new frame
             #print(str(currentTime) + ": Node " + str(self.nodeParams.config.nodeId) + " - New frame started")
             self.syncTDMAFrame(currentTime)
+            print("Node " + str(self.nodeParams.config.nodeId) + " - Previous frame data throughput(in/out): ", self.bytesRcvd, self.bytesSent)
+            self.bytesSent = 0
+            self.bytesRcvd = 0
         
         if self.frameTime < self.cycleLength: 
             cycleEnd = 0
@@ -394,13 +401,13 @@ class TDMAComm(SerialComm):
                     
                 if (packetBytes): # if packet is of non-zero length
                     self.bufferTxMsg(packetBytes)
-                
+ 
                 self.meshQueueIn[destId] = b'' # clear message after transmission
 
             self.radio.bufferTxMsg(HDLC_END_TDMA) # append end of message byte
         
             #print("Node " + str(self.nodeParams.config.nodeId) + " - Number of bytes sent: " + str(len(self.radio.txBuffer)))
-            self.sendBuffer() 
+            self.bytesSent += self.sendBuffer() 
 
             # End transmit period
             self.transmitComplete = True
@@ -449,7 +456,7 @@ class TDMAComm(SerialComm):
 
     def readMsgs(self):
         """Read from serial connection and look for end of message value."""
-        self.radio.readBytes(True)
+        self.bytesRcvd += self.radio.readBytes(True)
         
         for i in range(self.rxBufferReadPos, self.radio.bytesInRxBuffer):
             self.rxBufferReadPos = i+1

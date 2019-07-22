@@ -23,7 +23,7 @@ class UDPRadio(Radio):
         """Reads raw bytes from udp connection"""
         if not self.sockRead:
             raise NoSocket("No read socket connection available")
-            return  
+            return 0
         
         # Read from socket
         newBytes = []
@@ -42,16 +42,21 @@ class UDPRadio(Radio):
         # Process rx bytes
         if newBytes:
             self.processRxBytes(newBytes, bufferFlag)
+            return len(newBytes)
+        else:
+            return 0
+        
 
     def sendBytes(self, msgBytes):
         """Send bytes over udp connection."""
         if not self.sockWrite:
             raise NoSocket("No write socket connection available")
-            return  
+            return 0 
         
         try:
             self.sockWrite.sendto(msgBytes, (self.sockWriteIp, self.sockWritePort))
+            return len(msgBytes)
         except Exception as e:
-            pass
+            return 0
             #print(e)
             #print("UDP socket write error.")

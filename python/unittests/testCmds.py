@@ -1,5 +1,6 @@
 import time
 import struct
+import json
 from collections import namedtuple
 from mesh.generic.tdmaState import TDMAStatus
 from mesh.generic.cmdDict import CmdDict
@@ -9,6 +10,7 @@ from mesh.generic.commandMsg import CommandMsg
 from mesh.generic.command import Command
 from mesh.generic.nodeHeader import createHeader
 from mesh.generic.nodeParams import NodeParams
+from mesh.generic.nodeConfig import NodeConfig
 from mesh.generic.nodeState import NodeState, LinkStatus
 from unittests.testConfig import configFilePath
 
@@ -54,7 +56,7 @@ testCmds.update({cmdId: cmd})
 ### TDMACmds
 # TDMACmds['MeshStatus']
 cmdId = TDMACmds['MeshStatus']
-cmdData = {'commStartTimeSec': int(time.time()), 'status': TDMAStatus.nominal}
+cmdData = {'commStartTimeSec': int(time.time()), 'status': TDMAStatus.nominal, 'configHash': nodeParams.config.calculateHash()}
 cmd = Command(cmdId, cmdData, [cmdId, nodeId])
 testCmds.update({cmdId: cmd})
 
@@ -72,6 +74,24 @@ linkStatus = [[LinkStatus.NoLink for i in range(nodeParams.config.maxNumNodes)] 
 linkStatus[nodeId-1] = [LinkStatus.IndirectLink]*nodeParams.config.maxNumNodes
 cmdData = {'linkStatus': linkStatus, 'nodeId': 1}
 cmd = Command(cmdId, cmdData, [cmdId, nodeId])
+testCmds.update({cmdId: cmd})
+
+# TDMACmds['ConfigUpdate']
+cmdId = TDMACmds['ConfigUpdate']
+configHash = nodeParams.config.calculateHash()
+with open(configFilePath, "r") as jsonFile:
+    configData = json.load(jsonFile)
+newConfig_pb = NodeConfig.toProtoBuf(configData).SerializeToString()
+cmdData = {'destId': nodeParams.config.nodeId, 'config': newConfig_pb, 'configHash': configHash, 'hashLength': nodeParams.config.hashSize, 'configLength': len(newConfig_pb)}
+cmd = Command(cmdId, cmdData, [cmdId, nodeId, nodeParams.get_cmdCounter()])
+testCmds.update({cmdId: cmd})
+
+# TDMACmds['NetworkRestart']
+cmdId = TDMACmds['NetworkRestart']
+destId = 4
+restartTime = int(time.time() + 1000)
+cmdData = {'destId': destId, 'restartTime': restartTime}
+cmd = Command(cmdId, cmdData, [cmdId, nodeId, nodeParams.get_cmdCounter()])
 testCmds.update({cmdId: cmd})
 
 ### GndCmds

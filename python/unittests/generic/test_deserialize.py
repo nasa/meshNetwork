@@ -1,7 +1,7 @@
 import pytest
 from mesh.generic.deserialize import deserialize, parseHeader, parseBody, unpackBytes
 from mesh.generic.cmdDict import CmdDict
-from mesh.generic.nodeHeader import packHeader
+from mesh.generic.nodeHeader import packHeader, headers
 from mesh.generic.cmds import NodeCmds
 from mesh.generic.customExceptions import InsufficientMsgBytes
 from unittests.testCmds import testCmds
@@ -13,7 +13,9 @@ class TestDeserialize:
         # Test command
         self.cmdId = NodeCmds['GCSCmd']
         self.command = testCmds[self.cmdId]
+        self.bodyFormat = CmdDict[self.cmdId].packFormat
         self.headerBytes = self.command.packHeader()
+        self.headerFormat = headers[CmdDict[self.cmdId].header]['format']
         self.msgBytes = self.command.serialize()
 
     def test_unpackBytes(self):
@@ -22,8 +24,8 @@ class TestDeserialize:
         msg = b'12345'
         fmt = '=BBBBB'
         out = unpackBytes(fmt, msg)
-        assert(len(out) == calcsize(fmt))
-        #assert(len(out[1]) == 0) # no excess bytes
+        assert(len(out[0]) == calcsize(fmt))
+        assert(len(out[1]) == 0) # no excess bytes
 
         # Test processing of short message
         fmt = '=BBBBBB'
@@ -33,17 +35,20 @@ class TestDeserialize:
         # Test processing of long message
         fmt = '=BBBB'
         out = unpackBytes(fmt, msg)
-        assert(len(out) == calcsize(fmt))
-        #assert(out[1] == msg[calcsize(fmt):])
+        assert(len(out[0]) == calcsize(fmt))
+        assert(out[1] == msg[calcsize(fmt):])
 
     def test_parseHeader(self):
         """Test parsing header from serial message bytes."""
-        header = parseHeader(self.msgBytes[0:len(self.headerBytes)], self.cmdId)
+        headerEntries = unpackBytes(self.headerFormat, self.msgBytes[0:len(self.headerBytes)])
+        #header = parseHeader([self.msgBytes[0:len(self.headerBytes)],[]], self.cmdId)
+        header = parseHeader(headerEntries, self.cmdId)
         self.checkHeaderEntries(header)
 
     def test_parseBody(self):
         """Test parsing body from serial message bytes."""
-        body = parseBody(self.msgBytes[len(self.headerBytes):], self.cmdId)
+        bodyEntries = unpackBytes(self.bodyFormat, self.msgBytes[len(self.headerBytes):])
+        body = parseBody(bodyEntries, self.cmdId)
         self.checkBodyEntries(body)
 
     def test_deserializeBody(self):
