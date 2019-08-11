@@ -2,7 +2,7 @@ from enum import IntEnum
 from collections import namedtuple
 from mesh.generic.cmds import NodeCmds, TDMACmds
 from mesh.generic.command import Command
-from switch import switch
+import math
 
 class NetworkVote(IntEnum):
     NotReceived = 0
@@ -15,8 +15,14 @@ class VoteDecision(IntEnum):
     Yes = 1
     No = 2
 
+class MeshMsgType(IntEnum):
+    CmdResponse = 0
+    MsgBytes = 1
+    BlockData = 2
+
 class NetworkPoll(object):
-    def __init__(self, cmdId, cmdCounter, cmd, votes, exclusions, startTime):
+    def __init__(self, sourceId, cmdId, cmdCounter, cmd, votes, exclusions, startTime):
+        self.sourceId = sourceId
         self.cmdId = cmdId
         self.cmdCounter = cmdCounter
         self.cmd = cmd
@@ -25,6 +31,13 @@ class NetworkPoll(object):
         self.startTime = startTime # wait time before clearing uncompleted poll
         self.decision = VoteDecision.Undecided
         self.voteSent = False
+
+class MeshMsg(object):
+    def __init__(self, msgType, cmdId=None, status=None, msgBytes=None):
+        self.msgType = msgType
+        self.cmdId = cmdId
+        self.status = status
+        self.msgBytes = msgBytes
 
 #NetworkPoll = namedtuple('NetworkPoll', ['cmdId', 'cmdCounter', 'votes', 'exclusions', 'decision', 'voteSent'])
 
@@ -43,8 +56,17 @@ class MeshController(object):
         # Network polling
         self.networkPolls = []
  
+        # Block transmit
+        self.blockReqIdCounter = 0
+        self.blockTx = None
+        self.blockTxData = None
+        self.blockTxAccepted = False
+
         # Node configuration
         self.nodeParams = nodeParams
+
+        # Mesh messages
+        self.meshMsgs = []
 
     def execute(self):
         """Executes any processing logic required by this node."""
@@ -90,6 +112,17 @@ class MeshController(object):
                 self.nodeParams.restartRequested = False
                 self.nodeParams.restartTime = None
 
+        # Monitor block transmit
+        if (self.blockTxAccepted):
+            if (self.nodeParams.clock.getTime() >= self.blockTx['startTime']): # start block transmit
+                # Start block transmit
+                self.comm.startBlockTx(self.blockTx['blockReqId'], self.blockTx['destId'], self.blockTx['sourceId'], self.blockTx['startTime'], self.blockTx['length'], self.blockTxData)
+
+                # Clear block transmit status
+                self.blockTx = None
+                self.blockTxData = None
+                self.blockTxAccepted = False
+
         #if (self.nodeParams.restartRequested):
          #   if (self.nodeParams.restartConfirmed): # Trigger restart at requested time
           #      if (self.nodeParams.clock.getTime() >= self.nodeParams.restartTime):
@@ -130,14 +163,13 @@ class MeshController(object):
     def processNetworkMsgs(self):
         # Process pending network messages
         for msg in self.comm.networkMsgQueue:
-            print("Node " + str(self.nodeParams.config.nodeId) + " - Message received: ", str(msg['header']['cmdId']))
             
             # Create new poll to monitor command acceptance
             if ('destId' in msg['msgContents'] and msg['msgContents']['destId'] != 0): # populate exclusion list
                 exclusions = [msg['msgContents']['destId']] # destination node is excluded from polling
             else:
                 exclusions = []
-            newPoll = NetworkPoll(msg['header']['cmdId'], msg['header']['cmdCounter'], msg['msgContents'], [NetworkVote.NotReceived]*self.nodeParams.config.maxNumNodes, exclusions, self.nodeParams.clock.getTime())
+            newPoll = NetworkPoll(msg['header']['sourceId'], msg['header']['cmdId'], msg['header']['cmdCounter'], msg['msgContents'], [NetworkVote.NotReceived]*self.nodeParams.config.maxNumNodes, exclusions, self.nodeParams.clock.getTime())
             newPoll.votes[msg['header']['sourceId']-1] = NetworkVote.Yes # source of command is automatic yes vote
             self.networkPolls.append(newPoll)
             #print("New poll created for " + str(msg['header']['cmdCounter']))
@@ -151,19 +183,20 @@ class MeshController(object):
         for poll in self.networkPolls:
             # Respond to poll
             if (poll.voteSent == False): # respond to poll
-                for case in switch(poll.cmdId):
-                    if case(TDMACmds['ConfigUpdate']):
-                        if (poll.cmd['valid'] == True):
-                            poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
-                        else: # invalid config
-                            poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.No
-                        break
-                    
-                    if case(TDMACmds['NetworkRestart']):
-                        # TODO - Hardcode positive response for now
+                if (poll.cmdId == TDMACmds['ConfigUpdate']):   
+                    if (poll.cmd['valid'] == True):
                         poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
-                        break
-                    
+                    else: # invalid config
+                        poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.No
+                elif (poll.cmdId == TDMACmds['NetworkRestart']):
+                    # TODO - Hardcode positive response for now
+                    poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
+                elif (poll.cmdId == TDMACmds['BlockTxRequest']):
+                    if (self.blockTxAccepted or self.comm.blockTxInProgress): # reject new request
+                        poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.No
+                    else: # accept request
+                        poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
+        
                 # Send poll response
                 print("Node " + str(self.nodeParams.config.nodeId) + ": Sending command response")
                         
@@ -211,26 +244,39 @@ class MeshController(object):
 
     def executeNetworkAction(self, poll):
         # Perform action from accepted poll
-        for case in switch(poll.cmdId):
-            if case(TDMACmds['NetworkRestart']):
-                if (poll.decision == VoteDecision.Yes and (poll.cmd['destId'] == 0 or poll.cmd['destId'] == self.nodeParams.config.nodeId)): # global or restart for this node
-                    self.nodeParams.restartRequested = True
-                    self.nodeParams.restartTime = poll.cmd['restartTime']
-                    print("Node " + str(self.nodeParams.config.nodeId) + " - Executing network restart.")               
-                    return True
-                break
+        if (poll.cmdId == TDMACmds['NetworkRestart']):
+            if (poll.decision == VoteDecision.Yes and (poll.cmd['destId'] == 0 or poll.cmd['destId'] == self.nodeParams.config.nodeId)): # global or restart for this node
+                self.nodeParams.restartRequested = True
+                self.nodeParams.restartTime = poll.cmd['restartTime']
+                print("Node " + str(self.nodeParams.config.nodeId) + " - Executing network restart.")               
+                return True
 
-            if case(TDMACmds['ConfigUpdate']):
-                if (poll.decision == VoteDecision.Yes and (poll.cmd['destId'] == 0 or poll.cmd['destId'] == self.nodeParams.config.nodeId)): # load configuration for update
-                    self.nodeParams.newConfig = poll.cmd['config']
-                    print("Node " + str(self.nodeParams.config.nodeId) + " - Storing new config for update.")               
-                else: # no action further action on rejected update
-                    pass
-                return True        
+        elif (poll.cmdId == TDMACmds['ConfigUpdate']):
+            if (poll.decision == VoteDecision.Yes and (poll.cmd['destId'] == 0 or poll.cmd['destId'] == self.nodeParams.config.nodeId)): # load configuration for update
+                self.nodeParams.newConfig = poll.cmd['config']
+                print("Node " + str(self.nodeParams.config.nodeId) + " - Storing new config for update.")               
+            else: # no action further action on rejected update
+               pass
+            return True        
 
-            else: # Unimplemented command
-                print("Not an implemented command id")
-                return False
+        elif (poll.cmdId == TDMACmds['BlockTxRequest']):
+            # Notify host of block transmit status
+            if (poll.sourceId == self.nodeParams.config.nodeId):
+                self.meshMsgs.append(MeshMsg(MeshMsgType.CmdResponse, cmdId=TDMACmds['BlockTxRequest'], status=poll.decision))
+
+            if (poll.decision == VoteDecision.Yes): # Initiate block transmit
+                # Store pending block transmit status
+                self.blockTxAccepted = True
+                self.blockTxStartTime = poll.cmd['startTime']
+                self.blockTx = poll.cmd
+                self.blockTx['blockData'] = self.blockTxData
+                self.blockTx['sourceId'] = poll.sourceId
+            
+            return True
+
+        else: # Unimplemented command
+            print("Not an implemented command id")
+            return False
  
     def sendMsg(self, destId, msgBytes):
         """This function receives messages to be sent over the mesh network and queues them for transmission."""
@@ -239,10 +285,33 @@ class MeshController(object):
         self.comm.meshQueueIn[destId] += msgBytes
 
     def getMsgs(self):
-        msgs = self.comm.hostBuffer
-        self.comm.hostBuffer = bytearray() # clear messages after retrieval
+        msgs = []
+
+        # Output pending command responses
+        for msg in self.meshMsgs:
+            msgs.append(msg)
+        self.meshMsgs = [] # clear messages
+
+
+        # Output received network data bytes and block transfers
+        if (self.comm.hostBuffer):
+            msgs.append(MeshMsg(MeshMsgType.MsgBytes, msgBytes=self.comm.hostBuffer))
+            self.comm.hostBuffer = bytearray() # clear messages after retrieval
+        if (self.comm.blockTxOut):
+            msgs.append(MeshMsg(MeshMsgType.BlockData, msgBytes=self.comm.blockTxOut))
+            self.comm.blockTxOut = bytearray() # clear after retrieval
         
         return msgs
 
+    def sendDataBlock(self, destId, blockBytes):
+        """This function receives a large data block to be sent over the mesh network for Block Transfer."""
+        # Store data block and request block data transfer
+        blockTxStartTime = int(self.nodeParams.clock.getTime() + self.nodeParams.config.commConfig['pollTimeout'])
+        blockTxLength = math.ceil((len(blockBytes) / self.nodeParams.config.commConfig['blockTxPacketSize'])) # length in number of packets
+        #self.blockTx = {'blockData': blockBytes, 'destId': destId, 'startTime': blockTxStartTime, 'length': blockTxLength, 'sourceId': self.nodeParams.config.nodeId}
+        self.blockTxData = blockBytes
+        self.comm.tdmaCmds[TDMACmds['BlockTxRequest']] = Command(TDMACmds['BlockTxRequest'], {'blockReqId': self.getBlockRequestId(), 'destId': destId, 'startTime': blockTxStartTime, 'length': blockTxLength, 'status': 1}, [TDMACmds['BlockTxRequest'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
 
-    # TODO - monitor network voting
+    def getBlockRequestId(self):
+        self.blockReqIdCounter = (self.blockReqIdCounter + 1) % 256 # wrap after exceeding 8-bit value
+        return self.blockReqIdCounter 

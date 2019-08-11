@@ -9,9 +9,7 @@ SatFCCmds.update({'StateUpdate': 201, 'NodeStateUpdate': 211, 'ManeuverCmd': 210
 
 PixhawkFCCmds = {'ModeChange': 50, 'ArmCommand': 55, 'VehicleStatus': 60, 'PosCmd': 100}
 
-TDMACmds = {'MeshStatus': 90, 'TimeOffset': 91, 'TimeOffsetSummary': 92, 'LinkStatus': 93, 'LinkStatusSummary': 94, 'BlockTxRequest': 95, 'BlockTxRequestResponse': 96, 'BlockTxConfirmed': 97, 'BlockTxStatus': 98, 'BlockData': 99, 'CurrentConfig': 120, 'ConfigUpdate': 121, 'NetworkRestart': 125} 
-
-
+TDMACmds = {'MeshStatus': 90, 'TimeOffset': 91, 'TimeOffsetSummary': 92, 'LinkStatus': 93, 'LinkStatusSummary': 94, 'BlockTxRequest': 95, 'BlockTxPacketReceipt': 97, 'BlockTxStatus': 98, 'BlockData': 99, 'CurrentConfig': 120, 'ConfigUpdate': 121, 'NetworkRestart': 125} 
 
 GndCmds = {'TimeOffsetSummary': 92, 'LinkStatusSummary': 94}
 
@@ -20,4 +18,5 @@ TestCmds = {'SendDataBlock': 150}
 FPGACmds = {'FPGAMsgStart': 250}
 
 # Commands that should be relayed
-cmdsToRelay = [NodeCmds['GCSCmd'], NodeCmds['ConfigRequest'], NodeCmds['ParamUpdate'], TDMACmds['BlockTxRequest'], TDMACmds['BlockTxRequestResponse'], TDMACmds['BlockTxConfirmed'], TDMACmds['BlockTxStatus'], TestCmds['SendDataBlock']]
+cmdsToRelay = []
+#cmdsToRelay = [NodeCmds['GCSCmd'], NodeCmds['ConfigRequest'], NodeCmds['ParamUpdate'], TDMACmds['BlockTxRequest'], TDMACmds['BlockTxRequestResponse'], TDMACmds['BlockTxStatus'], TestCmds['SendDataBlock']]

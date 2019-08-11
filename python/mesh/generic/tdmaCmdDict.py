@@ -58,21 +58,22 @@ def serialize_TDMACmds_NetworkRestart(cmdData, timestamp):
     return msgBytes
 
 def serialize_TDMACmds_BlockTxRequest(cmdData, timestamp):
-    return pack(TDMACmdDict[TDMACmds['BlockTxRequest']].packFormat, cmdData['blockReqID'], cmdData['startTime'], cmdData['length'])
+    # Block transmit request command (includes transfer session ID, start time for block transfer, length of block transfer, and a status byte (1 to start, 0 to end))
+    return pack(TDMACmdDict[TDMACmds['BlockTxRequest']].packFormat, cmdData['blockReqId'], cmdData['destId'], cmdData['startTime'], cmdData['length'], cmdData['status'])
+
+def serialize_TDMACmds_BlockTxPacketReceipt(cmdData, timestamp):
+    # Confirmation of block transmit packet receipt
+    return pack(TDMACmdDict[TDMACmds['BlockTxPacketReceipt']].packFormat, cmdData['blockReqId'], cmdData['packetNum'])
 
 def serialize_TDMACmds_BlockTxStatus(cmdData, timestamp):
-    return pack(TDMACmdDict[TDMACmds['BlockTxStatus']].packFormat, cmdData['blockReqID'], cmdData['startTime'], cmdData['length'])
-
-def serialize_TDMACmds_BlockTxConfirmed(cmdData, timestamp):
-    return pack(TDMACmdDict[TDMACmds['BlockTxConfirmed']].packFormat, cmdData['blockReqID'])
-
-def serialize_TDMACmds_BlockTxRequestResponse(cmdData, timestamp):
-    return pack(TDMACmdDict[TDMACmds['BlockTxRequestResponse']].packFormat, cmdData['blockReqID'], cmdData['accept'])
+    # Block transmit status message sent by receiving nodes (includes block transfer session ID and transfer statistics)
+    return pack(TDMACmdDict[TDMACmds['BlockTxStatus']].packFormat, cmdData['blockReqId'], cmdData['numPacketsRcvd'])
 
 def serialize_TDMACmds_BlockData(cmdData, timestamp):
-    return cmdData['data']
+    # Block transmit data block message to send block data (includes transfer ID, sequential transfer packet number, data length, and raw data)
+    msgBytes = pack(TDMACmdDict[TDMACmds['BlockData']].packFormat, cmdData['blockReqId'], cmdData['packetNum'], cmdData['dataLength'])
+    return msgBytes + cmdData['data']
 
-#TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=iB', serialize_TDMACmds_MeshStatus, ['commStartTime', 'cmdCounter'], header='MinimalHeader'), \
 TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=IB' + str(configHashSize) + 's', serialize_TDMACmds_MeshStatus, ['commStartTimeSec', 'status', 'configHash'], header='SourceHeader'), \
        TDMACmds['TimeOffset']: CommandType('=H', serialize_TDMACmds_TimeOffset, ['timeOffset'], header='SourceHeader'), \
        TDMACmds['TimeOffsetSummary']: CommandType('', serialize_TDMACmds_TimeOffsetSummary, ['numNodes'], header='MinimalHeader'), \
@@ -84,9 +85,8 @@ TDMACmdDict = {TDMACmds['MeshStatus']: CommandType('=IB' + str(configHashSize) +
        TDMACmds['CurrentConfig']: CommandType('<BB', serialize_TDMACmds_CurrentConfig, ['configLength', 'hashLength'], header='SourceHeader'), \
        TDMACmds['ConfigUpdate']: CommandType('=BHB', serialize_TDMACmds_ConfigUpdate, ['destId', 'configLength', 'hashLength'], header='NodeHeader'), \
        TDMACmds['NetworkRestart']: CommandType('<BI', serialize_TDMACmds_NetworkRestart, ['destId', 'restartTime'], header='NodeHeader'), \
-       TDMACmds['BlockTxStatus']: CommandType('=BiB', serialize_TDMACmds_BlockTxStatus, ['blockReqID', 'startTime', 'length'],  header='NodeHeader'), \
-       TDMACmds['BlockTxRequest']: CommandType('=BiB', serialize_TDMACmds_BlockTxRequest, ['blockReqID', 'startTime', 'length'],  header='NodeHeader'), \
-       TDMACmds['BlockTxConfirmed']: CommandType('=B', serialize_TDMACmds_BlockTxConfirmed, ['blockReqID'], header='NodeHeader'), \
-       TDMACmds['BlockTxRequestResponse']: CommandType('=BB', serialize_TDMACmds_BlockTxRequestResponse, ['blockReqID', 'accept'], header='NodeHeader'), \
-       TDMACmds['BlockData']: CommandType('', serialize_TDMACmds_BlockData, ['data'], header='SourceHeader')} 
+       TDMACmds['BlockTxPacketReceipt']: CommandType('=BH', serialize_TDMACmds_BlockTxPacketReceipt, ['blockReqId', 'packetNum'],  header='SourceHeader'), \
+       TDMACmds['BlockTxStatus']: CommandType('=BH', serialize_TDMACmds_BlockTxStatus, ['blockReqId', 'numPacketsRcvd'],  header='NodeHeader'), \
+       TDMACmds['BlockTxRequest']: CommandType('=BBIHB', serialize_TDMACmds_BlockTxRequest, ['blockReqId', 'destId', 'startTime', 'length', 'status'],  header='NodeHeader'), \
+       TDMACmds['BlockData']: CommandType('=BHH', serialize_TDMACmds_BlockData, ['blockReqId', 'packetNum', 'dataLength'], header='SourceHeader')} 
 

@@ -53,6 +53,8 @@
         "enablePin": "P8_15", 
         "statusPin": "P8_18",
         "recvAllMsgs": true,
+        "adminEnable": true,
+        "adminLength": 100,
         "restartDelay": 3,
         "pollTimeout": 60
 	}

@@ -18,14 +18,14 @@ def processMsg(self, cmdId, header, msg, args):
  
             # Parse message contents
             #if cmdId not in [TDMACmds['BlockData'], TDMACmds['LinkStatus']]:
-            if cmdId not in [TDMACmds['BlockData']]:
-                try: 
-                    msgContents = deserialize(msg, cmdId, 'body')       
-                    if msgContents == None:
-                        return False
-                except Exception as e:
-                    print("Exception occurred while deserializing message:", e)
+            #if cmdId not in [TDMACmds['BlockData']]:
+            try: 
+                msgContents = deserialize(msg, cmdId, 'body')       
+                if msgContents == None:
                     return False
+            except Exception as e:
+                print("Exception occurred while deserializing message:", e)
+                return False
             
             # Process message by command id
             for case in switch(cmdId):
@@ -84,7 +84,7 @@ def processMsg(self, cmdId, header, msg, args):
                             #self.nodeParams.cmdResponse.append({'cmdId': NodeCmds['ConfigUpdate'], 'cmdResponse': int(cmdStatus), 'sourceId': header['sourceId']}) 
 
                             # Add to network message queue for polling
-                            print(str(self.nodeParams.config.nodeId) + " - ConfigUpdate message received.")
+                            #print(str(self.nodeParams.config.nodeId) + " - ConfigUpdate message received.")
                             comm.networkMsgQueue.append({"header": header, "msgContents": {'config': config, 'destId': msgContents['destId'], 'valid': cmdStatus}})
                         else: # insufficient message bytes
                             pass
@@ -101,42 +101,27 @@ def processMsg(self, cmdId, header, msg, args):
 
                         break
 
-                if case(TDMACmds['BlockTxRequest']): # Request for a block of transmit time
-                    blockTxResponse = False
-                    if comm.blockTxStatus['status'] == TDMABlockTxStatus.false: # no current block tx active
-                        # Check block transmit constraints
-                        if validateBlockTxRequest(msgContents, header, self.nodeParams):        
-                            # Store pending request parameters
-                            comm.blockTxStatus['blockReqID'] = msgContents['blockReqID']
-                            comm.blockTxStatus['status'] = TDMABlockTxStatus.pending # set to pending status and wait for start
-                            comm.blockTxStatus['startTime'] = msgContents['startTime'] # store time of request
-                            comm.blockTxStatus['txNode'] = header['sourceId'] # store requesting node's ID
-                            comm.blockTxStatus['length'] = msgContents['length'] # transmit block length
-
-                            blockTxResponse = True # set response to request
-
-                    elif comm.blockTxStatus['status'] == TDMABlockTxStatus.pending:
-                        if comm.blockTxStatus['blockReqID'] == msgContents['blockReqId'] and header['sourceId'] == comm.blockTxStatus['txNode']: # repeat positive response
-                            blockTxResponse = True  
+                if case(TDMACmds['BlockTxRequest']): # Block transmit request
+                    if (msgContents['status'] == 1): # block tx start request
+                        # Pass to mesh controller for processing
+                        comm.networkMsgQueue.append({"header": header, "msgContents": msgContents})
+                        cmdStatus = True
+                    elif (comm.blockTxInProgress and msgContents['blockReqId'] == self.blockTx.reqId and header['sourceId'] == self.blockTx.srcId): # source node ending block tx
+                        print("Node", self.nodeParams.config.nodeId, "- Ending block transmit by request of sender.")
+                        comm.blockTx.complete = True
+                        cmdStatus = True
                             
-                    # Send response
-                    responseCmd = Command(TDMACmds['BlockTxRequestResponse'], {'blockReqID': msgContents['blockReqID'], 'accept': blockTxResponse}, [TDMACmds['BlockTxRequestResponse'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
-                    comm.radio.bufferTxMsg(responseCmd.serialize(self.nodeParams.clock.getTime()))
-            
-                    break           
-
-                if case(TDMACmds['BlockTxConfirmed']): # Transmit block confirmation
-                    if comm.blockTxStatus['status'] == TDMABlockTxStatus.pending: # pending block transmit
-                        if comm.blockTxStatus['blockReqID'] == msgContents['blockReqID'] and comm.blockTxStatus['txNode'] == header['sourceId']: # confirmation received correct node with correct block ID
-                            comm.blockTxStatus['status'] = TDMABlockTxStatus.confirmed              
-                    break        
-
-                if case(TDMACmds['BlockTxRequestResponse']): 
-                    if comm.blockTxStatus['status'] == TDMABlockTxStatus.pending and comm.blockTxStatus['txNode'] == self.nodeParams.config.nodeId: # Block Tx previously requested by this node
-                        if header['sourceId'] in comm.blockTxStatus['blockResponseList']: # this node in response list
-                            comm.blockTxStatus['blockResponseList'][header['sourceId']] = msgContents['accept']
                     break
-
+               
+                if case(TDMACmds['BlockTxPacketReceipt']): # Block transmit packet receipt
+                    # Store received receipt
+                    if (comm.blockTx and comm.blockTx.srcId == self.nodeParams.config.nodeId):
+                        comm.blockTxPacketReceipts.append({'blockReqId': msgContents['blockReqId'], 'packetNum': msgContents['packetNum'], 'sourceId': header['sourceId']})
+                    
+                    cmdStatus = True
+                    #print("Block packet receipt received")
+                    break
+            
                 if case(TDMACmds['BlockTxStatus']):
                     updateStatus = False
                     if comm.blockTxStatus['status'] == TDMABlockTxStatus.false: # receiving node not aware of block transmit    
@@ -157,10 +142,23 @@ def processMsg(self, cmdId, header, msg, args):
                     break
 
                 if case(TDMACmds['BlockData']): # raw block data
-                    headerSize = calcsize(headers[CmdDict[cmdId].header]['format'])
-                    blockData = msg[headerSize:]
-                    print("Block data received:", blockData)
+                    if (msgContents['dataLength'] == len(msgContents['raw'])):
+                        # Send packet receipt
+                        comm.tdmaCmds[TDMACmds['BlockTxPacketReceipt']] = Command(TDMACmds['BlockTxPacketReceipt'], {'blockReqId': msgContents['blockReqId'], 'packetNum': msgContents['packetNum']}, [TDMACmds['BlockTxPacketReceipt'], self.nodeParams.config.nodeId]) 
+                        cmdStatus = True
+                        print("Node", self.nodeParams.config.nodeId, "- Block tx packet", msgContents['packetNum'], "received. Length-", len(msg))
                     
+                        # Store received packet
+                        comm.blockTx.packets[msgContents['packetNum']] = msgContents['raw']
+
+                    else: # errant packet, sending no response will trigger packet resend
+                        pass
+
+                    #headerSize = calcsize(headers[CmdDict[cmdId].header]['format'])
+                    #blockData = msg[headerSize:]
+                    #print("Block data received:", blockData)
+                    break                    
+
             return cmdStatus                    
 
 def validateBlockTxRequest(msgContents, header, nodeParams):

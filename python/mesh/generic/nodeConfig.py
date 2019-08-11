@@ -166,10 +166,13 @@ class NodeConfig(dict):
             else: # calculate rx delay from input percentage
                 self.commConfig['rxDelay'] = self.commConfig['rxDelay'] * self.commConfig['txLength']
             
-            sleepLength = self.commConfig['frameLength'] - self.commConfig['cycleLength']
+            self.commConfig['adminLength'] = self.commConfig['adminLength']/1000.0 # convert to seconds from milliseconds
+            self.commConfig['blockTxPacketSize'] = int(0.5 * self.commConfig['adminLength'] * self.meshBaudrate/8.0)
+
+            sleepLength = self.commConfig['frameLength'] - self.commConfig['cycleLength'] - self.commConfig['adminLength']
             if sleepLength < 0: # Config infeasible
-                print("ERROR: TDMA Frame length is less than Cycle length!")
-                raise TDMAConfigError("TDMA Frame length is less than Cycle length.")
+                print("ERROR: TDMA Frame length is not sufficient!")
+                raise TDMAConfigError("TDMA Frame length is not sufficient.")
                     
             if 'transmitSlot' not in self.commConfig:
                 self.commConfig['transmitSlot'] = self.nodeId           
@@ -320,6 +323,9 @@ class NodeConfig(dict):
         nodeConfig_p.tdma.statusPin = tdma['statusPin']
         nodeConfig_p.tdma.recvAllMsgs = tdma['recvAllMsgs']
         nodeConfig_p.tdma.restartDelay = tdma['restartDelay']
+        nodeConfig_p.tdma.pollTimeout = tdma['pollTimeout'] 
+        nodeConfig_p.tdma.adminEnable = tdma['adminEnable']
+        nodeConfig_p.tdma.adminLength = tdma['adminLength']
         
         #print(nodeConfig_p)
         #print(len(nodeConfig_p.SerializeToString()))
@@ -399,6 +405,9 @@ class NodeConfig(dict):
         tdma['statusPin'] = nodeConfig_p.tdma.statusPin
         tdma['recvAllMsgs'] = nodeConfig_p.tdma.recvAllMsgs
         tdma['restartDelay'] = nodeConfig_p.tdma.restartDelay
+        tdma['pollTimeout'] = nodeConfig_p.tdma.pollTimeout
+        tdma['adminEnable'] = nodeConfig_p.tdma.adminEnable
+        tdma['adminLength'] = nodeConfig_p.tdma.adminLength
         nodeConfig['tdmaConfig'] = tdma
         
         #print(nodeConfig)

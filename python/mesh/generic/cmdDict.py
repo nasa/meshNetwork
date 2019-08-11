@@ -9,7 +9,6 @@ from mesh.generic.nodeConfig import configHashSize
 # Serialize methods
 def serialize_NodeCmds_CmdResponse(cmdData, timestamp):
     """Method for serializing NodeCmds['CmdReponse'] command for serial transmission."""
-    print(cmdData)     
     return pack(NodeCmdDict[NodeCmds['CmdResponse']].packFormat, cmdData['cmdId'], cmdData['cmdCounter'], cmdData['cmdResponse'])
 
 def serialize_NodeCmds_GCSCmd(cmdData, timestamp):

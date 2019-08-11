@@ -4,7 +4,6 @@ import random, time, math
 from math import ceil
 from mesh.generic.msgParser import MsgParser
 from mesh.generic.slipMsg import SLIPMsg
-from mesh.generic.hdlcMsg import HDLC_END_TDMA
 from mesh.generic.radio import RadioMode
 from mesh.generic.cmds import TDMACmds, NodeCmds
 from mesh.generic.tdmaState import TDMAStatus, TDMAMode, TDMABlockTxStatus
@@ -15,7 +14,10 @@ from mesh.generic.tdmaCmdProcessor import TDMACmdProcessor
 from mesh.generic.nodeCmdProcessor import NodeCmdProcessor
 from mesh.generic.dijkstra import findShortestPaths
 from mesh.generic.nodeConfig import NodeConfig
+from mesh.generic.blockTx import BlockTx, BlockTxPacketStatus
 import struct
+
+BLOCK_TX_MSG = 1
 
 class TDMAComm(SerialComm):
     def __init__(self, msgProcessors, radio, msgParser, nodeParams):
@@ -47,6 +49,8 @@ class TDMAComm(SerialComm):
         self.frameTime = 0.0
         self.frameLength = nodeParams.config.commConfig['frameLength']
         self.cycleLength = nodeParams.config.commConfig['cycleLength']
+        self.adminEnabled = nodeParams.config.commConfig['adminEnable']
+        self.adminLength = nodeParams.config.commConfig['adminLength']
 
         # TDMA status
         self.tdmaStatus = TDMAStatus.nominal
@@ -80,9 +84,23 @@ class TDMAComm(SerialComm):
         # Current read position in radio rx buffer
         self.rxBufferReadPos = 0
 
-        # Block TX init
-        self.resetBlockTxStatus()
-        self.clearDataBlock()
+        # Block Tx information
+        self.blockTx = None
+        self.blockTxInProgress = False
+        #self.blockTxReqId = None
+        #self.blockTxStartTime = None
+        #self.blockTxLength = 0
+        self.blockTxPacketStatus = dict() # stores transmitted packet status until all receipt requests received
+        self.blockTxReceiptTimeout = 3 # Number of frames to wait for block tx packet receipt - TODO: move to configuration
+        self.blockTxRetryLimit = 1 # Number of block tx packet resends - TODO: move to configuration
+        self.blockTxEndMult = 1.5 # end time multiplier - TODO: move to configuration
+        #self.blockTxPacketNum = 0
+        #self.blockTxDataLoc = 0
+        #self.blockTxDestId = 0
+        #self.blockTxSrcId = 0
+        self.blockTxPacketReceipts = []
+        #self.resetBlockTxStatus()
+        #self.clearDataBlock()
 
         # Comm enable flag
         self.enabled = True
@@ -90,11 +108,13 @@ class TDMAComm(SerialComm):
         # Mesh data in/out buffers
         self.meshQueueIn = [b''] * (self.maxNumSlots + 1)
         self.hostBuffer = bytearray()
+        self.blockTxOut = bytearray()
 
         # Network graph
         #self.meshGraph = [0] * self.maxNumSlots # timestamps of last received message from each other node
         self.lastGraphUpdate = 0.0
         self.meshPaths = [[]*self.maxNumSlots] * self.maxNumSlots
+        self.neighbors = []
 
         # Delay init (for full network restart)
         if (initDelay):
@@ -121,16 +141,20 @@ class TDMAComm(SerialComm):
         if self.frameTime >= self.frameLength: # Start new frame
             #print(str(currentTime) + ": Node " + str(self.nodeParams.config.nodeId) + " - New frame started")
             self.syncTDMAFrame(currentTime)
-            print("Node " + str(self.nodeParams.config.nodeId) + " - Previous frame data throughput(in/out): ", self.bytesRcvd, self.bytesSent)
+            #print("Node " + str(self.nodeParams.config.nodeId) + " - Previous frame data throughput(in/out): ", self.bytesRcvd, self.bytesSent)
             self.bytesSent = 0
             self.bytesRcvd = 0
         
-        if self.frameTime < self.cycleLength: 
-            cycleEnd = 0
-        else: # sleep period
-            cycleEnd = 1
-    
-        return cycleEnd
+        if self.frameTime < (self.cycleLength + self.adminLength): # active portion of frame
+            return 0
+        else: 
+            return 1
+        #elif self.frameTime < (self.cycleLength + self.adminLength): # admin period
+        #    framePeriod = 1
+        #else: # sleep period
+        #    framePeriod = 2
+
+        #return framePeriod
 
     def executeTDMAComm(self, currentTime):
         """Execute TDMA communication scheme."""
@@ -142,12 +166,18 @@ class TDMAComm(SerialComm):
         if (frameStatus == 1):
             self.sleep()
             return
+        #elif (frameStatus == 2):
+        #    self.sleep()
+        #    return
 
         # Check for mode updates
         self.updateMode(self.frameTime)
     
         # Perform mode specific behavior
         for case in switch(self.tdmaMode):
+            if case(TDMAMode.admin):
+                self.admin()
+                break
             if case(TDMAMode.sleep):
                 # Set radio to sleep mode
                 self.radio.setMode(RadioMode.sleep)
@@ -195,7 +225,88 @@ class TDMAComm(SerialComm):
                 self.radio.setMode(RadioMode.transmit)
                 self.sendBlock()
                 break
-    
+   
+    def admin(self):
+        # Disable radio upon admin completion
+        if (self.receiveComplete == True or self.transmitComplete == True):
+            self.radio.setMode(RadioMode.sleep)
+            return
+
+        # Admin period process control
+        adminTime = self.frameTime - (self.cycleLength)
+        if (self.blockTxInProgress): # execute block transfer logic
+            self.executeBlockTx(adminTime)
+        else:
+            self.executeAdmin(adminTime)
+        
+    def executeAdmin(self, adminTime):
+        controlNode = self.frameCount % (self.maxNumSlots+1) + 1 # each node gets a round as admin controller followed by one open opportunity for all
+        if (adminTime < self.enableLength): # Initialize radio
+            if (controlNode == self.nodeParams.config.nodeId): # This node is in control
+                # Set radio to transmit mode
+                self.radio.setMode(RadioMode.transmit)
+            else: # listening this period
+                # Set radio to receive mode
+                self.radio.setMode(RadioMode.receive)
+        else: # execute admin period
+            if (controlNode == self.nodeParams.config.nodeId): # This node is in control
+                if (self.transmitComplete == False): # Execute admin transmission
+                    self.radio.setMode(RadioMode.transmit) # set radio mode
+                    adminBytes = self.packageAdminData()
+                    packetBytes = self.createMeshPacket(0, b'', adminBytes, self.nodeParams.config.nodeId)
+                    if (packetBytes): # if packet is of non-zero length
+                        self.bufferTxMsg(packetBytes)
+                    
+                    #self.radio.bufferTxMsg(HDLC_END_TDMA) # append end of message byte
+                    self.bytesSent += self.sendBuffer() 
+
+                    self.transmitComplete = True
+                    #print("Node " + str(self.nodeParams.config.nodeId) + " - Admin transmit complete")
+                else:
+                    self.radio.setMode(RadioMode.sleep)
+                    
+            else: # other nodes in control this admin period
+                if self.receiveComplete == False and adminTime >= self.rxReadTime:
+                    self.radio.setMode(RadioMode.receive) # set radio mode
+                    self.receiveComplete = self.readMsgs()
+                    if (self.receiveComplete):    
+                        #print("Node " + str(self.nodeParams.config.nodeId) + " - Admin receive complete")
+                        self.radio.setMode(RadioMode.sleep)
+
+    def executeBlockTx(self, adminTime):
+        if (adminTime < self.enableLength): # Initialize radio
+            if (self.blockTx.srcId == self.nodeParams.config.nodeId): # This node is transmiting
+                # Set radio to transmit mode
+                self.radio.setMode(RadioMode.transmit)
+            else: # receiving
+                # Set radio to receive mode
+                self.radio.setMode(RadioMode.receive)
+        else: # execute block transmit period
+            if (self.blockTx.srcId == self.nodeParams.config.nodeId): # This node is sending
+                if (self.transmitComplete == False): # Execute transmission
+                    self.radio.setMode(RadioMode.transmit) # set radio mode
+                    
+                    packetBytes = self.sendBlockTxPacket()
+                    if (packetBytes): # if packet is of non-zero length
+                        self.bufferTxMsg(packetBytes)
+                    
+                    #self.radio.bufferTxMsg(HDLC_END_TDMA) # append end of message byte
+                    self.bytesSent += self.sendBuffer() 
+
+                    self.transmitComplete = True
+                else:
+                    self.radio.setMode(RadioMode.sleep)
+                    
+            else:
+                if self.receiveComplete == False and adminTime >= self.rxReadTime:
+                    self.radio.setMode(RadioMode.receive) # set radio mode
+                    self.receiveComplete = self.readMsgs()
+                    if (self.receiveComplete):    
+                        #print("Node " + str(self.nodeParams.config.nodeId) + " - Block packet receive complete")
+                        self.radio.setMode(RadioMode.sleep)
+            
+
+ 
     def init(self, currentTime):
         if not self.commStartTime or not self.networkConfigConfirmed: # Mesh not initialized
             self.initComm(currentTime)
@@ -219,7 +330,6 @@ class TDMAComm(SerialComm):
         configHash = self.nodeParams.config.calculateHash()
         config_pb = NodeConfig.toProtoBuf(self.nodeParams.config.rawConfig).SerializeToString()
         self.tdmaCmds[TDMACmds['CurrentConfig']] = Command(TDMACmds['CurrentConfig'], {'config': config_pb, 'configLength': len(config_pb), 'configHash': configHash, 'hashLength': self.nodeParams.config.hashSize}, [TDMACmds['CurrentConfig'], self.nodeParams.config.nodeId], self.maxNumSlots * self.nodeParams.config.commConfig['configTxInterval'])
-        print(self.maxNumSlots * self.nodeParams.config.commConfig['configTxInterval'])
 
         # Determine where in frame mesh network currently is
         self.syncTDMAFrame(currentTime)
@@ -261,6 +371,7 @@ class TDMAComm(SerialComm):
         """Determine where in frame mesh network currently is to ensure time sync."""
         self.frameTime = (currentTime - self.commStartTime)%self.frameLength
         self.frameStartTime = currentTime - self.frameTime
+        self.frameCount = math.floor(currentTime - self.commStartTime) / self.frameLength
         #print("Node " + str(self.nodeParams.config.nodeId) + " " + str(self.frameStartTime),"- Frame start") 
         
         # Update periodic mesh messages
@@ -287,6 +398,15 @@ class TDMAComm(SerialComm):
         # Process any received messages
         self.processMsgs()
 
+        # Update block transmit status
+        if (self.blockTxInProgress):
+            # Process block transmit receipts
+            if (self.blockTx.srcId == self.nodeParams.config.nodeId):
+                self.processBlockTxReceipts()
+            
+            self.updateBlockTxStatus()
+
+
         # Sleep until next frame to save CPU usage
         remainingFrameTime = (self.frameLength - (self.nodeParams.clock.getTime() - self.frameStartTime))
         if (remainingFrameTime > 0.010):
@@ -299,28 +419,41 @@ class TDMAComm(SerialComm):
     def updateShortestPaths(self):
         for node in range(self.maxNumSlots):
             self.meshPaths[node] = findShortestPaths(self.maxNumSlots, self.nodeParams.linkStatus, node+1)
+            # Populate direct mesh network neightbors list for this node
+            if (node+1 == self.nodeParams.config.nodeId):
+                for paths in self.meshPaths[node]:
+                    for path in paths:
+                        if (len(path) > 1): # path exists
+                           if (path[1] not in self.neighbors): # new neighbor
+                                self.neighbors.append(path[1])  
+    
+        #print("Node", self.nodeParams.config.nodeId, "- Direct neighbors:", str(self.neighbors)) 
+        
 
     def updateMode(self, frameTime):
         # Update slot
         self.resetTDMASlot(frameTime)
 
         # Check for TDMA failsafe
-        if self.tdmaFailsafe == True:
+        if (self.tdmaFailsafe == True):
             self.setTDMAMode(TDMAMode.failsafe)
             return
         
-        if frameTime >= self.cycleLength: # Cycle complete
-            self.setTDMAMode(TDMAMode.sleep)
-            #print str(frameTime) + " - Cycle complete, sleeping"
+        if (frameTime >= self.cycleLength): # Cycle complete
+            if (self.adminEnabled and frameTime < (self.cycleLength + self.adminLength)): # admin period
+                self.setTDMAMode(TDMAMode.admin)
+            else: # sleep period
+                self.setTDMAMode(TDMAMode.sleep)
+                #print str(frameTime) + " - Cycle complete, sleeping"
             return
 
         # Check for block transmit
-        if self.blockTxStatus['status'] == TDMABlockTxStatus.active:
-            if self.blockTxStatus['txNode'] == self.nodeParams.config.nodeId: # this node is transmitting
-                self.setTDMAMode(TDMAMode.blockTx)
-            else: # this node is receiving
-                self.setTDMAMode(TDMAMode.blockRx)
-            return
+        #if self.blockTxStatus['status'] == TDMABlockTxStatus.active:
+        #    if self.blockTxStatus['txNode'] == self.nodeParams.config.nodeId: # this node is transmitting
+        #        self.setTDMAMode(TDMAMode.blockTx)
+        #    else: # this node is receiving
+        #        self.setTDMAMode(TDMAMode.blockRx)
+        #    return
 
         # Normal cycle sequence
         if self.slotTime < self.enableLength: # Initialize comm at start of slot
@@ -360,7 +493,7 @@ class TDMAComm(SerialComm):
             #else:
             if frameTime < self.cycleLength: # during cycle
                 self.slotNum = int(frameTime/self.slotLength) + 1
-            else: # during sleep period
+            else: # post-cycle
                 self.slotNum = self.maxNumSlots
         #self.slotStartTime = currentTime - (frameTime - (self.slotNum-1)*self.slotLength) 
         #self.slotTime = frameTime - self.slotStartTime
@@ -378,6 +511,9 @@ class TDMAComm(SerialComm):
             if mode == TDMAMode.receive:
                 self.receiveComplete = False 
             elif mode == TDMAMode.transmit:
+                self.transmitComplete = False 
+            elif mode == TDMAMode.admin: 
+                self.receiveComplete = False 
                 self.transmitComplete = False 
                 #print str(time.time()) + ": " + str(frameTime) + " - Node " + str(self.nodeId) + " - Transmitting"
     
@@ -404,7 +540,7 @@ class TDMAComm(SerialComm):
  
                 self.meshQueueIn[destId] = b'' # clear message after transmission
 
-            self.radio.bufferTxMsg(HDLC_END_TDMA) # append end of message byte
+            #self.radio.bufferTxMsg(HDLC_END_TDMA) # append end of message byte
         
             #print("Node " + str(self.nodeParams.config.nodeId) + " - Number of bytes sent: " + str(len(self.radio.txBuffer)))
             self.bytesSent += self.sendBuffer() 
@@ -424,51 +560,37 @@ class TDMAComm(SerialComm):
 
         return self.createMeshPacket(destId, msgBytes, adminBytes, self.nodeParams.config.nodeId)
 
-    def createMeshPacket(self, destId, msgBytes, adminBytes, sourceId):
+    def createMeshPacket(self, destId, msgBytes, adminBytes, sourceId, blockTxPacket=0):
 
         if (len(adminBytes) == 0 and len(msgBytes) == 0): # do not send empty message
             return bytearray()
 
         # Create mesh packet header
-        packetHeaderFormat = '<BBHHH'
-        packetHeader = struct.pack(packetHeaderFormat, sourceId, destId, len(adminBytes), len(msgBytes), self.nodeParams.get_cmdCounter())
+        packetHeaderFormat = '<BBHHHB'
+        packetHeader = struct.pack(packetHeaderFormat, sourceId, destId, len(adminBytes), len(msgBytes), self.nodeParams.get_cmdCounter(), blockTxPacket)
         
         # Return mesh packet
         return bytearray(packetHeader + adminBytes + msgBytes)
 
-    def sendBlock(self):
-        if self.dataBlock:
-            if len(self.dataBlock[self.dataBlockPos:]) > self.nodeParams.config.commConfig['maxBlockTransferSize']: # buffer portion of data block
-                blockDataCmd = Command(TDMACmds['BlockData'], {'data': self.dataBlock[self.dataBlockPos:self.dataBlockPos + self.nodeParams.config.commConfig['maxBlockTransferSize']]}, [TDMACmds['BlockData'], self.nodeParams.config.nodeId]).serialize(self.nodeParams.clock.getTime())
-                self.dataBlockPos += self.nodeParams.config.commConfig['maxBlockTransferSize']
-            else: # send entire data block
-                blockDataCmd = Command(TDMACmds['BlockData'], {'data': self.dataBlock[self.dataBlockPos:]}, [TDMACmds['BlockData'], self.nodeParams.config.nodeId]).serialize(self.nodeParams.clock.getTime())
-                self.clearDataBlock() # clear stored data block
-                self.blockTxStatus['blockTxComplete'] = True # end block transfer
-            
-            # Send block data
-            self.radio.bufferTxMsg(blockDataCmd)
-            self.radio.bufferTxMsg(HDLC_END_TDMA)
-            self.radio.sendBuffer(self.nodeParams.config.commConfig['maxBlockTransferSize'])
-        
-        else: # end block transfer - no data to send
-            self.blockTxStatus['blockTxComplete'] = True
-
     def readMsgs(self):
         """Read from serial connection and look for end of message value."""
         self.bytesRcvd += self.radio.readBytes(True)
-        
-        for i in range(self.rxBufferReadPos, self.radio.bytesInRxBuffer):
-            self.rxBufferReadPos = i+1
+       
+        # Look for TDMA message end indicator 
+        #for i in range(self.rxBufferReadPos, self.radio.bytesInRxBuffer):
+        #    self.rxBufferReadPos = i+1
             #byte = self.rxBuffer[i:i+1]
-            if self.radio.rxBuffer[i:i+1] == HDLC_END_TDMA: # End of transmission found
-                return True
+       #     if self.radio.rxBuffer[i:i+1] == HDLC_END_TDMA: # End of transmission found
+                #print("Node " + str(self.nodeParams.config.nodeId) + " - Bytes in rxBuffer: ", self.radio.bytesInRxBuffer)
+       #         return True
         
+        #print("Node " + str(self.nodeParams.config.nodeId) + " - Bytes in rxBuffer: ", self.radio.bytesInRxBuffer)
+
         return False # end of transmission not found
    
     def relayMsg(self, msgBytes):
         """Relay received message. Existing mesh header is maintained with only the source updated."""
-        packetHeaderFormat = '<BBHHH'
+        packetHeaderFormat = '<BBHHHB'
         meshHeaderLen = struct.calcsize(packetHeaderFormat)
         packetHeader = struct.unpack(packetHeaderFormat, msgBytes[0:meshHeaderLen])
         sourceId = packetHeader[0]
@@ -476,6 +598,7 @@ class TDMAComm(SerialComm):
         adminLength = packetHeader[2]    
         payloadLength = packetHeader[3]
         cmdCounter = packetHeader[4]
+        statusByte = packetHeader[5]
         #print("Node " + str(self.nodeParams.config.nodeId) + " relaying message from " + str(sourceId) + " - " + str(cmdCounter))
 
         # Update packet sourceId
@@ -496,7 +619,7 @@ class TDMAComm(SerialComm):
                 msg = self.msgParser.parsedMsgs.pop(0)
                 
                 # Parse mesh packet header
-                packetHeaderFormat = '<BBHHH'
+                packetHeaderFormat = '<BBHHHB'
                 meshHeaderLen = struct.calcsize(packetHeaderFormat)
                 packetHeader = struct.unpack(packetHeaderFormat, msg[0:meshHeaderLen])
                 sourceId = packetHeader[0]
@@ -504,6 +627,7 @@ class TDMAComm(SerialComm):
                 adminLength = packetHeader[2]    
                 payloadLength = packetHeader[3]
                 cmdCounter = packetHeader[4]
+                statusByte = packetHeader[5]
  
                 # Ignore stale commands
                 if (cmdCounter in self.nodeParams.cmdHistory):
@@ -524,16 +648,18 @@ class TDMAComm(SerialComm):
                     # Place raw message bytes in buffer to send to host
                     if (payloadLength > 0):
                         if (destId == self.nodeParams.config.nodeId or self.nodeParams.config.commConfig['recvAllMsgs']):
-                            print("Placing in hostBuffer: " + str(msg[meshHeaderLen + adminLength:]))
+                            #print("Placing in hostBuffer: " + str(msg[meshHeaderLen + adminLength:]))
                             self.hostBuffer += msg[meshHeaderLen + adminLength:]
        
                     # Check for relay
                     if (self.inited == False): # don't process for relaying if mesh not inited
                         return
  
-                    if (destId == 0): # broadcast message
-                        # All broadcast messages are relayed
-                        self.relayMsg(bytearray(msg))
+                    if (destId == 0):
+                        if (statusByte != BLOCK_TX_MSG): # broadcast message (don't relay block tx packets)
+                            # All broadcast messages are relayed
+                            self.relayMsg(bytearray(msg))
+
                     elif (destId != self.nodeParams.config.nodeId): # message for another node
                         # Only relay if on the shortest path
                         if (self.checkForRelay(self.nodeParams.config.nodeId, destId, sourceId) == True): # message should be relayed
@@ -592,12 +718,16 @@ class TDMAComm(SerialComm):
         for cmdId in list(self.tdmaCmds.keys()):
             cmd = self.tdmaCmds[cmdId]
 
-            # Delay initial config transmission
+            # Check for admin only commands
+            adminCmds = [TDMACmds['CurrentConfig'], TDMACmds['ConfigUpdate']]
+            if (cmdId in adminCmds and self.tdmaMode != TDMAMode.admin): # do not send admin only commands
+                continue
+            # Delay config transmission (initial delay upon mesh startup)
             if (cmdId == TDMACmds['CurrentConfig'] and timestamp < self.initialConfigTxTime):
                 continue
    
             # Check for polling commands (need to be processed by sender)
-            if (cmdId in [TDMACmds['NetworkRestart'], TDMACmds['ConfigUpdate']]):
+            if (cmdId in [TDMACmds['NetworkRestart'], TDMACmds['ConfigUpdate'], TDMACmds['BlockTxRequest']]):
                 TDMACmdProcessor['msgProcessor'](self, cmdId, {'cmdId': cmd.cmdId, 'sourceId': self.nodeParams.config.nodeId, 'cmdCounter': cmd.header['header']['cmdCounter']}, cmd.serialize(timestamp), {'nodeStatus': self.nodeParams.nodeStatus, 'clock': self.nodeParams.clock, 'comm': self})
                 #self.networkMsgQueue.append({"header": {"cmdId": cmd.cmdId, "sourceId": self.nodeParams.config.nodeId, "cmdCounter": cmd.cmdCounter}, "msgContents": cmd.cmdData})
             #elif (cmdId == TDMACmds['ConfigUpdate']):
@@ -622,118 +752,148 @@ class TDMAComm(SerialComm):
         return tdmaCmdBytes
                                 
 
-    def resetBlockTxStatus(self):
-        """Clears block transmit status."""
-        self.blockTxStatus = {'status': TDMABlockTxStatus.false, 'txNode': None, 'startTime': None, 'length': None, 'blockResponseList': {}, 'blockReqID': None, 'requestTime': None, 'blockTxComplete': False}
-        self.tdmaStatus = TDMAStatus.nominal
+    def startBlockTx(self, reqId, destId, srcId, startTime, length, blockData=None):
+        if (self.blockTxInProgress == True): # reject new block tx because one already in progress
+            return False    
 
-    def monitorBlockTx(self):
-        """Monitors current status of block transmit."""
-        if self.blockTxStatus['status'] == TDMABlockTxStatus.false:
-            return
+        # Store block transfer details
+        endTime = startTime + int(length*self.frameLength*self.blockTxEndMult)
+        self.blockTx = BlockTx(reqId, length, srcId, destId, startTime, endTime, blockData)
+        self.blockTxInProgress = True
+        #self.blockTxComplete = False
+        #self.blockTxReqId = reqId
+        #self.blockTxDestId = destId
+        #self.blockTxSrcId = srcId
+        #self.blockTxLength = length
+        #self.blockTxStartTime = startTime
+        #self.blockTxEndTime = startTime + int(length*self.frameLength*self.blockTxEndMult)
 
-        elif self.blockTxStatus['status'] == TDMABlockTxStatus.pending: # monitor pending block request
-            if self.blockTxStatus['txNode'] == self.nodeParams.config.nodeId: # this node requested block tx
-                # Check block request responses
-                response = self.checkBlockResponse()
-                if response == True:
-                    # Confirm block tx
-                    blockConfirmCmd = Command(TDMACmds['BlockTxConfirmed'], {'blockReqID': self.blockTxStatus['blockReqID']}, [TDMACmds['BlockTxConfirmed'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
-                    self.radio.bufferTxMsg(blockConfirmCmd.serialize(self.nodeParams.clock.getTime()))
-                    self.blockTxStatus['status'] = TDMABlockTxStatus.confirmed              
-                    return
+        print("Node", self.nodeParams.config.nodeId, "- Starting block transmit, length-", self.blockTx.length)
 
-                elif response == False:
-                    # Cancel request
-                    self.resetBlockTxStatus()
-                    return
-
-                # Check for request timeout
-                if (self.frameStartTime - self.blockTxStatus['requestTime']) > self.nodeParams.config.commConfig['blockTxRequestTimeout'] * self.nodeParams.config.commConfig['frameLength']:
-                    # Request timed out - reset status
-                    self.resetBlockTxStatus()
-                    return
-            if self.frameStartTime >= self.blockTxStatus['startTime']: # no block confirmed received
-                # Cancel pending block
-                self.resetBlockTxStatus()
-                return
-        
-        elif self.blockTxStatus['status'] == TDMABlockTxStatus.confirmed: 
-            # Check for block start
-            if self.frameStartTime >= self.blockTxStatus['startTime']: # start block
-                self.blockTxStatus['status'] = TDMABlockTxStatus.active
-                self.tdmaStatus = TDMAStatus.blockTx
-        
-            # Send block transmit status message
-            if self.blockTxStatus['txNode'] == self.nodeParams.config.nodeId:
-                blockStatusCmd = Command(TDMACmds['BlockTxStatus'], {'blockReqID': self.blockTxStatus['blockReqID'], 'startTime': self.blockTxStatus['startTime'], 'length': self.blockTxStatus['length']}, [TDMACmds['BlockTxStatus'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
-                self.radio.bufferTxMsg(blockStatusCmd.serialize(self.nodeParams.clock.getTime()))
-    
-        elif self.blockTxStatus['status'] == TDMABlockTxStatus.active: # block transmit in progress
-            # Check for end of block transmit
-            if self.blockTxStatus['blockTxComplete'] or (self.frameStartTime - self.blockTxStatus['startTime']) >= self.blockTxStatus['length']*self.nodeParams.config.commConfig['frameLength'] or self.tdmaStatus == TDMAStatus.nominal:
-                # Block transmit ended - reset status
-                self.resetBlockTxStatus()
-
-    def clearDataBlock(self):
-        """Clear data stored for block transfer."""
-        self.dataBlock = bytearray()
-        self.dataBlockPos = 0
-
-    def sendDataBlock(self, dataBlock):
-        """Begins block transfer process."""
-        
-        # Calculate block tx parameters
-        length = int(ceil(len(dataBlock) / self.nodeParams.config.commConfig['maxBlockTransferSize']))
-        if length > self.nodeParams.config.commConfig['maxTxBlockSize']:
-            # Too much data to transmit
-            return False
-        
-        startTime = int(self.frameStartTime + self.nodeParams.config.commConfig['frameLength'] * self.nodeParams.config.commConfig['minBlockTxDelay'])
-        
-        # Store data block
-        self.dataBlock = dataBlock
-    
-        # Populate response list
-        self.populateBlockResponseList()
-
-        # Send block tx request
-        blockReqID = random.randint(1,255) # just a random "unique" number 
-        blockTxCmd = Command(TDMACmds['BlockTxRequest'], {'blockReqID': blockReqID, 'startTime': startTime, 'length': length}, [TDMACmds['BlockTxRequest'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
-        self.bufferTxMsg(blockTxCmd.serialize(self.nodeParams.clock.getTime()))
-    
-        # Update blockTxStatus
-        self.blockTxStatus['blockReqID'] = blockReqID
-        self.blockTxStatus['startTime'] = startTime
-        self.blockTxStatus['length'] = length
-        self.blockTxStatus['requestTime'] = self.frameStartTime
-        self.blockTxStatus['txNode'] = self.nodeParams.config.nodeId
-        self.blockTxStatus['status'] = TDMABlockTxStatus.pending
-    
         return True
 
-    def populateBlockResponseList(self):
-        """Add currently present nodes to block request response list."""
-        for i in range(len(self.nodeParams.nodeStatus)):
-            if self.nodeParams.nodeStatus[i].present:
-                self.blockTxStatus['blockResponseList'].update({i+1: None})
+    def sendBlockTxPacket(self):
+        """Send next block transmit packet."""
 
-    def checkBlockResponse(self):
-        # Check for positive response from all nodes
-        numPosResponses = 0
-        for node in self.blockTxStatus['blockResponseList']:
-            response = self.blockTxStatus['blockResponseList'][node]
-            if response != None:
-                if response == False: # False response
-                    return False
-                elif response == True:
-                    numPosResponses += 1
+        # Check for missed packets
+        packetsToRemove = []
+        repeatPacket = None
+        #for entry in range(len(self.blockTxPacketStatus)):
+        for entry in self.blockTxPacketStatus.keys():
+            status = self.blockTxPacketStatus[entry]
+            status.framesSinceTx += 1
+            
+            # Check for responses from all directly connected nodes
+            allResponsesRcvd = True
+            for node in self.neighbors:
+                if (node not in status.responsesRcvd): # response not received from this node
+                    allResponsesRcvd = False
+                    break
+        
+            # Check packet status
+            #print("Responses received, framesSinceTx:", allResponsesRcvd, status.framesSinceTx)
+            if (allResponsesRcvd == True): # packet successfully sent
+                print("Node", self.nodeParams.config.nodeId, "- All responses received for block tx packet", status.packetNum)
+                packetsToRemove.append(entry)
+            elif (allResponsesRcvd == False and status.framesSinceTx >= self.blockTxReceiptTimeout): # resend packet
+                status.framesSinceTx = 0 # reset frame counter
+                status.retries += 1
+                repeatPacket = status.packet
+                if (status.retries >= self.blockTxRetryLimit): # Retry limit met, remove packet from status list
+                    packetsToRemove.append(entry)
+                break
+     
+        # Remove entries from packet status list
+        #self.blockTxPacketStatus = [self.blockTxPacketStatus[entry] for entry in range(len(self.blockTxStatus)) if entry not in packetsToRemove] 
+        for entry in packetsToRemove:
+            del self.blockTxPacketStatus[entry]
+        
+        # Check for packet to resend
+        if (repeatPacket): # packet to resend
+            print("Node " + str(self.nodeParams.config.nodeId) + " - Resending block transmit packet")
+            return repeatPacket
 
-        if numPosResponses == len(self.blockTxStatus['blockResponseList']): # all responded positive
-            return True
-        else: # still awaiting responses
-            return None
+        ## Send next increment of block data
+        newPacket = self.getBlockTxPacket()
+        
+        if (newPacket != None): # data to send
+            # Add new packet to status list
+            self.blockTxPacketStatus[self.blockTx.packetNum] = BlockTxPacketStatus(newPacket, self.blockTx.packetNum)
+        elif (len(self.blockTxPacketStatus) == 0): # Check for block transmit completion (all packets sent successfully)
+            self.blockTx.complete = True
+
+        return newPacket
+
     
+    def getBlockTxPacket(self):
+        self.blockTx.packetNum += 1
+        
+        # Check for block data
+        #if (self.blockTxData == None): # no data to send
+        #    return None
+
+        # Create mesh packet from next chunk of block data
+        if (self.blockTx.dataLoc >= len(self.blockTx.data)): # no packets remaining
+            return None
+        elif (len(self.blockTx.data) > self.blockTx.dataLoc + self.nodeParams.config.commConfig['blockTxPacketSize']): 
+            newBlockTxDataLoc = self.blockTx.dataLoc + int(self.nodeParams.config.commConfig['blockTxPacketSize'])
+            blockDataChunk = self.blockTx.data[self.blockTx.dataLoc:newBlockTxDataLoc]
+            self.blockTx.dataLoc = newBlockTxDataLoc
+        else: # send remainder of data block
+            blockDataChunk = self.blockTx.data[self.blockTx.dataLoc:]
+            self.blockTx.dataLoc = len(self.blockTx.data) # reached end of data block
+   
+        blockDataCmd = Command(TDMACmds['BlockData'], {'blockReqId': self.blockTx.reqId, 'packetNum': self.blockTx.packetNum, 'dataLength': len(blockDataChunk), 'data': blockDataChunk}, [TDMACmds['BlockData'], self.nodeParams.config.nodeId])
+        blockDataSerialized = self.tdmaCmdParser.encodeMsg(blockDataCmd.serialize(self.nodeParams.clock.getTime()))
+ 
+        blockPacket = self.createMeshPacket(self.blockTx.destId, b'', blockDataSerialized, self.nodeParams.config.nodeId, BLOCK_TX_MSG)
+                    
+        print("Node " + str(self.nodeParams.config.nodeId) + " - Sending block transmit packet", self.blockTx.packetNum, ". Length-", len(blockPacket))
+
+        return blockPacket
+
+    def processBlockTxReceipts(self):
+        # Update block tx packet receipt status
+        for receipt in self.blockTxPacketReceipts:
+            if (receipt['blockReqId'] == self.blockTx.reqId and receipt['packetNum'] in self.blockTxPacketStatus):
+                if (receipt['sourceId'] not in self.blockTxPacketStatus[receipt['packetNum']].responsesRcvd):
+                    self.blockTxPacketStatus[receipt['packetNum']].responsesRcvd.append(receipt['sourceId'])
+
+        self.blockTxPacketReceipts = []
+            
+    def updateBlockTxStatus(self):
+        # Monitor for block transmit end
+        if (self.blockTx.complete or self.nodeParams.clock.getTime() >= self.blockTx.endTime): # block transmit ended
+            if (self.blockTx.srcId == self.nodeParams.config.nodeId): # sender end block tx
+                # Send block transmit end message
+                self.tdmaCmds[TDMACmds['BlockTxRequest']] = Command(TDMACmds['BlockTxRequest'], {'blockReqId': self.blockTx.reqId, 'destId': self.blockTx.destId, 'startTime': self.blockTx.startTime, 'length': self.blockTx.length, 'status': 0}, [TDMACmds['BlockTxRequest'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
+    
+            # End block transmit
+            self.endBlockTx()
+    
+    def endBlockTx(self):
+        print("Node", self.nodeParams.config.nodeId, "- Concluding block transmit.")
+
+        # Do something with block transmit results - TODO
+        if (self.blockTx.srcId != self.nodeParams.config.nodeId and self.blockTx.destId in [0, self.nodeParams.config.nodeId]): # pass block transmit data to host
+            self.blockTxOut = self.blockTx.getData()
+            print("Node", self.nodeParams.config.nodeId, "- Sending block tx data to host, length:", len(self.blockTxOut))
+
+        # Check for need to relay - TODO - implement logic for relaying block tx to destination node
+
+        # Clear block transmit parameters
+        self.blockTx = None
+        self.blockTxInProgress = False
+        #self.blockTxReqId = None
+        #self.blockTxStartTime = None
+        #self.blockTxLength = 0
+        self.blockTxPacketStatus = dict() # stores transmitted packet status until all receipt requests received
+        #self.blockTxPacketNum = 0
+        #self.blockTxDataLoc = 0
+        #self.blockTxDestId = 0
+        #self.blockTxSrcId = 0
+        self.blockTxPacketReceipts = []
+
     def checkTimeOffset(self, offset=None):
         if offset == None: # offset not provided so attempt to get offset from clock
             offset = self.nodeParams.clock.getOffset()

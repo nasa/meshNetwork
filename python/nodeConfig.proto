@@ -56,6 +56,9 @@ message TDMAConfiguration {
     string statusPin = 25;
     bool recvAllMsgs = 26;
     uint32 restartDelay = 27;
+    uint32 pollTimeout = 28;
+    bool adminEnable = 29;
+    uint32 adminLength = 30;
 }
 
 message NodeConfig_proto {
