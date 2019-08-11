@@ -308,9 +308,14 @@ class MeshController(object):
         # Store data block and request block data transfer
         blockTxStartTime = int(self.nodeParams.clock.getTime() + self.nodeParams.config.commConfig['pollTimeout'])
         blockTxLength = math.ceil((len(blockBytes) / self.nodeParams.config.commConfig['blockTxPacketSize'])) # length in number of packets
-        #self.blockTx = {'blockData': blockBytes, 'destId': destId, 'startTime': blockTxStartTime, 'length': blockTxLength, 'sourceId': self.nodeParams.config.nodeId}
+
+        if (blockTxLength > self.nodeParams.config.commConfig['blockTxMaxLength']): # data block is too large
+            return False
+
         self.blockTxData = blockBytes
         self.comm.tdmaCmds[TDMACmds['BlockTxRequest']] = Command(TDMACmds['BlockTxRequest'], {'blockReqId': self.getBlockRequestId(), 'destId': destId, 'startTime': blockTxStartTime, 'length': blockTxLength, 'status': 1}, [TDMACmds['BlockTxRequest'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
+
+        return True
 
     def getBlockRequestId(self):
         self.blockReqIdCounter = (self.blockReqIdCounter + 1) % 256 # wrap after exceeding 8-bit value

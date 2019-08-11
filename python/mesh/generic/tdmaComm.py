@@ -87,20 +87,8 @@ class TDMAComm(SerialComm):
         # Block Tx information
         self.blockTx = None
         self.blockTxInProgress = False
-        #self.blockTxReqId = None
-        #self.blockTxStartTime = None
-        #self.blockTxLength = 0
         self.blockTxPacketStatus = dict() # stores transmitted packet status until all receipt requests received
-        self.blockTxReceiptTimeout = 3 # Number of frames to wait for block tx packet receipt - TODO: move to configuration
-        self.blockTxRetryLimit = 1 # Number of block tx packet resends - TODO: move to configuration
-        self.blockTxEndMult = 1.5 # end time multiplier - TODO: move to configuration
-        #self.blockTxPacketNum = 0
-        #self.blockTxDataLoc = 0
-        #self.blockTxDestId = 0
-        #self.blockTxSrcId = 0
         self.blockTxPacketReceipts = []
-        #self.resetBlockTxStatus()
-        #self.clearDataBlock()
 
         # Comm enable flag
         self.enabled = True
@@ -757,16 +745,9 @@ class TDMAComm(SerialComm):
             return False    
 
         # Store block transfer details
-        endTime = startTime + int(length*self.frameLength*self.blockTxEndMult)
+        endTime = startTime + int(length*self.frameLength*self.nodeParams.config.commConfig['blockTxEndMult'])
         self.blockTx = BlockTx(reqId, length, srcId, destId, startTime, endTime, blockData)
         self.blockTxInProgress = True
-        #self.blockTxComplete = False
-        #self.blockTxReqId = reqId
-        #self.blockTxDestId = destId
-        #self.blockTxSrcId = srcId
-        #self.blockTxLength = length
-        #self.blockTxStartTime = startTime
-        #self.blockTxEndTime = startTime + int(length*self.frameLength*self.blockTxEndMult)
 
         print("Node", self.nodeParams.config.nodeId, "- Starting block transmit, length-", self.blockTx.length)
 
@@ -795,11 +776,11 @@ class TDMAComm(SerialComm):
             if (allResponsesRcvd == True): # packet successfully sent
                 print("Node", self.nodeParams.config.nodeId, "- All responses received for block tx packet", status.packetNum)
                 packetsToRemove.append(entry)
-            elif (allResponsesRcvd == False and status.framesSinceTx >= self.blockTxReceiptTimeout): # resend packet
+            elif (allResponsesRcvd == False and status.framesSinceTx >= self.nodeParams.config.commConfig['blockTxReceiptTimeout']): # resend packet
                 status.framesSinceTx = 0 # reset frame counter
                 status.retries += 1
                 repeatPacket = status.packet
-                if (status.retries >= self.blockTxRetryLimit): # Retry limit met, remove packet from status list
+                if (status.retries >= self.nodeParams.config.commConfig['blockTxPacketRetry']): # Retry limit met, remove packet from status list
                     packetsToRemove.append(entry)
                 break
      

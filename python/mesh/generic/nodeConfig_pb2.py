@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='nodeConfig',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x10nodeConfig.proto\x12\nnodeConfig\"\x8f\x03\n\x11NodeConfiguration\x12\x0e\n\x06nodeId\x18\x01 \x01(\r\x12\x13\n\x0bmaxNumNodes\x18\x02 \x01(\r\x12\x10\n\x08platform\x18\x03 \x01(\t\x12\x19\n\x11nodeUpdateTimeout\x18\x04 \x01(\x02\x12\x1b\n\x13\x46\x43\x43ommWriteInterval\x18\x05 \x01(\x02\x12\x14\n\x0c\x46\x43\x43ommDevice\x18\x06 \x01(\t\x12\x12\n\nFCBaudrate\x18\x07 \x01(\x04\x12\x13\n\x0b\x63mdInterval\x18\x08 \x01(\x02\x12\x13\n\x0blogInterval\x18\t \x01(\x02\x12\x10\n\x08\x63ommType\x18\n \x01(\t\x12\x17\n\x0fnumMeshNetworks\x18\x0b \x01(\r\x12\x13\n\x0bmeshDevices\x18\x0c \x03(\t\x12\x0e\n\x06radios\x18\r \x03(\t\x12\x12\n\nmsgParsers\x18\x0e \x03(\t\x12\x14\n\x0cmeshBaudrate\x18\x0f \x01(\x04\x12\x13\n\x0bparseMsgMax\x18\x10 \x01(\r\x12\x14\n\x0crxBufferSize\x18\x11 \x01(\r\x12\x12\n\ngcsPresent\x18\x12 \x01(\x08\"W\n\x16InterfaceConfiguration\x12\x15\n\rnodeCommIntIP\x18\x01 \x01(\t\x12\x12\n\ncommRdPort\x18\x02 \x01(\r\x12\x12\n\ncommWrPort\x18\x03 \x01(\r\"\xb9\x05\n\x11TDMAConfiguration\x12\x10\n\x08sleepPin\x18\x01 \x01(\t\x12\x14\n\x0c\x65nableLength\x18\x02 \x01(\x02\x12\x17\n\x0fslotGuardLength\x18\x03 \x01(\x02\x12\x18\n\x10preTxGuardLength\x18\x04 \x01(\x02\x12\x19\n\x11postTxGuardLength\x18\x05 \x01(\x02\x12\x10\n\x08txLength\x18\x06 \x01(\x02\x12\x0f\n\x07rxDelay\x18\x07 \x01(\x02\x12\x16\n\x0einitTimeToWait\x18\x08 \x01(\x02\x12\x13\n\x0bmaxNumSlots\x18\t \x01(\r\x12\x17\n\x0f\x64\x65siredDataRate\x18\n \x01(\x02\x12\x15\n\rinitSyncBound\x18\x0b \x01(\r\x12\x18\n\x10operateSyncBound\x18\x0c \x01(\r\x12\x15\n\roffsetTimeout\x18\r \x01(\x02\x12\x18\n\x10offsetTxInterval\x18\x0e \x01(\x02\x12\x18\n\x10statusTxInterval\x18\x0f \x01(\x02\x12\x17\n\x0flinksTxInterval\x18\x10 \x01(\x02\x12\x16\n\x0emaxTxBlockSize\x18\x11 \x01(\r\x12\x13\n\x0blinkTimeout\x18\x12 \x01(\x02\x12\x1d\n\x15\x62lockTxRequestTimeout\x18\x13 \x01(\r\x12\x17\n\x0fminBlockTxDelay\x18\x14 \x01(\r\x12\x0c\n\x04\x66pga\x18\x15 \x01(\x08\x12\x17\n\x0f\x66pgaFailsafePin\x18\x16 \x01(\t\x12\x14\n\x0c\x66pgaFifoSize\x18\x17 \x01(\r\x12\x11\n\tenablePin\x18\x18 \x01(\t\x12\x11\n\tstatusPin\x18\x19 \x01(\t\x12\x13\n\x0brecvAllMsgs\x18\x1a \x01(\x08\x12\x14\n\x0crestartDelay\x18\x1b \x01(\r\x12\x13\n\x0bpollTimeout\x18\x1c \x01(\r\x12\x13\n\x0b\x61\x64minEnable\x18\x1d \x01(\x08\x12\x13\n\x0b\x61\x64minLength\x18\x1e \x01(\r\"\xa3\x01\n\x10NodeConfig_proto\x12+\n\x04node\x18\x01 \x01(\x0b\x32\x1d.nodeConfig.NodeConfiguration\x12\x35\n\tinterface\x18\x02 \x01(\x0b\x32\".nodeConfig.InterfaceConfiguration\x12+\n\x04tdma\x18\x03 \x01(\x0b\x32\x1d.nodeConfig.TDMAConfigurationb\x06proto3')
+  serialized_pb=_b('\n\x10nodeConfig.proto\x12\nnodeConfig\"\x8f\x03\n\x11NodeConfiguration\x12\x0e\n\x06nodeId\x18\x01 \x01(\r\x12\x13\n\x0bmaxNumNodes\x18\x02 \x01(\r\x12\x10\n\x08platform\x18\x03 \x01(\t\x12\x19\n\x11nodeUpdateTimeout\x18\x04 \x01(\x02\x12\x1b\n\x13\x46\x43\x43ommWriteInterval\x18\x05 \x01(\x02\x12\x14\n\x0c\x46\x43\x43ommDevice\x18\x06 \x01(\t\x12\x12\n\nFCBaudrate\x18\x07 \x01(\x04\x12\x13\n\x0b\x63mdInterval\x18\x08 \x01(\x02\x12\x13\n\x0blogInterval\x18\t \x01(\x02\x12\x10\n\x08\x63ommType\x18\n \x01(\t\x12\x17\n\x0fnumMeshNetworks\x18\x0b \x01(\r\x12\x13\n\x0bmeshDevices\x18\x0c \x03(\t\x12\x0e\n\x06radios\x18\r \x03(\t\x12\x12\n\nmsgParsers\x18\x0e \x03(\t\x12\x14\n\x0cmeshBaudrate\x18\x0f \x01(\x04\x12\x13\n\x0bparseMsgMax\x18\x10 \x01(\r\x12\x14\n\x0crxBufferSize\x18\x11 \x01(\r\x12\x12\n\ngcsPresent\x18\x12 \x01(\x08\"W\n\x16InterfaceConfiguration\x12\x15\n\rnodeCommIntIP\x18\x01 \x01(\t\x12\x12\n\ncommRdPort\x18\x02 \x01(\r\x12\x12\n\ncommWrPort\x18\x03 \x01(\r\"\xd6\x05\n\x11TDMAConfiguration\x12\x10\n\x08sleepPin\x18\x01 \x01(\t\x12\x14\n\x0c\x65nableLength\x18\x02 \x01(\x02\x12\x17\n\x0fslotGuardLength\x18\x03 \x01(\x02\x12\x18\n\x10preTxGuardLength\x18\x04 \x01(\x02\x12\x19\n\x11postTxGuardLength\x18\x05 \x01(\x02\x12\x10\n\x08txLength\x18\x06 \x01(\x02\x12\x0f\n\x07rxDelay\x18\x07 \x01(\x02\x12\x16\n\x0einitTimeToWait\x18\x08 \x01(\x02\x12\x13\n\x0bmaxNumSlots\x18\t \x01(\r\x12\x17\n\x0f\x64\x65siredDataRate\x18\n \x01(\x02\x12\x15\n\rinitSyncBound\x18\x0b \x01(\r\x12\x18\n\x10operateSyncBound\x18\x0c \x01(\r\x12\x15\n\roffsetTimeout\x18\r \x01(\x02\x12\x18\n\x10offsetTxInterval\x18\x0e \x01(\x02\x12\x18\n\x10statusTxInterval\x18\x0f \x01(\x02\x12\x17\n\x0flinksTxInterval\x18\x10 \x01(\x02\x12\x13\n\x0blinkTimeout\x18\x11 \x01(\x02\x12\x18\n\x10\x62lockTxMaxLength\x18\x12 \x01(\r\x12\x1d\n\x15\x62lockTxReceiptTimeout\x18\x13 \x01(\r\x12\x1a\n\x12\x62lockTxPacketRetry\x18\x14 \x01(\r\x12\x16\n\x0e\x62lockTxEndMult\x18\x15 \x01(\x02\x12\x0c\n\x04\x66pga\x18\x16 \x01(\x08\x12\x17\n\x0f\x66pgaFailsafePin\x18\x17 \x01(\t\x12\x14\n\x0c\x66pgaFifoSize\x18\x18 \x01(\r\x12\x11\n\tenablePin\x18\x19 \x01(\t\x12\x11\n\tstatusPin\x18\x1a \x01(\t\x12\x13\n\x0brecvAllMsgs\x18\x1b \x01(\x08\x12\x14\n\x0crestartDelay\x18\x1c \x01(\r\x12\x13\n\x0bpollTimeout\x18\x1d \x01(\r\x12\x13\n\x0b\x61\x64minEnable\x18\x1e \x01(\x08\x12\x13\n\x0b\x61\x64minLength\x18\x1f \x01(\r\"\xa3\x01\n\x10NodeConfig_proto\x12+\n\x04node\x18\x01 \x01(\x0b\x32\x1d.nodeConfig.NodeConfiguration\x12\x35\n\tinterface\x18\x02 \x01(\x0b\x32\".nodeConfig.InterfaceConfiguration\x12+\n\x04tdma\x18\x03 \x01(\x0b\x32\x1d.nodeConfig.TDMAConfigurationb\x06proto3')
 )
 
 
@@ -341,99 +341,106 @@ _TDMACONFIGURATION = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='maxTxBlockSize', full_name='nodeConfig.TDMAConfiguration.maxTxBlockSize', index=16,
-      number=17, type=13, cpp_type=3, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='linkTimeout', full_name='nodeConfig.TDMAConfiguration.linkTimeout', index=17,
-      number=18, type=2, cpp_type=6, label=1,
+      name='linkTimeout', full_name='nodeConfig.TDMAConfiguration.linkTimeout', index=16,
+      number=17, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='blockTxRequestTimeout', full_name='nodeConfig.TDMAConfiguration.blockTxRequestTimeout', index=18,
+      name='blockTxMaxLength', full_name='nodeConfig.TDMAConfiguration.blockTxMaxLength', index=17,
+      number=18, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='blockTxReceiptTimeout', full_name='nodeConfig.TDMAConfiguration.blockTxReceiptTimeout', index=18,
       number=19, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='minBlockTxDelay', full_name='nodeConfig.TDMAConfiguration.minBlockTxDelay', index=19,
+      name='blockTxPacketRetry', full_name='nodeConfig.TDMAConfiguration.blockTxPacketRetry', index=19,
       number=20, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='fpga', full_name='nodeConfig.TDMAConfiguration.fpga', index=20,
-      number=21, type=8, cpp_type=7, label=1,
+      name='blockTxEndMult', full_name='nodeConfig.TDMAConfiguration.blockTxEndMult', index=20,
+      number=21, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='fpga', full_name='nodeConfig.TDMAConfiguration.fpga', index=21,
+      number=22, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='fpgaFailsafePin', full_name='nodeConfig.TDMAConfiguration.fpgaFailsafePin', index=21,
-      number=22, type=9, cpp_type=9, label=1,
+      name='fpgaFailsafePin', full_name='nodeConfig.TDMAConfiguration.fpgaFailsafePin', index=22,
+      number=23, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='fpgaFifoSize', full_name='nodeConfig.TDMAConfiguration.fpgaFifoSize', index=22,
-      number=23, type=13, cpp_type=3, label=1,
+      name='fpgaFifoSize', full_name='nodeConfig.TDMAConfiguration.fpgaFifoSize', index=23,
+      number=24, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='enablePin', full_name='nodeConfig.TDMAConfiguration.enablePin', index=23,
-      number=24, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='statusPin', full_name='nodeConfig.TDMAConfiguration.statusPin', index=24,
+      name='enablePin', full_name='nodeConfig.TDMAConfiguration.enablePin', index=24,
       number=25, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='recvAllMsgs', full_name='nodeConfig.TDMAConfiguration.recvAllMsgs', index=25,
-      number=26, type=8, cpp_type=7, label=1,
+      name='statusPin', full_name='nodeConfig.TDMAConfiguration.statusPin', index=25,
+      number=26, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='recvAllMsgs', full_name='nodeConfig.TDMAConfiguration.recvAllMsgs', index=26,
+      number=27, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='restartDelay', full_name='nodeConfig.TDMAConfiguration.restartDelay', index=26,
-      number=27, type=13, cpp_type=3, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='pollTimeout', full_name='nodeConfig.TDMAConfiguration.pollTimeout', index=27,
+      name='restartDelay', full_name='nodeConfig.TDMAConfiguration.restartDelay', index=27,
       number=28, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='adminEnable', full_name='nodeConfig.TDMAConfiguration.adminEnable', index=28,
-      number=29, type=8, cpp_type=7, label=1,
+      name='pollTimeout', full_name='nodeConfig.TDMAConfiguration.pollTimeout', index=28,
+      number=29, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='adminEnable', full_name='nodeConfig.TDMAConfiguration.adminEnable', index=29,
+      number=30, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='adminLength', full_name='nodeConfig.TDMAConfiguration.adminLength', index=29,
-      number=30, type=13, cpp_type=3, label=1,
+      name='adminLength', full_name='nodeConfig.TDMAConfiguration.adminLength', index=30,
+      number=31, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -451,7 +458,7 @@ _TDMACONFIGURATION = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=524,
-  serialized_end=1221,
+  serialized_end=1250,
 )
 
 
@@ -495,8 +502,8 @@ _NODECONFIG_PROTO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1224,
-  serialized_end=1387,
+  serialized_start=1253,
+  serialized_end=1416,
 )
 
 _NODECONFIG_PROTO.fields_by_name['node'].message_type = _NODECONFIGURATION

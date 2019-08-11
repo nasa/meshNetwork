@@ -45,20 +45,21 @@ message TDMAConfiguration {
     float offsetTxInterval = 14;
     float statusTxInterval = 15;
     float linksTxInterval = 16;
-    uint32 maxTxBlockSize = 17;
-    float linkTimeout = 18;
-    uint32 blockTxRequestTimeout = 19;
-    uint32 minBlockTxDelay = 20;
-    bool fpga = 21;
-    string fpgaFailsafePin = 22;
-    uint32 fpgaFifoSize = 23;
-    string enablePin = 24;
-    string statusPin = 25;
-    bool recvAllMsgs = 26;
-    uint32 restartDelay = 27;
-    uint32 pollTimeout = 28;
-    bool adminEnable = 29;
-    uint32 adminLength = 30;
+    float linkTimeout = 17;
+    uint32 blockTxMaxLength = 18;
+    uint32 blockTxReceiptTimeout = 19;
+    uint32 blockTxPacketRetry = 20;
+    float blockTxEndMult = 21;
+    bool fpga = 22;
+    string fpgaFailsafePin = 23;
+    uint32 fpgaFifoSize = 24;
+    string enablePin = 25;
+    string statusPin = 26;
+    bool recvAllMsgs = 27;
+    uint32 restartDelay = 28;
+    uint32 pollTimeout = 29;
+    bool adminEnable = 30;
+    uint32 adminLength = 31;
 }
 
 message NodeConfig_proto {
