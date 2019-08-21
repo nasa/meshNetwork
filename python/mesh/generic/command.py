@@ -21,7 +21,6 @@ class Command(object):
             raise CommandIdNotFound("Command Id {} not found", cmdId)
 
     def serialize(self, timestamp=[]):
-        self.lastTxTime = timestamp
 
         # Serialize and return command data
         return self.packHeader() + self.packBody(timestamp) # combine header with command payload data

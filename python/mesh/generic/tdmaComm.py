@@ -2,6 +2,7 @@ from mesh.generic.serialComm import SerialComm
 from switch import switch
 import random, time, math
 from math import ceil
+from copy import deepcopy
 from mesh.generic.msgParser import MsgParser
 from mesh.generic.slipMsg import SLIPMsg
 from mesh.generic.radio import RadioMode
@@ -84,6 +85,10 @@ class TDMAComm(SerialComm):
         # Current read position in radio rx buffer
         self.rxBufferReadPos = 0
 
+        # Mesh header information
+        self.meshPacketHeaderFormat = '<BBHHHB'
+        self.meshHeaderLen = struct.calcsize(self.meshPacketHeaderFormat)
+
         # Block Tx information
         self.blockTx = None
         self.blockTxInProgress = False
@@ -94,7 +99,8 @@ class TDMAComm(SerialComm):
         self.enabled = True
 
         # Mesh data in/out buffers
-        self.meshQueueIn = [b''] * (self.maxNumSlots + 1)
+        #self.meshQueueIn = [b''] * (self.maxNumSlots + 1)
+        self.meshQueueIn = []
         self.hostBuffer = bytearray()
         self.blockTxOut = bytearray()
 
@@ -228,6 +234,7 @@ class TDMAComm(SerialComm):
             self.executeAdmin(adminTime)
         
     def executeAdmin(self, adminTime):
+        adminLength = self.nodeParams.config.commConfig['adminBytesMaxLength'] + self.nodeParams.config.commConfig['msgPayloadMaxLength']
         controlNode = self.frameCount % (self.maxNumSlots+1) + 1 # each node gets a round as admin controller followed by one open opportunity for all
         if (adminTime < self.enableLength): # Initialize radio
             if (controlNode == self.nodeParams.config.nodeId): # This node is in control
@@ -240,7 +247,7 @@ class TDMAComm(SerialComm):
             if (controlNode == self.nodeParams.config.nodeId): # This node is in control
                 if (self.transmitComplete == False): # Execute admin transmission
                     self.radio.setMode(RadioMode.transmit) # set radio mode
-                    adminBytes = self.packageAdminData()
+                    adminBytes = self.packageAdminData(adminLength)
                     packetBytes = self.createMeshPacket(0, b'', adminBytes, self.nodeParams.config.nodeId)
                     if (packetBytes): # if packet is of non-zero length
                         self.bufferTxMsg(packetBytes)
@@ -510,23 +517,39 @@ class TDMAComm(SerialComm):
             return    
     
         # Send buffered and periodic commands
+        broadcastMsgSent = False
         if self.tdmaMode == TDMAMode.transmit:
             # Send periodic TDMA commands
             #self.sendTDMACmds()
 
             # Check queue for waiting outgoing messages
-            self.processBuffers() # process relay and command buffers
-            for destId in range(len(self.meshQueueIn)):
+            bytesSent = 0
+            bytesSent += self.processBuffers() # process relay and command buffers
+            for msg in self.meshQueueIn:
                 packetBytes = b''
-                if (destId == 0):
-                    packetBytes = self.packageMeshPacket(destId, self.meshQueueIn[destId])
-                elif (destId != 0 and self.meshQueueIn[destId]): # only send non-zero non-broadcast messages
-                    packetBytes = self.packageMeshPacket(destId, self.meshQueueIn[destId])
+
+                if (bytesSent + len(msg.msgBytes) > self.nodeParams.config.commConfig['maxTransferSize']): # maximum transmit size reached
+                    break 
+
+                if (msg.destId == 0):
+                    packetBytes = self.packageMeshPacket(destId, msg.msgBytes)
+                    broadcastMsgSent = True
+                elif (msg.destId != 0 and msg.msgBytes): # only send non-zero non-broadcast messages
+                    packetBytes = self.packageMeshPacket(destId, msg.msgBytes)
                     
                 if (packetBytes): # if packet is of non-zero length
                     self.bufferTxMsg(packetBytes)
  
-                self.meshQueueIn[destId] = b'' # clear message after transmission
+            # Clear queue
+            self.meshQueueIn = []
+
+            # Send broadcast message
+            if (broadcastMsgSent == False): # send a broadcast message for network administration
+                if (bytesSent < self.nodeParams.config.commConfig['maxTransferSize']): # maximum transmit size not reached
+                    packetBytes = self.packageMeshPacket(0, b'')
+                
+                    if (packetBytes): # if packet is of non-zero length
+                        self.bufferTxMsg(packetBytes)
 
             #self.radio.bufferTxMsg(HDLC_END_TDMA) # append end of message byte
         
@@ -543,19 +566,18 @@ class TDMAComm(SerialComm):
     def packageMeshPacket(self, destId, msgBytes):
         adminBytes = b''
         if (destId == 0): # package network admin messages into broadcast message
-            adminBytes = self.packageAdminData()
+            adminBytes = self.packageAdminData(self.nodeParams.config.commConfig['adminBytesMaxLength'])
             #adminBytes = self.sendTDMACmds()
 
         return self.createMeshPacket(destId, msgBytes, adminBytes, self.nodeParams.config.nodeId)
 
-    def createMeshPacket(self, destId, msgBytes, adminBytes, sourceId, blockTxPacket=0):
+    def createMeshPacket(self, destId, msgBytes, adminBytes, sourceId, statusByte=0):
 
         if (len(adminBytes) == 0 and len(msgBytes) == 0): # do not send empty message
             return bytearray()
 
         # Create mesh packet header
-        packetHeaderFormat = '<BBHHHB'
-        packetHeader = struct.pack(packetHeaderFormat, sourceId, destId, len(adminBytes), len(msgBytes), self.nodeParams.get_cmdCounter(), blockTxPacket)
+        packetHeader = struct.pack(self.meshPacketHeaderFormat, sourceId, destId, len(adminBytes), len(msgBytes), self.nodeParams.get_cmdCounter(), statusByte)
         
         # Return mesh packet
         return bytearray(packetHeader + adminBytes + msgBytes)
@@ -578,9 +600,7 @@ class TDMAComm(SerialComm):
    
     def relayMsg(self, msgBytes):
         """Relay received message. Existing mesh header is maintained with only the source updated."""
-        packetHeaderFormat = '<BBHHHB'
-        meshHeaderLen = struct.calcsize(packetHeaderFormat)
-        packetHeader = struct.unpack(packetHeaderFormat, msgBytes[0:meshHeaderLen])
+        packetHeader = struct.unpack(self.meshPacketHeaderFormat, msgBytes[0:self.meshHeaderLen])
         sourceId = packetHeader[0]
         destId = packetHeader[1]
         adminLength = packetHeader[2]    
@@ -607,9 +627,7 @@ class TDMAComm(SerialComm):
                 msg = self.msgParser.parsedMsgs.pop(0)
                 
                 # Parse mesh packet header
-                packetHeaderFormat = '<BBHHHB'
-                meshHeaderLen = struct.calcsize(packetHeaderFormat)
-                packetHeader = struct.unpack(packetHeaderFormat, msg[0:meshHeaderLen])
+                packetHeader = struct.unpack(self.meshPacketHeaderFormat, msg[0:self.meshHeaderLen])
                 sourceId = packetHeader[0]
                 destId = packetHeader[1]
                 adminLength = packetHeader[2]    
@@ -624,20 +642,20 @@ class TDMAComm(SerialComm):
                     self.nodeParams.cmdHistory.append(cmdCounter) # update command history
 
                 # Validate message
-                if (len(msg) == (meshHeaderLen + adminLength + payloadLength)): # message length is valid
+                if (len(msg) == (self.meshHeaderLen + adminLength + payloadLength)): # message length is valid
                     # Update information on direct mesh links based on sourceId
                     self.nodeParams.nodeStatus[sourceId-1].present = True
                     self.nodeParams.nodeStatus[sourceId-1].lastMsgRcvdTime = self.nodeParams.clock.getTime()
 
                     # Extract any mesh messages and process
                     if (adminLength > 0):
-                        self.processMeshMsgs(msg[meshHeaderLen:meshHeaderLen + adminLength])
+                        self.processMeshMsgs(msg[self.meshHeaderLen:self.meshHeaderLen + adminLength])
    
                     # Place raw message bytes in buffer to send to host
                     if (payloadLength > 0):
                         if (destId == self.nodeParams.config.nodeId or self.nodeParams.config.commConfig['recvAllMsgs']):
-                            #print("Placing in hostBuffer: " + str(msg[meshHeaderLen + adminLength:]))
-                            self.hostBuffer += msg[meshHeaderLen + adminLength:]
+                            #print("Placing in hostBuffer: " + str(msg[self.meshHeaderLen + adminLength:]))
+                            self.hostBuffer += msg[self.meshHeaderLen + adminLength:]
        
                     # Check for relay
                     if (self.inited == False): # don't process for relaying if mesh not inited
@@ -685,7 +703,7 @@ class TDMAComm(SerialComm):
             for i in range(len(self.tdmaCmdParser.parsedMsgs)):
                 self.processMsg(self.tdmaCmdParser.parsedMsgs.pop(0), {'nodeStatus': self.nodeParams.nodeStatus, 'comm': self, 'clock': self.nodeParams.clock})  
 
-    def packageAdminData(self):
+    def packageAdminData(self, maxLength):
         adminBytes = b''
         
         # Send command responses
@@ -694,19 +712,18 @@ class TDMAComm(SerialComm):
         #    adminBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(self.nodeParams.clock.getTime()))
             
         # Send TDMA commands
-        adminBytes += self.sendTDMACmds()
+        adminBytes += self.sendTDMACmds(maxLength)
 
         return adminBytes
 
-    def sendTDMACmds(self):
+    def sendTDMACmds(self, maxLength):
         tdmaCmdBytes = b''    
-    
         # Send TDMA messages
         timestamp = self.nodeParams.clock.getTime()
         for cmdId in list(self.tdmaCmds.keys()):
             cmd = self.tdmaCmds[cmdId]
-
-            # Check for admin only commands
+            
+            # Check for admin period only commands
             adminCmds = [TDMACmds['CurrentConfig'], TDMACmds['ConfigUpdate']]
             if (cmdId in adminCmds and self.tdmaMode != TDMAMode.admin): # do not send admin only commands
                 continue
@@ -720,23 +737,34 @@ class TDMAComm(SerialComm):
                 #self.networkMsgQueue.append({"header": {"cmdId": cmd.cmdId, "sourceId": self.nodeParams.config.nodeId, "cmdCounter": cmd.cmdCounter}, "msgContents": cmd.cmdData})
             #elif (cmdId == TDMACmds['ConfigUpdate']):
             #    self.networkMsgQueue.append({"header": {"cmdId": cmd.cmdId, "sourceId": self.nodeParams.config.nodeId, "cmdCounter": cmd.cmdCounter}, "msgContents": {"valid": True, "destId": cmd.cmdData['destId']}})
- 
+
             # Update command counter
             if ('cmdCounter' in cmd.header):
                 cmd.header['cmdCounter'] = self.nodeParams.get_cmdCounter()
 
             # Send periodic commands at prescribed interval
+            msgBytes = b''
             if cmd.txInterval:
                 if ceil(timestamp*100)/100.0 >= ceil((cmd.lastTxTime + cmd.txInterval)*100)/100.0: # only compare down to milliseconds
                     #self.bufferTxMsg(cmd.serialize(timestamp))
-                    tdmaCmdBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))
-                    if (cmdId == TDMACmds['CurrentConfig']):
-                        print("Node " + str(self.nodeParams.config.nodeId) + " Sending CurrentConfig message.")
+                    msgBytes = self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))
+                    #print("Node", self.nodeParams.config.nodeId, "- Sending periodic command:", cmd.cmdId) 
+                    #tdmaCmdBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))
             else: # non-periodic command
                 #self.bufferTxMsg(cmd.serialize(timestamp))
-                tdmaCmdBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))
-                del self.tdmaCmds[cmdId] # remove single-time command
-        
+                msgBytes = self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))
+                #tdmaCmdBytes += self.tdmaCmdParser.encodeMsg(cmd.serialize(timestamp))
+                
+            # Check for alotted size overflow    
+            if (msgBytes and (len(tdmaCmdBytes) + len(msgBytes) <= maxLength)): # append to outgoing bytes
+                tdmaCmdBytes += msgBytes
+                if (cmdId == TDMACmds['CurrentConfig']):
+                    print("Node " + str(self.nodeParams.config.nodeId) + " Sending CurrentConfig message.")
+                if (cmd.txInterval): # update last transmit time
+                    cmd.lastTxTime = timestamp
+                else: # remove single-time command
+                    del self.tdmaCmds[cmdId]
+
         return tdmaCmdBytes
                                 
 
@@ -858,7 +886,9 @@ class TDMAComm(SerialComm):
         # Do something with block transmit results - TODO
         if (self.blockTx.srcId != self.nodeParams.config.nodeId and self.blockTx.destId in [0, self.nodeParams.config.nodeId]): # pass block transmit data to host
             self.blockTxOut = self.blockTx.getData()
-            print("Node", self.nodeParams.config.nodeId, "- Sending block tx data to host, length:", len(self.blockTxOut))
+            
+            if (len(self.blockTxOut) > 0):
+                print("Node", self.nodeParams.config.nodeId, "- Sending block tx data to host, length:", len(self.blockTxOut))
 
         # Check for need to relay - TODO - implement logic for relaying block tx to destination node
 

@@ -167,7 +167,7 @@ class NodeConfig(dict):
                 self.commConfig['rxDelay'] = self.commConfig['rxDelay'] * self.commConfig['txLength']
             
             self.commConfig['adminLength'] = self.commConfig['adminLength']/1000.0 # convert to seconds from milliseconds
-            self.commConfig['blockTxPacketSize'] = int(0.5 * self.commConfig['adminLength'] * self.meshBaudrate/8.0)
+            self.commConfig['blockTxPacketSize'] = self.commConfig['adminBytesMaxLength'] + self.commConfig['msgPayloadMaxLength']
 
             sleepLength = self.commConfig['frameLength'] - self.commConfig['cycleLength'] - self.commConfig['adminLength']
             if sleepLength < 0: # Config infeasible
@@ -327,6 +327,8 @@ class NodeConfig(dict):
         nodeConfig_p.tdma.pollTimeout = tdma['pollTimeout'] 
         nodeConfig_p.tdma.adminEnable = tdma['adminEnable']
         nodeConfig_p.tdma.adminLength = tdma['adminLength']
+        nodeConfig_p.tdma.adminBytesMaxLength = tdma['adminBytesMaxLength']
+        nodeConfig_p.tdma.msgPayloadMaxLength = tdma['msgPayloadMaxLength']
         
         #print(nodeConfig_p)
         #print(len(nodeConfig_p.SerializeToString()))
@@ -410,6 +412,8 @@ class NodeConfig(dict):
         tdma['pollTimeout'] = nodeConfig_p.tdma.pollTimeout
         tdma['adminEnable'] = nodeConfig_p.tdma.adminEnable
         tdma['adminLength'] = nodeConfig_p.tdma.adminLength
+        tdma['adminBytesMaxLength'] = nodeConfig_p.tdma.adminBytesMaxLength
+        tdma['msgPayloadMaxLength'] = nodeConfig_p.tdma.msgPayloadMaxLength
         nodeConfig['tdmaConfig'] = tdma
         
         #print(nodeConfig)

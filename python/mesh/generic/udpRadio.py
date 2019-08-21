@@ -31,7 +31,7 @@ class UDPRadio(Radio):
             readAttempts = 0
             newBytes = bytearray()
             while readAttempts < 10: # Check for multiple messages
-                newData, source = self.sockRead.recvfrom(self.uartNumBytesToRead)
+                newData, source = self.sockRead.recvfrom(4096)
                 newBytes = newBytes + newData
                 readAttempts = readAttempts + 1
                 

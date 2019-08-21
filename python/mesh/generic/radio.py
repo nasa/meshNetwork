@@ -77,18 +77,6 @@ class Radio(object):
 
         return len(newBytes)
 
-    def sendBytes(self, msgBytes):
-        """Send bytes over serial connection."""
-        if not self.serial:
-            raise NoSerialConnection("No serial connection available")
-            return 0  
-        
-        try:
-            return self.serial.write(msgBytes)
-            
-        except serial.SerialException:
-            pass
-            
     def processRxBytes(self, newBytes, bufferFlag):
         """Default behavior just adds directly to rxBuffer."""
         self.bufferRxMsg(newBytes, bufferFlag)
@@ -113,8 +101,20 @@ class Radio(object):
         return self.rxBuffer[0:self.bytesInRxBuffer]
 
     # Send methods
+    def sendBytes(self, msgBytes):
+        """Sends bytes provided bytes directly out over serial connection.  This method provides no bandwidth usage control."""
+        if not self.serial:
+            raise NoSerialConnection("No serial connection available")
+            return 0  
+        
+        try:
+            return self.serial.write(msgBytes)
+            
+        except serial.SerialException:
+            pass
+            
     def sendMsg(self, msgBytes):
-        """Send message to radio."""
+        """Packages provided bytes into properly formatted message for radio and transmits.  This method provides no bandwidth usage control."""
 
         bytesSent = 0
         if len(msgBytes) > 0:
@@ -131,6 +131,7 @@ class Radio(object):
         return msgBytes
 
     def sendBuffer(self, maxBytesToSend=0):
+        """This is the primary method for transmitting bytes using the Radio.  This method allows the radio to regulate how much data is being sent out."""
         bytesSent = 0
 
         if self.txBuffer:

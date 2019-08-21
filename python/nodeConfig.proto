@@ -60,6 +60,8 @@ message TDMAConfiguration {
     uint32 pollTimeout = 29;
     bool adminEnable = 30;
     uint32 adminLength = 31;
+    uint32 adminBytesMaxLength = 32;
+    uint32 msgPayloadMaxLength = 33;
 }
 
 message NodeConfig_proto {

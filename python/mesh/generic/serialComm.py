@@ -101,10 +101,13 @@ class SerialComm(object):
         return self.radio.sendBuffer()
             
     def processBuffers(self):
+        bytesSent = 0
+
         if self.cmdBuffer: # command buffer
             #noRepeatCmds = []
             for key in self.cmdBuffer:
                 self.bufferTxMsg(self.cmdBuffer[key]['bytes'])
+                bytesSent += len(self.cmdBuffer[key]['bytes'])
                 #if self.cmdBuffer[key]['txInterval'] == 0: # no repeat
                 #    noRepeatCmds.append(key)
             #for key in noRepeatCmds: # remove non-repeat commands
@@ -115,7 +118,10 @@ class SerialComm(object):
             #for cmd in cmdRelayBuffer:
             #    self.bufferTxMsg(cmd)
             self.radio.bufferTxMsg(self.cmdRelayBuffer)
+            bytesSent += len(self.cmdRelayBuffer)
             self.cmdRelayBuffer = bytearray()
+
+        return bytesSent
                 
     def bufferTxMsg(self, msgBytes):
         """Add bytes to transmission buffer."""

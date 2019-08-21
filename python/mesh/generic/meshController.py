@@ -32,6 +32,11 @@ class NetworkPoll(object):
         self.decision = VoteDecision.Undecided
         self.voteSent = False
 
+class MeshTxMsg(object):
+    def __init__(self, destId, msgBytes):
+        self.destId = destId
+        self.msgBytes = msgBytes
+
 class MeshMsg(object):
     def __init__(self, msgType, cmdId=None, status=None, msgBytes=None):
         self.msgType = msgType
@@ -278,11 +283,16 @@ class MeshController(object):
             print("Not an implemented command id")
             return False
  
-    def sendMsg(self, destId, msgBytes):
+    def sendMsg(self, destId, msg):
         """This function receives messages to be sent over the mesh network and queues them for transmission."""
         
         # Place message in appropriate position in outgoing queue (broadcast messages are stored in the zero position) 
-        self.comm.meshQueueIn[destId] += msgBytes
+
+        if (len(msg) <= self.nodeParams.config.commConfig['msgPayloadMaxLength']): # message meets size requirements
+            self.comm.meshQueueIn.append(MeshTxMsg(destId, msg))
+            return True
+        else:
+            return False
 
     def getMsgs(self):
         msgs = []
@@ -307,7 +317,7 @@ class MeshController(object):
         """This function receives a large data block to be sent over the mesh network for Block Transfer."""
         # Store data block and request block data transfer
         blockTxStartTime = int(self.nodeParams.clock.getTime() + self.nodeParams.config.commConfig['pollTimeout'])
-        blockTxLength = math.ceil((len(blockBytes) / self.nodeParams.config.commConfig['blockTxPacketSize'])) # length in number of packets
+        blockTxLength = math.ceil(len(blockBytes) / self.nodeParams.config.commConfig['blockTxPacketSize']) # length in number of packets
 
         if (blockTxLength > self.nodeParams.config.commConfig['blockTxMaxLength']): # data block is too large
             return False

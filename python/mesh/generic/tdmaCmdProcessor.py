@@ -4,7 +4,6 @@ from mesh.generic.cmdDict import CmdDict
 from struct import unpack, calcsize
 from mesh.generic.nodeHeader import headers
 from mesh.generic.deserialize import deserialize
-from mesh.generic.cmdProcessor import processHeader
 from mesh.generic.tdmaState import TDMABlockTxStatus
 from mesh.generic.command import Command
 

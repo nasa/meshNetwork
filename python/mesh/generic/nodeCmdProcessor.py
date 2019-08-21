@@ -2,7 +2,6 @@ from struct import calcsize
 from switch import switch
 from mesh.generic.cmds import NodeCmds
 from mesh.generic.deserialize import deserialize, unpackBytes
-from mesh.generic.cmdProcessor import processHeader
 from mesh.generic.cmdDict import CmdDict
 from mesh.generic.nodeHeader import headers
 from mesh.generic.nodeConfig import ParamId
