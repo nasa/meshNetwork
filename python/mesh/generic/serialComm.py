@@ -147,23 +147,26 @@ class SerialComm(object):
             args: Other arguments needed for processing serial message.
         """
         if len(msg) > 0:
-            nodeStatus = args['nodeStatus']
-            comm = args['comm']
-            clock = args['clock']
+            try: 
+                nodeStatus = args['nodeStatus']
+                comm = args['comm']
+                clock = args['clock']
     
-            # Parse command header
-            cmdId = unpack('B',msg[0:1])[0]
-            header = deserialize(msg, cmdId, 'header')
-            if (processHeader(self, header, msg, nodeStatus, clock, comm) == False): # stale command
+                # Parse command header
+                cmdId = unpack('B',msg[0:1])[0]
+                header = deserialize(msg, cmdId, 'header')
+                if (processHeader(self, header, msg, nodeStatus, clock, comm) == False): # stale command
+                    return False
+
+                # Pass command to proper processor
+                for processor in self.msgProcessors:
+                    if cmdId in processor['cmdList'].values():
+                        return processor['msgProcessor'](self, cmdId, header, msg, args)
+                        break
+            
+            except Exception as e:
+                print("Exception occurred while processing message:", e)
                 return False
-
-            # Parse command id
-
-            # Pass command to proper processor
-            for processor in self.msgProcessors:
-                if cmdId in processor['cmdList'].values():
-                    return processor['msgProcessor'](self, cmdId, header, msg, args)
-                    break
 
         return False
             

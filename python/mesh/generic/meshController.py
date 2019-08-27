@@ -308,7 +308,7 @@ class MeshController(object):
             msgs.append(MeshMsg(MeshMsgType.MsgBytes, msgBytes=self.comm.hostBuffer))
             self.comm.hostBuffer = bytearray() # clear messages after retrieval
         if (self.comm.blockTxOut):
-            msgs.append(MeshMsg(MeshMsgType.BlockData, msgBytes=self.comm.blockTxOut))
+            msgs.append(MeshMsg(MeshMsgType.BlockData, status=self.comm.blockTxOut['dataComplete'], msgBytes=self.comm.blockTxOut['data']))
             self.comm.blockTxOut = bytearray() # clear after retrieval
         
         return msgs

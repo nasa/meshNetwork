@@ -19,6 +19,7 @@ class BlockTx(object):
         self.data = rawData
         self.dataLoc = 0
         self.packetNum = 0
+        self.dataComplete = False
 
     def allPacketsRcvd(self):
         for packetNum in range(self.length):
@@ -30,11 +31,15 @@ class BlockTx(object):
     def getData(self):
         # Verify that block data is complete
         if (self.allPacketsRcvd()):
-            outData = b''
-            for packetNum in range(self.length):
+            self.dataComplete = True
+            
+        outData = b''
+            
+        for packetNum in range(self.length):
+            if (packetNum+1 in self.packets): # packet received
                 outData += self.packets[packetNum+1]
             
-            return outData
+        return outData
     
-        else: # missing packets
-            return b''
+        #else: # missing packets
+        #    return b''

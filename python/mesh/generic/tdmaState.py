@@ -6,8 +6,6 @@ class TDMAMode(IntEnum):
     receive = 2
     transmit = 3
     failsafe = 4
-    blockRx = 5
-    blockTx = 6
     admin = 7
 
 class TDMABlockTxStatus(Enum):
