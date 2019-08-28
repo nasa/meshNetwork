@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='nodeInterface',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x13nodeInterface.proto\x12\rnodeInterface\"N\n\x07\x43ommand\x12\x12\n\ntxInterval\x18\x01 \x01(\x02\x12\x10\n\x08msgBytes\x18\x02 \x01(\x0c\x12\r\n\x05\x63mdId\x18\x03 \x01(\r\x12\x0e\n\x06\x64\x65stId\x18\x04 \x01(\r\"\xef\x01\n\rNodeThreadMsg\x12\x36\n\x04type\x18\x01 \x01(\x0e\x32(.nodeInterface.NodeThreadMsg.NodeMsgType\x12\x11\n\ttimestamp\x18\x02 \x01(\x01\x12\x10\n\x08\x63mdRelay\x18\x03 \x01(\x0c\x12$\n\x04\x63mds\x18\x04 \x03(\x0b\x32\x16.nodeInterface.Command\x12\x12\n\nlinkStatus\x18\x05 \x03(\r\x12\x11\n\trcvdBytes\x18\x06 \x01(\x0c\x12\x11\n\tdataBlock\x18\x07 \x01(\x0c\"!\n\x0bNodeMsgType\x12\x08\n\x04NODE\x10\x00\x12\x08\n\x04\x43OMM\x10\x01\x62\x06proto3')
+  serialized_pb=_b('\n\x13nodeInterface.proto\x12\rnodeInterface\"N\n\x07\x43ommand\x12\x12\n\ntxInterval\x18\x01 \x01(\x02\x12\x10\n\x08msgBytes\x18\x02 \x01(\x0c\x12\r\n\x05\x63mdId\x18\x03 \x01(\r\x12\x0e\n\x06\x64\x65stId\x18\x04 \x01(\r\"\xef\x01\n\rNodeThreadMsg\x12\x36\n\x04type\x18\x01 \x01(\x0e\x32(.nodeInterface.NodeThreadMsg.NodeMsgType\x12\x11\n\ttimestamp\x18\x02 \x01(\x01\x12\x10\n\x08\x63mdRelay\x18\x03 \x01(\x0c\x12$\n\x04\x63mds\x18\x04 \x03(\x0b\x32\x16.nodeInterface.Command\x12\x12\n\nlinkStatus\x18\x05 \x03(\r\x12\x11\n\trcvdBytes\x18\x06 \x01(\x0c\x12\x11\n\tdataBlock\x18\x07 \x01(\x0c\"!\n\x0bNodeMsgType\x12\x08\n\x04NODE\x10\x00\x12\x08\n\x04\x43OMM\x10\x01\"K\n\x07MeshMsg\x12\x0f\n\x07msgType\x18\x01 \x01(\r\x12\r\n\x05\x63mdId\x18\x02 \x01(\r\x12\x0e\n\x06status\x18\x03 \x01(\r\x12\x10\n\x08msgBytes\x18\x04 \x01(\x0c\"0\n\x08MeshMsgs\x12$\n\x04msgs\x18\x01 \x03(\x0b\x32\x16.nodeInterface.MeshMsgb\x06proto3')
 )
 
 
@@ -173,11 +173,97 @@ _NODETHREADMSG = _descriptor.Descriptor(
   serialized_end=358,
 )
 
+
+_MESHMSG = _descriptor.Descriptor(
+  name='MeshMsg',
+  full_name='nodeInterface.MeshMsg',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='msgType', full_name='nodeInterface.MeshMsg.msgType', index=0,
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='cmdId', full_name='nodeInterface.MeshMsg.cmdId', index=1,
+      number=2, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='status', full_name='nodeInterface.MeshMsg.status', index=2,
+      number=3, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='msgBytes', full_name='nodeInterface.MeshMsg.msgBytes', index=3,
+      number=4, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=360,
+  serialized_end=435,
+)
+
+
+_MESHMSGS = _descriptor.Descriptor(
+  name='MeshMsgs',
+  full_name='nodeInterface.MeshMsgs',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='msgs', full_name='nodeInterface.MeshMsgs.msgs', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=437,
+  serialized_end=485,
+)
+
 _NODETHREADMSG.fields_by_name['type'].enum_type = _NODETHREADMSG_NODEMSGTYPE
 _NODETHREADMSG.fields_by_name['cmds'].message_type = _COMMAND
 _NODETHREADMSG_NODEMSGTYPE.containing_type = _NODETHREADMSG
+_MESHMSGS.fields_by_name['msgs'].message_type = _MESHMSG
 DESCRIPTOR.message_types_by_name['Command'] = _COMMAND
 DESCRIPTOR.message_types_by_name['NodeThreadMsg'] = _NODETHREADMSG
+DESCRIPTOR.message_types_by_name['MeshMsg'] = _MESHMSG
+DESCRIPTOR.message_types_by_name['MeshMsgs'] = _MESHMSGS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Command = _reflection.GeneratedProtocolMessageType('Command', (_message.Message,), {
@@ -193,6 +279,20 @@ NodeThreadMsg = _reflection.GeneratedProtocolMessageType('NodeThreadMsg', (_mess
   # @@protoc_insertion_point(class_scope:nodeInterface.NodeThreadMsg)
   })
 _sym_db.RegisterMessage(NodeThreadMsg)
+
+MeshMsg = _reflection.GeneratedProtocolMessageType('MeshMsg', (_message.Message,), {
+  'DESCRIPTOR' : _MESHMSG,
+  '__module__' : 'nodeInterface_pb2'
+  # @@protoc_insertion_point(class_scope:nodeInterface.MeshMsg)
+  })
+_sym_db.RegisterMessage(MeshMsg)
+
+MeshMsgs = _reflection.GeneratedProtocolMessageType('MeshMsgs', (_message.Message,), {
+  'DESCRIPTOR' : _MESHMSGS,
+  '__module__' : 'nodeInterface_pb2'
+  # @@protoc_insertion_point(class_scope:nodeInterface.MeshMsgs)
+  })
+_sym_db.RegisterMessage(MeshMsgs)
 
 
 # @@protoc_insertion_point(module_scope)

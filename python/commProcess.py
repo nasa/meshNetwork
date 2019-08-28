@@ -9,8 +9,9 @@ from mesh.generic.hdlcMsg import HDLCMsg
 from mesh.generic.slipMsg import SLIPMsg
 from mesh.generic.msgParser import MsgParser
 from mesh.generic.serialComm import SerialComm    
+from mesh.generic.meshController import MeshController
 from mesh.generic.multiProcess import getNewMsgs
-from mesh.interface.nodeInterface_pb2 import NodeThreadMsg
+from mesh.interface.nodeInterface_pb2 import NodeThreadMsg, MeshMsg, MeshMsgs
 
 class CommProcess(Process):
     def __init__(self, configFile, meshNum, runFlag):
@@ -34,7 +35,11 @@ class CommProcess(Process):
 
         ## Create comm object
         # Serial connection
-        ser = serial.Serial(port = self.nodeParams.config.meshDevices[meshNum], baudrate=self.nodeParams.config.meshBaudrate, timeout=0)
+        ser = None
+        try:
+            ser = serial.Serial(port = self.nodeParams.config.meshDevices[meshNum], baudrate=self.nodeParams.config.meshBaudrate, timeout=0)
+        except serial.SerialException:
+            pass
 
         # Radio
         radioConfig = {'uartNumBytesToRead': self.nodeParams.config.uartNumBytesToRead, 'rxBufferSize': self.nodeParams.config.rxBufferSize}
@@ -55,13 +60,14 @@ class CommProcess(Process):
             msgParser = MsgParser(parserConfig)
 
 
-        # Create comm
+        # Create comm and mesh interface
         if (self.nodeParams.config.commConfig['fpga'] == True):
             from mesh.generic.tdmaComm_fpga import TDMAComm_FPGA as TDMAComm
         else:    
             from mesh.generic.tdmaComm import TDMAComm
         
         self.comm = TDMAComm([], radio, msgParser, self.nodeParams)
+        self.meshController = MeshController(self.nodeParams, self.comm)
 
         # Node control run time bounds
         if (self.nodeParams.config.commConfig['fpga'] == False): # only needed for software-controlled comm
@@ -100,12 +106,12 @@ class CommProcess(Process):
                         # Parse messages for transmission
                         if (nodeMsg.cmds): # commands received
                             for cmd in nodeMsg.cmds:
-                                self.comm.queueMeshMsg(cmd.destId, cmd.msgBytes)
+                                self.meshController.sendMsg(cmd.destId, cmd.msgBytes)
                 
                 self.interface.msgParser.parsedMsgs = [] # clear out processed parsed messages
                 
-                # Execute comm  
-                self.comm.execute()
+                # Execute network
+                self.meshController.execute()
 
                 # Managed node control run flag (only when comm is running in software)
                 if (self.nodeParams.config.commConfig['fpga'] == False):
@@ -118,10 +124,23 @@ class CommProcess(Process):
                 
                 # Send any received bytes to node control process
                 #if (self.nodeParams.config.commConfig['fpga'] == False or self.comm.frameTime > self.comm.cycleLength):
-                if (self.comm.hostBuffer):
-                    rcvdBytes = self.comm.hostBuffer
-                    self.comm.hostBuffer = bytearray()
-                    self.interface.sendBytes(rcvdBytes) 
+                msgs = self.meshController.getMsgs()
+                    
+                # Package messages and pass to control thread
+                meshMsgs = MeshMsgs()
+                if (msgs):
+                    for msg in msgs:
+                        meshMsg = MeshMsg()
+                        meshMsg.msgType = msg.msgType
+                        meshMsg.cmdId = msg.cmdId
+                        meshMsg.status = msg.status
+                        meshMsg.msgBytes = msg.msgBytes
+                        
+                        meshMsgs.append(msgMsg)
+                        
+                meshMsgsBytes = meshMsgs.SerializeToString()        
+
+                self.interface.sendBytes(meshMsgsBytes) 
                 
             except KeyboardInterrupt:
                 print("\nTerminating Comm Process.")

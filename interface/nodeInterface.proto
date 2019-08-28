@@ -22,3 +22,14 @@ message NodeThreadMsg {
     bytes rcvdBytes = 6; 
     bytes dataBlock = 7;   
 }
+
+message MeshMsg {
+    uint32 msgType = 1;
+    uint32 cmdId = 2;
+    uint32 status = 3;
+    bytes msgBytes = 4;
+}
+
+message MeshMsgs {
+    repeated MeshMsg msgs = 1;
+}
