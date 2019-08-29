@@ -19,6 +19,7 @@ The software is divided into two main parts which also run as separate processes
 
 Although the goal is to keep the API as common as possible across the different language implementations, because of different features or capabilities of a given language, the functionality of a given class, or sometimes the classes themselves, may differ between the Python and C++ versions.  The Python API documentation can be used to give a general overview of the software structure, but please refer to the individual language APIs for specific implementation details.
 
+
 Interface Between Host Platform and Mesh Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -26,12 +27,13 @@ The Mesh Network logic/software is designed to operate as independently as possi
 
 Host To Mesh Network Interface
 ------------------------------
-The Mesh Network receives data from the host platform and transmits it unchanged to the desired destination.  The host passes the data to mesh network using the *queueMeshMsg* method of the **TDMAComm** class.  Along with the raw data, the ID number of the desired destination node is provided to the method.  This method takes the provided data and stores it in the outgoing message queue, *meshQueueIn*.  MeshQueueIn is an array with an entry for broadcast messages, to be sent to all nodes in the network, and an entry for each individual node in the mesh network. During the transmission period for the host platform node, the mesh network logic will trasnmit a mesh packet for each non-empty entry in meshQueueIn.  These outgoing packets are then received by the other mesh network nodes and transmitted across the network to their proper destinations appropriately. 
+The Mesh Network receives standard data for transmission from the host platform and transmits it unchanged to the desired destination.  The host passes the data to mesh network using the *sendMsg* method of the **MeshController** class.  Along with the raw data, the ID number of the desired destination node is provided to this method.  This method takes the provided data and places it in the outgoing message queue, *meshQueueIn*, of the **TDMAComm** class.  MeshQueueIn is then processed by TDMAComm to create mesh packets for transmissions.  During the transmit period for the host platform node, the mesh network logic will transmit a mesh packet for each non-empty message placed in meshQueueIn.  These outgoing packets are then received by the other mesh network nodes and transmitted across the network to their proper destinations appropriately. 
+
+To send large quantities of data that are too large for a single slot transmission period of a network node, the host can use the *sendDataBlock* method of MeshController.  The data is provided as well as the destination node ID number, and the network will execute a Block Transmit.  During block transmits, the sending node assumes control of the Admin period and breaks the provided data block into smaller packets for transmission.  The receiving nodes then receive the individual packets and reassemble the data block to pass to the destination host.
 
 Mesh Network to Host Interface
 ------------------------------
-Mesh packets received by the host mesh node are received and parsed and then placed in the *hostBuffer* of **TDMAComm** for the host platform to process.  TDMAComm strips the mesh network packet structure from the data prior to placing it in the hostBuffer.  The hostBuffer contents are the raw data bytes sent by other mesh network node host platforms.  The mesh network packet structure is stripped prior to placing the data into the hostBuffer for host platform consumption.
-
+Messages for the host are retrieved from the network using the *getMsgs* method of MeshController.  This method will pull any received standard data packets as well as completed block transmit data blocks and command responses from the network and return them to the host.  For each message to be passed to the host, an instance of **MeshMsg** is created to wrap the message and includes any relevent metadata.  The getMsgs method will then return an array of all currently available messages to the host.
 
 Configuration
 ^^^^^^^^^^^^^

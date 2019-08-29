@@ -1,0 +1,15 @@
+Interface Between Host Platform and Mesh Network
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Mesh Network logic/software is designed to operate as independently as possible from the host platform.  The interface between the host and the mesh network logic is intentionally designed to be simple and concise, so that the host is not required to monitor or control any of the internal mesh network logic.  The host provides the raw data for transmission over the network to the mesh logic which then handles everything downstream from that point to determine when and how to transmit the data over the network.  Incoming data received by the mesh network is likewise parsed and passed back to the host platform as appropriate.  This section documents how the host to mesh network interface operates.
+
+Host To Mesh Network Interface
+------------------------------
+The Mesh Network receives standard data for transmission from the host platform and transmits it unchanged to the desired destination.  The host passes the data to mesh network using the *sendMsg* method of the **MeshController** class.  Along with the raw data, the ID number of the desired destination node is provided to this method.  This method takes the provided data and places it in the outgoing message queue, *meshQueueIn*, of the **TDMAComm** class.  MeshQueueIn is then processed by TDMAComm to create mesh packets for transmissions.  During the transmit period for the host platform node, the mesh network logic will transmit a mesh packet for each non-empty message placed in meshQueueIn.  These outgoing packets are then received by the other mesh network nodes and transmitted across the network to their proper destinations appropriately. 
+
+To send large quantities of data that are too large for the standard periodic transmission period of a network node, the host can use the *sendDataBlock* method of MeshController.  The data is provided as well as the destination node ID number, and the network will execute a Block Transmit.  During block transmits, the sending node assumes control of the Admin period and breaks the provided data block into smaller packets for transmission.  The receiving nodes then receive the individual packets and reassemble the data block to pass to the destination host.
+
+Mesh Network to Host Interface
+------------------------------
+Messages for the host are retrieved from the network using the *getMsgs* method of MeshController.  This method will pull any received standard data packets as well as completed block transmit data blocks and command responses from the network and return them to the host.  For each message to be passed to the host, an instance of **MeshMsg** is created to wrap the message and includes any relevent metadata.  The getMsgs method will then return an array of all currently available messages to the host.
+

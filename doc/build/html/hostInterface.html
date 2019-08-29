@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Interface Between Host Platform and Mesh Network &#8212; Mesh Network Communication System 2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="interface-between-host-platform-and-mesh-network">
+<h1>Interface Between Host Platform and Mesh Network<a class="headerlink" href="#interface-between-host-platform-and-mesh-network" title="Permalink to this headline">¶</a></h1>
+<p>The Mesh Network logic/software is designed to operate as independently as possible from the host platform.  The interface between the host and the mesh network logic is intentionally designed to be simple and concise, so that the host is not required to monitor or control any of the internal mesh network logic.  The host provides the raw data for transmission over the network to the mesh logic which then handles everything downstream from that point to determine when and how to transmit the data over the network.  Incoming data received by the mesh network is likewise parsed and passed back to the host platform as appropriate.  This section documents how the host to mesh network interface operates.</p>
+<div class="section" id="host-to-mesh-network-interface">
+<h2>Host To Mesh Network Interface<a class="headerlink" href="#host-to-mesh-network-interface" title="Permalink to this headline">¶</a></h2>
+<p>The Mesh Network receives standard data for transmission from the host platform and transmits it unchanged to the desired destination.  The host passes the data to mesh network using the <em>sendMsg</em> method of the <strong>MeshController</strong> class.  Along with the raw data, the ID number of the desired destination node is provided to this method.  This method takes the provided data and places it in the outgoing message queue, <em>meshQueueIn</em>, of the <strong>TDMAComm</strong> class.  MeshQueueIn is then processed by TDMAComm to create mesh packets for transmissions.  During the transmit period for the host platform node, the mesh network logic will transmit a mesh packet for each non-empty message placed in meshQueueIn.  These outgoing packets are then received by the other mesh network nodes and transmitted across the network to their proper destinations appropriately.</p>
+<p>To send large quantities of data that are too large for the standard periodic transmission period of a network node, the host can use the <em>sendDataBlock</em> method of MeshController.  The data is provided as well as the destination node ID number, and the network will execute a Block Transmit.  During block transmits, the sending node assumes control of the Admin period and breaks the provided data block into smaller packets for transmission.  The receiving nodes then receive the individual packets and reassemble the data block to pass to the destination host.</p>
+</div>
+<div class="section" id="mesh-network-to-host-interface">
+<h2>Mesh Network to Host Interface<a class="headerlink" href="#mesh-network-to-host-interface" title="Permalink to this headline">¶</a></h2>
+<p>Messages for the host are retrieved from the network using the <em>getMsgs</em> method of MeshController.  This method will pull any received standard data packets as well as completed block transmit data blocks and command responses from the network and return them to the host.  For each message to be passed to the host, an instance of <strong>MeshMsg</strong> is created to wrap the message and includes any relevent metadata.  The getMsgs method will then return an array of all currently available messages to the host.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Mesh Network Communication System</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Network Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="software.html">Software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hardware.html">Hardware Implementations</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Chris Becker, Garrick Merrill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/hostInterface.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
