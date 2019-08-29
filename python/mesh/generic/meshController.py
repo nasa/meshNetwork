@@ -21,14 +21,14 @@ class MeshMsgType(IntEnum):
     BlockData = 2
 
 class NetworkPoll(object):
-    def __init__(self, sourceId, cmdId, cmdCounter, cmd, votes, exclusions, startTime):
+    def __init__(self, sourceId, cmdId, cmdCounter, cmd, numNodes, exclusions, startTime):
         self.sourceId = sourceId
         self.cmdId = cmdId
         self.cmdCounter = cmdCounter
         self.cmd = cmd
-        self.votes = votes
+        self.votes = [NetworkVote.NotReceived]*numNodes
         self.exclusions = exclusions
-        self.startTime = startTime # wait time before clearing uncompleted poll
+        self.startTime = startTime # poll start time
         self.decision = VoteDecision.Undecided
         self.voteSent = False
 
@@ -43,8 +43,6 @@ class MeshMsg(object):
         self.cmdId = cmdId
         self.status = status
         self.msgBytes = msgBytes
-
-#NetworkPoll = namedtuple('NetworkPoll', ['cmdId', 'cmdCounter', 'votes', 'exclusions', 'decision', 'voteSent'])
 
 class MeshController(object):   
     """Generic node controller to subtype for specific vehicle types.
@@ -65,6 +63,7 @@ class MeshController(object):
         self.blockReqIdCounter = 0
         self.blockTx = None
         self.blockTxData = None
+        self.blockTxReqPending = False
         self.blockTxAccepted = False
 
         # Node configuration
@@ -98,7 +97,7 @@ class MeshController(object):
     def monitorNetworkStatus(self):
         """Monitors status of nodes to determine their current status."""
 
-        # Monitor mesh network init (including loading received configuration)
+        # Monitor mesh network init (including config update)
         if (self.comm.networkConfigConfirmed == False and self.comm.networkConfigRcvd == True): # load new config
             print("Loading received configuration")
             print("Node number: " + str(self.nodeParams.config.nodeId))
@@ -121,11 +120,10 @@ class MeshController(object):
         if (self.blockTxAccepted):
             if (self.nodeParams.clock.getTime() >= self.blockTx['startTime']): # start block transmit
                 # Start block transmit
-                self.comm.startBlockTx(self.blockTx['blockReqId'], self.blockTx['destId'], self.blockTx['sourceId'], self.blockTx['startTime'], self.blockTx['length'], self.blockTxData)
+                self.comm.startBlockTx(self.blockTx['blockReqId'], self.blockTx['destId'], self.blockTx['sourceId'], self.blockTx['startTime'], self.blockTx['length'], self.blockTx['blockData'])
 
                 # Clear block transmit status
                 self.blockTx = None
-                self.blockTxData = None
                 self.blockTxAccepted = False
 
         #if (self.nodeParams.restartRequested):
@@ -168,13 +166,12 @@ class MeshController(object):
     def processNetworkMsgs(self):
         # Process pending network messages
         for msg in self.comm.networkMsgQueue:
-            
             # Create new poll to monitor command acceptance
             if ('destId' in msg['msgContents'] and msg['msgContents']['destId'] != 0): # populate exclusion list
                 exclusions = [msg['msgContents']['destId']] # destination node is excluded from polling
             else:
                 exclusions = []
-            newPoll = NetworkPoll(msg['header']['sourceId'], msg['header']['cmdId'], msg['header']['cmdCounter'], msg['msgContents'], [NetworkVote.NotReceived]*self.nodeParams.config.maxNumNodes, exclusions, self.nodeParams.clock.getTime())
+            newPoll = NetworkPoll(msg['header']['sourceId'], msg['header']['cmdId'], msg['header']['cmdCounter'], msg['msgContents'], self.nodeParams.config.maxNumNodes, exclusions, self.nodeParams.clock.getTime())
             newPoll.votes[msg['header']['sourceId']-1] = NetworkVote.Yes # source of command is automatic yes vote
             self.networkPolls.append(newPoll)
             #print("New poll created for " + str(msg['header']['cmdCounter']))
@@ -188,24 +185,31 @@ class MeshController(object):
         for poll in self.networkPolls:
             # Respond to poll
             if (poll.voteSent == False): # respond to poll
+                cmdResponse = None
                 if (poll.cmdId == TDMACmds['ConfigUpdate']):   
                     if (poll.cmd['valid'] == True):
                         poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
+                        cmdResponse = True
                     else: # invalid config
                         poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.No
+                        cmdResponse = False
                 elif (poll.cmdId == TDMACmds['NetworkRestart']):
-                    # TODO - Hardcode positive response for now
                     poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
+                    cmdResponse = True
                 elif (poll.cmdId == TDMACmds['BlockTxRequest']):
                     if (self.blockTxAccepted or self.comm.blockTxInProgress): # reject new request
                         poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.No
+                        cmdResponse = False
                     else: # accept request
                         poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.Yes
-        
+                        cmdResponse = True
+                else: # rejected unrecognized command ids
+                    poll.votes[self.nodeParams.config.nodeId-1] = NetworkVote.No
+                    cmdResponse = False
+
                 # Send poll response
                 print("Node " + str(self.nodeParams.config.nodeId) + ": Sending command response")
-                        
-                self.comm.tdmaCmds[NodeCmds['CmdResponse']] = Command(NodeCmds['CmdResponse'], {'cmdId': poll.cmdId, 'cmdCounter': poll.cmdCounter, 'cmdResponse': True}, [NodeCmds['CmdResponse'], self.nodeParams.config.nodeId])
+                self.comm.tdmaCmds[NodeCmds['CmdResponse']] = Command(NodeCmds['CmdResponse'], {'cmdId': poll.cmdId, 'cmdCounter': poll.cmdCounter, 'cmdResponse': cmdResponse}, [NodeCmds['CmdResponse'], self.nodeParams.config.nodeId])
                 poll.voteSent = True            
 
             # Process any pending command responses
@@ -221,11 +225,14 @@ class MeshController(object):
             # Check for poll decision
             yesVotes = 0
             for node in range(0, self.nodeParams.config.maxNumNodes):
-                if (node+1 in poll.exclusions or self.nodeParams.nodeStatus[node].updating == False): # node vote excluded
+                if (node+1 in poll.exclusions): 
                     poll.votes[node] = NetworkVote.Excluded
+                elif (self.nodeParams.nodeStatus[node].updating == False): # node not updating
+                    poll.votes[node] = NetworkVote.Excluded
+                    poll.exclusions.append(node+1) # add node to exclusion list
                 elif (poll.votes[node] == NetworkVote.No): # node voted no
                     poll.decision = VoteDecision.No
-                    print("Node " + str(self.nodeParams.config.nodeId) + ": Vote failed - " + poll.cmdId, poll.cmdCounter)
+                    print("Node " + str(self.nodeParams.config.nodeId) + ": Vote failed - ", poll.cmdId, poll.cmdCounter)
                 elif (poll.votes[node] == NetworkVote.Yes): # node voted yes
                     yesVotes += 1
                 
@@ -260,11 +267,11 @@ class MeshController(object):
             if (poll.decision == VoteDecision.Yes and (poll.cmd['destId'] == 0 or poll.cmd['destId'] == self.nodeParams.config.nodeId)): # load configuration for update
                 self.nodeParams.newConfig = poll.cmd['config']
                 print("Node " + str(self.nodeParams.config.nodeId) + " - Storing new config for update.")               
-            else: # no action further action on rejected update
-               pass
-            return True        
+                return True        
 
         elif (poll.cmdId == TDMACmds['BlockTxRequest']):
+            self.blockTxReqPending = False # clear pending status
+
             # Notify host of block transmit status
             if (poll.sourceId == self.nodeParams.config.nodeId):
                 self.meshMsgs.append(MeshMsg(MeshMsgType.CmdResponse, cmdId=TDMACmds['BlockTxRequest'], status=poll.decision))
@@ -272,16 +279,21 @@ class MeshController(object):
             if (poll.decision == VoteDecision.Yes): # Initiate block transmit
                 # Store pending block transmit status
                 self.blockTxAccepted = True
-                self.blockTxStartTime = poll.cmd['startTime']
                 self.blockTx = poll.cmd
                 self.blockTx['blockData'] = self.blockTxData
                 self.blockTx['sourceId'] = poll.sourceId
+                self.blockTxData = None
             
-            return True
+                return True
+
+            # Clear stored block tx data
+            self.blockTxData = None
 
         else: # Unimplemented command
             print("Not an implemented command id")
             return False
+
+        return False
  
     def sendMsg(self, destId, msg):
         """This function receives messages to be sent over the mesh network and queues them for transmission."""
@@ -315,6 +327,9 @@ class MeshController(object):
 
     def sendDataBlock(self, destId, blockBytes):
         """This function receives a large data block to be sent over the mesh network for Block Transfer."""
+        if (self.blockTxReqPending or self.blockTxAccepted): # block tx already pending
+            return False
+
         # Store data block and request block data transfer
         blockTxStartTime = int(self.nodeParams.clock.getTime() + self.nodeParams.config.commConfig['pollTimeout'])
         blockTxLength = math.ceil(len(blockBytes) / self.nodeParams.config.commConfig['blockTxPacketSize']) # length in number of packets
@@ -325,8 +340,10 @@ class MeshController(object):
         self.blockTxData = blockBytes
         self.comm.tdmaCmds[TDMACmds['BlockTxRequest']] = Command(TDMACmds['BlockTxRequest'], {'blockReqId': self.getBlockRequestId(), 'destId': destId, 'startTime': blockTxStartTime, 'length': blockTxLength, 'status': 1}, [TDMACmds['BlockTxRequest'], self.nodeParams.config.nodeId, self.nodeParams.get_cmdCounter()])
 
+        self.blockTxReqPending = True
+
         return True
 
     def getBlockRequestId(self):
-        self.blockReqIdCounter = (self.blockReqIdCounter + 1) % 256 # wrap after exceeding 8-bit value
+        self.blockReqIdCounter = self.blockReqIdCounter % 255 + 1 # wrap after exceeding 8-bit value
         return self.blockReqIdCounter 
