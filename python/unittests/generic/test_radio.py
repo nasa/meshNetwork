@@ -145,7 +145,7 @@ class TestRadio:
         """Test sendBuffer method of Radio."""
         msg = b'12345'
         self.radio.bufferTxMsg(msg)
-        self.radio.sendBuffer()
+        assert(self.radio.sendBuffer() == len(msg))
         assert(len(self.radio.txBuffer) == 0) # buffer should clear after data sent
         time.sleep(0.1)
         self.radio.readBytes(True)

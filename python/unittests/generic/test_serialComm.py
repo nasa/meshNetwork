@@ -3,7 +3,6 @@ from struct import pack
 from mesh.generic.nodeParams import NodeParams
 from mesh.generic.serialComm import SerialComm
 from mesh.generic.radio import Radio
-from mesh.generic.slipMsgParser import SLIPMsgParser
 from mesh.generic.nodeCmdProcessor import NodeCmdProcessor
 from mesh.generic.slipMsg import SLIPMsg
 from test_SLIPMsg import truthSLIPMsg, testMsg
@@ -14,7 +13,6 @@ from mesh.generic.cmds import NodeCmds
 from mesh.generic.command import Command
 from unittests.testCmds import testCmds
 from unittests.testConfig import configFilePath, testSerialPort
-from unittests.testHelpers import createEncodedMsg
 
 class TestSerialComm:
     
@@ -22,7 +20,6 @@ class TestSerialComm:
         self.nodeParams = NodeParams(configFile=configFilePath)
         self.serialPort = serial.Serial(port=testSerialPort, baudrate=57600, timeout=0)
         self.radio = Radio(self.serialPort, {'uartNumBytesToRead': self.nodeParams.config.uartNumBytesToRead, 'rxBufferSize': 2000})
-        #msgParser = SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax})
         self.serialComm = SerialComm([NodeCmdProcessor], self.nodeParams, self.radio, [])
         
     def test_readBytes(self):
@@ -68,8 +65,8 @@ class TestSerialComm:
     def test_sendMsg(self):
         """Test sendMsg method of SerialComm."""
         # Create message parser for testing purposes
-        msgParser = SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax})
-        self.serialComm.msgParser = msgParser
+        msg = SLIPMsg(self.nodeParams.config.parseMsgMax)
+        self.serialComm.msgParser.msg = msg
 
         # Send test message
         msgBytes = b'12345'
@@ -85,14 +82,16 @@ class TestSerialComm:
     def test_bufferTxMsg(self):
         """Test bufferTxMsg method of SerialComm."""
         # Create message parser for testing purposes
-        msgParser = SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax})
-        self.serialComm.msgParser = msgParser
+        msg = SLIPMsg(self.nodeParams.config.parseMsgMax)
+        self.serialComm.msgParser.msg = msg
         
         # Test that encoded message buffered
         msgBytes = b'ZYXWVU'
         assert(len(self.serialComm.radio.txBuffer) == 0) # confirm empty tx buffer
         self.serialComm.bufferTxMsg(msgBytes)
-        truthMsg = createEncodedMsg(msgBytes)
+        encoder = SLIPMsg(256)
+        encoder.encodeMsg(msgBytes)
+        truthMsg = encoder.encoded
         assert(self.serialComm.radio.txBuffer == truthMsg) # confirm encoded message placed in tx buffer
 
     def test_sendBuffer(self):
@@ -103,7 +102,7 @@ class TestSerialComm:
         assert(self.serialComm.radio.txBuffer == msgBytes)
 
         # Send message and compare received bytes to sent
-        self.serialComm.sendBuffer()
+        assert(self.serialComm.sendBuffer() == len(msgBytes))
         time.sleep(0.1)
         assert(len(self.serialComm.radio.txBuffer) == 0)
         self.serialComm.readBytes()
@@ -117,15 +116,19 @@ class TestSerialComm:
         
         cmdId = NodeCmds['NoOp']
         cmdMsg = Command(cmdId, None, [cmdId, 1, 200]).serialize()
-        self.serialComm.processMsg(cmdMsg, args = {'logFile': [], 'nav': [], 'nodeStatus': nodeStatus, 'clock': clock, 'comm': self.serialComm})
+        assert(self.serialComm.processMsg(cmdMsg, args = {'logFile': [], 'nav': [], 'nodeStatus': nodeStatus, 'clock': clock, 'comm': self.serialComm}) == True)
 
         assert(cmdId in self.serialComm.cmdQueue) # Test that correct message added to cmdQueue   
         
+        # Confirm proper return when no message processed successfully
+        assert(self.serialComm.processMsg(b'12345', args = {'logFile': [], 'nav': [], 'nodeStatus': nodeStatus, 'clock': clock, 'comm': self.serialComm}) == False)
+
+
     def test_processMsgs(self):
         """Test processMsgs method of SerialComm."""
         # Create message parser for testing purposes
-        msgParser = SLIPMsgParser({'parseMsgMax': self.nodeParams.config.parseMsgMax})
-        self.serialComm.msgParser = msgParser
+        msg = SLIPMsg(self.nodeParams.config.parseMsgMax)
+        self.serialComm.msgParser.msg = msg
         
         # Create and send test messages
         nodeStatus = [NodeState(node+1) for node in range(5)]
@@ -133,8 +136,8 @@ class TestSerialComm:
         
         cmdId1 = NodeCmds['NoOp'] # No op command
         cmdMsg1 = Command(cmdId1, None, [cmdId1, 1, 200]).serialize()
-        cmdId2 = NodeCmds['ConfigRequest'] # configuration check command
-        cmdMsg2 = Command(cmdId2, {'configHash': b'1'*self.nodeParams.config.hashSize}, [cmdId2, 1, 201]).serialize()
+        cmdId2 = NodeCmds['GCSCmd'] # GCS command
+        cmdMsg2 = Command(cmdId2, {'destId': 1, 'mode': 2}, [cmdId2, 1, 201]).serialize()
         self.serialComm.sendMsg(cmdMsg1)
         self.serialComm.sendMsg(cmdMsg2)
         time.sleep(0.1)
@@ -158,7 +161,7 @@ class TestSerialComm:
         # Test command buffer
         testCmd = {'bytes': b'12345'}
         self.serialComm.cmdBuffer['key1'] = testCmd
-        self.serialComm.processBuffers()
+        assert(self.serialComm.processBuffers() == len(testCmd['bytes']))
         assert(len(self.serialComm.cmdBuffer) == 0) # buffer flushed
         assert(self.serialComm.radio.txBuffer == testCmd['bytes'])
     
